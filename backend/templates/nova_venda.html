@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Venda - Star Limp IA</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 430px;
+            margin: auto;
+        }
+
+        h1 {
+            color: #1f4e79;
+            text-align: center;
+        }
+
+        .card {
+            background: white;
+            padding: 18px;
+            border-radius: 16px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            box-sizing: border-box;
+            margin-bottom: 12px;
+        }
+
+        button, .botao-voltar {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: #1f4e79;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 17px;
+            text-align: center;
+            text-decoration: none;
+            box-sizing: border-box;
+            margin-top: 10px;
+        }
+
+        .botao-secundario {
+            background: #666;
+        }
+
+        .total {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1f4e79;
+            text-align: center;
+        }
+
+        .item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            font-size: 15px;
+        }
+
+        .vazio {
+            color: #777;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>Nova Venda</h1>
+
+    <div class="card">
+        <label>Buscar produto</label>
+        <input type="text" id="produto" placeholder="Ex: fresh 250g" oninput="buscarProdutos()">
+
+<div id="sugestoes"></div>
+<input type="hidden" id="produtoSelecionado">
+
+        <label>Quantidade</label>
+        <input type="number" value="1">
+
+        <button onclick="adicionarProduto()">
+    Adicionar produto
+</button>
+    </div>
+
+    <div class="card">
+        <h3>Itens da venda</h3>
+
+<div id="itensVenda"></div>
+
+
+    <div class="card">
+        <div class="total" id="totalVenda">
+    R$ 0,00
+</div>
+        <label>Forma de pagamento</label>
+        <select>
+            <option>Pix</option>
+            <option>Dinheiro</option>
+            <option>Débito</option>
+            <option>Crédito</option>
+            <option>Conta Cliente</option>
+        </select>
+
+        <button>Finalizar venda</button>
+    </div>
+
+    <a class="botao-voltar botao-secundario" href="/">Voltar</a>
+
+</div>
+
+</body>
+<script>
+    async function buscarProdutos() {
+        const termo = document.getElementById("produto").value;
+        const sugestoes = document.getElementById("sugestoes");
+
+        if (termo.length < 2) {
+            sugestoes.innerHTML = "";
+            return;
+        }
+
+        const resposta = await fetch(`/buscar-produtos?termo=${encodeURIComponent(termo)}`);
+        const produtos = await resposta.json();
+
+        sugestoes.innerHTML = "";
+
+        produtos.forEach(produto => {
+            const div = document.createElement("div");
+            div.style.padding = "12px";
+            div.style.marginBottom = "8px";
+            div.style.background = "#eef4fa";
+            div.style.borderRadius = "10px";
+            div.style.cursor = "pointer";
+
+            div.innerHTML = `
+                <strong>${produto.descricao}</strong><br>
+                R$ ${produto.preco.toFixed(2).replace(".", ",")}
+            `;
+
+            div.onclick = () => {
+    document.getElementById("produto").value = produto.descricao;
+
+    document.getElementById("produtoSelecionado").value =
+        JSON.stringify(produto);
+
+    sugestoes.innerHTML = "";
+};
+
+            sugestoes.appendChild(div);
+        });
+    }
+    let carrinho = [];
+let total = 0;
+
+function adicionarProduto() {
+
+    const produtoJson =
+        document.getElementById("produtoSelecionado").value;
+
+    if (!produtoJson) {
+        alert("Selecione um produto.");
+        return;
+    }
+
+    const produto = JSON.parse(produtoJson);
+
+    const quantidade =
+        parseFloat(document.querySelector('input[type="number"]').value);
+
+    const subtotal = produto.preco * quantidade;
+
+    carrinho.push({
+        produto: produto.descricao,
+        quantidade: quantidade,
+        subtotal: subtotal
+    });
+
+    atualizarCarrinho();
+
+    document.getElementById("produto").value = "";
+    document.getElementById("produtoSelecionado").value = "";
+}
+
+function atualizarCarrinho() {
+
+    const itensVenda =
+        document.getElementById("itensVenda");
+
+    itensVenda.innerHTML = "";
+
+    total = 0;
+
+    carrinho.forEach(item => {
+
+        total += item.subtotal;
+
+        const div = document.createElement("div");
+
+        div.className = "item";
+
+        div.innerHTML =
+            `${item.quantidade}x ${item.produto}
+            - R$ ${item.subtotal.toFixed(2).replace(".", ",")}`;
+
+        itensVenda.appendChild(div);
+    });
+
+    document.getElementById("totalVenda").innerHTML =
+        `R$ ${total.toFixed(2).replace(".", ",")}`;
+}
+</script>
+</html>
