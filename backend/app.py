@@ -73,3 +73,58 @@ def nova_venda(request: Request):
 @app.get("/buscar-produtos")
 def buscar_produtos(termo: str):
     return buscar_produtos_banco(termo)
+from fastapi import Body
+
+@app.post("/finalizar-venda")
+def finalizar_venda(dados: dict = Body(...)):
+    from datetime import datetime
+
+    itens = dados.get("itens", [])
+    total = dados.get("total", 0)
+    forma_pagamento = dados.get("forma_pagamento", "")
+
+    if not itens:
+        return {
+            "sucesso": False,
+            "mensagem": "Nenhum produto foi adicionado à venda."
+        }
+
+    data_hora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    conexao = sqlite3.connect(BANCO)
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        INSERT INTO vendas (data_hora, valor_total, forma_pagamento)
+        VALUES (?, ?, ?)
+    """, (data_hora, total, forma_pagamento))
+
+    venda_id = cursor.lastrowid
+
+    for item in itens:
+        cursor.execute("""
+            INSERT INTO itens_venda (
+                venda_id,
+                codigo_produto,
+                descricao,
+                quantidade,
+                preco_unitario,
+                subtotal
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (
+            venda_id,
+            item.get("codigo"),
+            item.get("produto"),
+            item.get("quantidade"),
+            item.get("preco"),
+            item.get("subtotal")
+        ))
+
+    conexao.commit()
+    conexao.close()
+
+    return {
+        "sucesso": True,
+        "mensagem": f"Venda Nº {venda_id} registrada com sucesso"
+    }

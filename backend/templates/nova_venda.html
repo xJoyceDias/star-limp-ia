@@ -60,6 +60,7 @@
             text-decoration: none;
             box-sizing: border-box;
             margin-top: 10px;
+            cursor: pointer;
         }
 
         .botao-secundario {
@@ -71,6 +72,7 @@
             font-weight: bold;
             color: #1f4e79;
             text-align: center;
+            margin-bottom: 15px;
         }
 
         .item {
@@ -85,6 +87,7 @@
         }
     </style>
 </head>
+
 <body>
 
 <div class="container">
@@ -95,45 +98,49 @@
         <label>Buscar produto</label>
         <input type="text" id="produto" placeholder="Ex: fresh 250g" oninput="buscarProdutos()">
 
-<div id="sugestoes"></div>
-<input type="hidden" id="produtoSelecionado">
+        <div id="sugestoes"></div>
+        <input type="hidden" id="produtoSelecionado">
 
         <label>Quantidade</label>
-        <input type="number" value="1">
+        <input type="number" id="quantidade" value="1">
 
         <button onclick="adicionarProduto()">
-    Adicionar produto
-</button>
+            Adicionar produto
+        </button>
     </div>
 
     <div class="card">
         <h3>Itens da venda</h3>
-
-<div id="itensVenda"></div>
-
+        <div id="itensVenda"></div>
+    </div>
 
     <div class="card">
         <div class="total" id="totalVenda">
-    R$ 0,00
-</div>
+            R$ 0,00
+        </div>
+
         <label>Forma de pagamento</label>
-        <select>
-            <option>Pix</option>
-            <option>Dinheiro</option>
-            <option>Débito</option>
-            <option>Crédito</option>
-            <option>Conta Cliente</option>
+        <select id="formaPagamento">
+            <option value="pix">Pix</option>
+            <option value="dinheiro">Dinheiro</option>
+            <option value="debito">Débito</option>
+            <option value="credito">Crédito</option>
+            <option value="fiado">Conta Cliente</option>
         </select>
 
-        <button>Finalizar venda</button>
+        <button onclick="finalizarVenda()">
+            Finalizar venda
+        </button>
     </div>
 
     <a class="botao-voltar botao-secundario" href="/">Voltar</a>
 
 </div>
 
-</body>
 <script>
+    let carrinho = [];
+    let total = 0;
+
     async function buscarProdutos() {
         const termo = document.getElementById("produto").value;
         const sugestoes = document.getElementById("sugestoes");
@@ -150,6 +157,7 @@
 
         produtos.forEach(produto => {
             const div = document.createElement("div");
+
             div.style.padding = "12px";
             div.style.marginBottom = "8px";
             div.style.background = "#eef4fa";
@@ -162,75 +170,95 @@
             `;
 
             div.onclick = () => {
-    document.getElementById("produto").value = produto.descricao;
-
-    document.getElementById("produtoSelecionado").value =
-        JSON.stringify(produto);
-
-    sugestoes.innerHTML = "";
-};
+                document.getElementById("produto").value = produto.descricao;
+                document.getElementById("produtoSelecionado").value = JSON.stringify(produto);
+                sugestoes.innerHTML = "";
+            };
 
             sugestoes.appendChild(div);
         });
     }
-    let carrinho = [];
-let total = 0;
 
-function adicionarProduto() {
+    function adicionarProduto() {
+        const produtoJson = document.getElementById("produtoSelecionado").value;
 
-    const produtoJson =
-        document.getElementById("produtoSelecionado").value;
+        if (!produtoJson) {
+            alert("Selecione um produto.");
+            return;
+        }
 
-    if (!produtoJson) {
-        alert("Selecione um produto.");
-        return;
+        const produto = JSON.parse(produtoJson);
+        const quantidade = parseFloat(document.getElementById("quantidade").value);
+
+        if (!quantidade || quantidade <= 0) {
+            alert("Informe uma quantidade válida.");
+            return;
+        }
+
+        const subtotal = produto.preco * quantidade;
+
+        carrinho.push({
+            codigo: produto.codigo,
+            produto: produto.descricao,
+            quantidade: quantidade,
+            preco: produto.preco,
+            subtotal: subtotal
+        });
+
+        atualizarCarrinho();
+
+        document.getElementById("produto").value = "";
+        document.getElementById("produtoSelecionado").value = "";
+        document.getElementById("quantidade").value = "1";
     }
 
-    const produto = JSON.parse(produtoJson);
+    function atualizarCarrinho() {
+        const itensVenda = document.getElementById("itensVenda");
 
-    const quantidade =
-        parseFloat(document.querySelector('input[type="number"]').value);
+        itensVenda.innerHTML = "";
+        total = 0;
 
-    const subtotal = produto.preco * quantidade;
+        carrinho.forEach(item => {
+            total += item.subtotal;
 
-    carrinho.push({
-        produto: produto.descricao,
-        quantidade: quantidade,
-        subtotal: subtotal
-    });
+            const div = document.createElement("div");
+            div.className = "item";
 
-    atualizarCarrinho();
+            div.innerHTML =
+                `${item.quantidade}x ${item.produto} - R$ ${item.subtotal.toFixed(2).replace(".", ",")}`;
 
-    document.getElementById("produto").value = "";
-    document.getElementById("produtoSelecionado").value = "";
-}
+            itensVenda.appendChild(div);
+        });
 
-function atualizarCarrinho() {
+        document.getElementById("totalVenda").innerHTML =
+            `R$ ${total.toFixed(2).replace(".", ",")}`;
+    }
 
-    const itensVenda =
-        document.getElementById("itensVenda");
+    async function finalizarVenda() {
+        if (carrinho.length === 0) {
+            alert("Adicione pelo menos um produto.");
+            return;
+        }
 
-    itensVenda.innerHTML = "";
+        const formaPagamento = document.getElementById("formaPagamento").value;
 
-    total = 0;
+        const resposta = await fetch("/finalizar-venda", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                itens: carrinho,
+                total: total,
+                forma_pagamento: formaPagamento
+            })
+        });
 
-    carrinho.forEach(item => {
+        const resultado = await resposta.json();
 
-        total += item.subtotal;
-
-        const div = document.createElement("div");
-
-        div.className = "item";
-
-        div.innerHTML =
-            `${item.quantidade}x ${item.produto}
-            - R$ ${item.subtotal.toFixed(2).replace(".", ",")}`;
-
-        itensVenda.appendChild(div);
-    });
-
-    document.getElementById("totalVenda").innerHTML =
-        `R$ ${total.toFixed(2).replace(".", ",")}`;
-}
+        alert(resultado.mensagem);
+    }
 </script>
+
+</body>
 </html>
