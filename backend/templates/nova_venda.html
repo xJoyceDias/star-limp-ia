@@ -120,14 +120,20 @@
         </div>
 
         <label>Forma de pagamento</label>
-        <select id="formaPagamento">
+        <select id="formaPagamento" onchange="mostrarCamposCliente()">
             <option value="pix">Pix</option>
             <option value="dinheiro">Dinheiro</option>
             <option value="debito">Débito</option>
             <option value="credito">Crédito</option>
             <option value="fiado">Conta Cliente</option>
         </select>
+        <div id="dadosContaCliente" style="display:none; margin-top:15px;">
+    <label>Nome do cliente</label>
+    <input type="text" id="clienteNome" placeholder="Ex: João Silva">
 
+    <label>Retirado por</label>
+    <input type="text" id="retiradoPor" placeholder="Ex: Joyce">
+</div>
         <button onclick="finalizarVenda()">
             Finalizar venda
         </button>
@@ -140,7 +146,16 @@
 <script>
     let carrinho = [];
     let total = 0;
+    function mostrarCamposCliente() {
+    const formaPagamento = document.getElementById("formaPagamento").value;
+    const dadosContaCliente = document.getElementById("dadosContaCliente");
 
+    if (formaPagamento === "fiado") {
+        dadosContaCliente.style.display = "block";
+    } else {
+        dadosContaCliente.style.display = "none";
+    }
+}
     async function buscarProdutos() {
         const termo = document.getElementById("produto").value;
         const sugestoes = document.getElementById("sugestoes");
@@ -243,17 +258,19 @@
         const formaPagamento = document.getElementById("formaPagamento").value;
 
         const resposta = await fetch("/finalizar-venda", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                itens: carrinho,
-                total: total,
-                forma_pagamento: formaPagamento
-            })
-        });
-
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+        itens: carrinho,
+        total: total,
+        forma_pagamento: formaPagamento,
+        cliente_nome: document.getElementById("clienteNome").value,
+        retirado_por: document.getElementById("retiradoPor").value
+    })
+});
+            
         const resultado = await resposta.json();
 
         alert(resultado.mensagem);
