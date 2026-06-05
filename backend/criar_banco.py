@@ -54,6 +54,17 @@ CREATE TABLE IF NOT EXISTS clientes (
 """)
 
 cursor.execute("""
+CREATE TABLE IF NOT EXISTS pagamentos_fiado (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cliente_id INTEGER NOT NULL,
+    valor_pago REAL NOT NULL,
+    saldo_anterior REAL NOT NULL,
+    saldo_atual REAL NOT NULL,
+    data_hora TEXT NOT NULL
+)
+""")
+
+cursor.execute("""
 CREATE TABLE IF NOT EXISTS fiados (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     venda_id INTEGER,
@@ -65,6 +76,7 @@ CREATE TABLE IF NOT EXISTS fiados (
     saldo_anterior REAL,
     saldo_atual REAL,
     data_hora TEXT,
+    forma_pagamento TEXT
     status TEXT DEFAULT 'ABERTO',
     FOREIGN KEY (venda_id) REFERENCES vendas(id),
     FOREIGN KEY (cliente_id) REFERENCES clientes(id)

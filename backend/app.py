@@ -77,7 +77,7 @@ from fastapi import Body
 
 @app.post("/finalizar-venda")
 def finalizar_venda(dados: dict = Body(...)):
-    from datetime import datetime
+    from datetime import datetime, timedelta
 
     itens = dados.get("itens", [])
     total = dados.get("total", 0)
@@ -213,4 +213,176 @@ def finalizar_venda(dados: dict = Body(...)):
         "mensagem": f"Venda Nº {venda_id} registrada com sucesso",
         "mensagem_whatsapp": mensagem_whatsapp,
         "telefone_whatsapp": telefone
+    }
+
+@app.get("/clientes")
+def pagina_clientes(request: Request):
+    conexao = sqlite3.connect(BANCO)
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT id, nome, telefone, saldo_fiado
+        FROM clientes
+        ORDER BY nome
+    """)
+
+    clientes = cursor.fetchall()
+    conexao.close()
+
+    return templates.TemplateResponse(
+        request,
+        "clientes.html",
+        {"clientes": clientes}
+    )
+
+
+@app.get("/clientes/{cliente_id}")
+def extrato_cliente(request: Request, cliente_id: int):
+    conexao = sqlite3.connect(BANCO)
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT id, nome, telefone, saldo_fiado
+        FROM clientes
+        WHERE id = ?
+    """, (cliente_id,))
+
+    cliente = cursor.fetchone()
+
+    cursor.execute("""
+        SELECT id, venda_id, data_hora, valor_compra, saldo_anterior, saldo_atual, retirado_por
+        FROM fiados
+        WHERE cliente_id = ?
+        ORDER BY data_hora DESC
+    """, (cliente_id,))
+
+    compras = cursor.fetchall()
+
+    compras_com_itens = []
+
+    for compra in compras:
+        venda_id = compra[1]
+
+        cursor.execute("""
+            SELECT descricao, quantidade, preco_unitario, subtotal
+            FROM itens_venda
+            WHERE venda_id = ?
+        """, (venda_id,))
+
+        itens = cursor.fetchall()
+
+        compras_com_itens.append({
+            "compra": compra,
+            "itens": itens
+        })
+
+    cursor.execute("""
+        SELECT data_hora, valor_pago, saldo_anterior, saldo_atual, forma_pagamento
+        FROM pagamentos_fiado
+        WHERE cliente_id = ?
+        ORDER BY data_hora DESC
+    """, (cliente_id,))
+
+    pagamentos = cursor.fetchall()
+
+    conexao.close()
+
+    return templates.TemplateResponse(
+        request,
+        "extrato_cliente.html",
+        {
+            "cliente": cliente,
+            "compras": compras_com_itens,
+            "pagamentos": pagamentos
+        }
+    )
+
+
+@app.get("/receber-pagamento")
+def pagina_receber_pagamento(request: Request):
+    conexao = sqlite3.connect(BANCO)
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT id, nome, telefone, saldo_fiado
+        FROM clientes
+        WHERE saldo_fiado > 0
+        ORDER BY nome
+    """)
+
+    clientes = cursor.fetchall()
+    conexao.close()
+
+    return templates.TemplateResponse(
+        request,
+        "receber_pagamento.html",
+        {"clientes": clientes}
+    )
+@app.post("/receber-pagamento")
+def receber_pagamento(dados: dict = Body(...)):
+    from datetime import datetime, timedelta
+
+    cliente_id = int(dados.get("cliente_id"))
+    valor_pago = float(dados.get("valor_pago", 0))
+    forma_pagamento = dados.get("forma_pagamento")
+
+    data_hora = (datetime.utcnow() - timedelta(hours=3)).strftime("%Y-%m-%d %H:%M:%S")
+
+    conexao = sqlite3.connect(BANCO)
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT saldo_fiado
+        FROM clientes
+        WHERE id = ?
+    """, (cliente_id,))
+
+    cliente = cursor.fetchone()
+
+    if not cliente:
+        conexao.close()
+        return {
+            "sucesso": False,
+            "mensagem": "Cliente não encontrado."
+        }
+
+    saldo_anterior = cliente[0] or 0
+    saldo_atual = saldo_anterior - valor_pago
+
+    if saldo_atual < 0:
+        saldo_atual = 0
+
+    cursor.execute("""
+        UPDATE clientes
+        SET saldo_fiado = ?
+        WHERE id = ?
+    """, (saldo_atual, cliente_id))
+
+    cursor.execute("""
+        IINSERT INTO pagamentos_fiado (
+            cliente_id,
+            valor_pago,
+            saldo_anterior,
+            saldo_atual,
+            data_hora,
+            forma_pagamento
+        )
+        
+        VALUES (?, ?, ?, ?, ?)
+    """, (
+        cliente_id,
+        valor_pago,
+        saldo_anterior,
+        saldo_atual,
+        data_hora,
+        forma_pagamento
+
+    ))
+
+    conexao.commit()
+    conexao.close()
+
+    return {
+        "sucesso": True,
+        "mensagem": "Pagamento registrado com sucesso."
     }

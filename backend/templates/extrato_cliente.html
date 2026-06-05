@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extrato do Cliente</title>
+
+    <style>
+        body { font-family: Arial, sans-serif; background: #f5f7fa; margin: 0; padding: 20px; }
+        .container { max-width: 430px; margin: auto; }
+        h1, h2 { color: #1f4e79; text-align: center; }
+        .cliente-card, .compra { background: white; padding: 18px; border-radius: 16px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .nome { font-size: 24px; font-weight: bold; color: #1f4e79; }
+        .telefone { margin-top: 10px; font-size: 18px; color: #444; }
+        .saldo { margin-top: 15px; font-size: 28px; font-weight: bold; color: #b00020; }
+        .saldo-label { color: #666; margin-top: 5px; }
+        .data { font-weight: bold; color: #1f4e79; margin-bottom: 10px; }
+        .linha { margin-bottom: 7px; color: #333; }
+        details { margin-top: 12px; background: #f1f4f8; padding: 12px; border-radius: 10px; }
+        summary { cursor: pointer; font-weight: bold; color: #1f4e79; }
+        .botao { display: block; width: 100%; padding: 14px; text-align: center; background: #666; color: white; text-decoration: none; border-radius: 10px; box-sizing: border-box; margin-top: 15px; font-size: 16px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>Extrato</h1>
+
+    <div class="cliente-card">
+        <div class="nome">{{ cliente[1] }}</div>
+        <div class="telefone">📞 {{ cliente[2] or "Telefone não informado" }}</div>
+        <div class="saldo">R$ {{ "%.2f"|format(cliente[3] or 0)|replace(".", ",") }}</div>
+        <div class="saldo-label">Saldo devedor atual</div>
+    </div>
+
+    {% for registro in compras %}
+        {% set compra = registro.compra %}
+
+        <div class="compra">
+            <div class="data">
+                📅 {{ compra[2][8:10] }}/{{ compra[2][5:7] }}/{{ compra[2][0:4] }} às {{ compra[2][11:16] }}
+            </div>
+
+            <div class="linha">💰 Compra: R$ {{ "%.2f"|format(compra[3] or 0)|replace(".", ",") }}</div>
+            <div class="linha">📋 Saldo anterior: R$ {{ "%.2f"|format(compra[4] or 0)|replace(".", ",") }}</div>
+            <div class="linha">📈 Saldo após compra: R$ {{ "%.2f"|format(compra[5] or 0)|replace(".", ",") }}</div>
+            <div class="linha">👤 Retirado por: {{ compra[6] or "Não informado" }}</div>
+
+            <details>
+                <summary>Ver produtos desta compra</summary>
+
+                {% for item in registro.itens %}
+                    <div class="linha">
+                        • {{ item[1] }}x {{ item[0] }} - R$ {{ "%.2f"|format(item[3] or 0)|replace(".", ",") }}
+                    </div>
+                {% endfor %}
+            </details>
+        </div>
+    {% endfor %}
+
+    <h2>Pagamentos realizados</h2>
+
+    {% for pagamento in pagamentos %}
+        <div class="compra">
+            <div class="data">
+                📅 {{ pagamento[0][8:10] }}/{{ pagamento[0][5:7] }}/{{ pagamento[0][0:4] }} às {{ pagamento[0][11:16] }}
+            </div>
+
+            <div class="linha">
+                💵 Pagamento recebido: R$ {{ "%.2f"|format(pagamento[1] or 0)|replace(".", ",") }}
+            </div>
+
+            <div class="linha">
+                📋 Saldo anterior: R$ {{ "%.2f"|format(pagamento[2] or 0)|replace(".", ",") }}
+            </div>
+
+            <div class="linha">
+                ✅ Saldo após pagamento: R$ {{ "%.2f"|format(pagamento[3] or 0)|replace(".", ",") }}
+            </div>
+        </div>
+    {% endfor %}
+
+    <a class="botao" href="/clientes">Voltar</a>
+
+</div>
+
+</body>
+</html>

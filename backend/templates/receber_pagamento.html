@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receber Pagamento</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 430px;
+            margin: auto;
+        }
+
+        h1 {
+            color: #1f4e79;
+            text-align: center;
+        }
+
+        .card {
+            background: white;
+            padding: 18px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            margin-bottom: 15px;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-top: 14px;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 14px;
+            margin-top: 6px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        button, .botao {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 16px;
+            text-align: center;
+            text-decoration: none;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: #1f4e79;
+            color: white;
+        }
+
+        .voltar {
+            background: #666;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>Receber Pagamento</h1>
+
+    <div class="card">
+
+        <label>Cliente</label>
+        <select id="clienteId">
+            {% for cliente in clientes %}
+                <option value="{{ cliente[0] }}">
+                    {{ cliente[1] }} - Saldo R$ {{ "%.2f"|format(cliente[3] or 0) }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <label>Valor recebido</label>
+        <label>Forma de pagamento</label>
+
+<select id="formaPagamento">
+    <option value="PIX">PIX</option>
+    <option value="DINHEIRO">Dinheiro</option>
+    <option value="CARTAO">Cartão</option>
+    <option value="TRANSFERENCIA">Transferência</option>
+</select>
+
+        <input type="number" id="valorPago" step="0.01" placeholder="Ex: 50.00">
+
+        <button onclick="registrarPagamento()">Confirmar pagamento</button>
+
+    </div>
+
+    <a class="botao voltar" href="/">Voltar</a>
+
+</div>
+
+<script>
+    async function registrarPagamento() {
+        const clienteId = document.getElementById("clienteId").value;
+        const valorPago = document.getElementById("valorPago").value;
+
+        if (!clienteId || !valorPago || Number(valorPago) <= 0) {
+            alert("Informe um valor válido.");
+            return;
+        }
+
+        const resposta = await fetch("/receber-pagamento", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                cliente_id: clienteId,
+                valor_pago: valorPago,
+                forma_pagamento: document.getElementById("formaPagamento").value
+            })
+        });
+
+        const resultado = await resposta.json();
+
+        alert(resultado.mensagem);
+
+        if (resultado.sucesso) {
+            window.location.href = "/clientes";
+        }
+    }
+</script>
+
+</body>
+</html>

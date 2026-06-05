@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clientes - Star Limp IA</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 430px;
+            margin: auto;
+        }
+
+        h1 {
+            color: #1f4e79;
+            text-align: center;
+        }
+
+        .card {
+            background: white;
+            padding: 18px;
+            border-radius: 16px;
+            margin-bottom: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .nome {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1f4e79;
+            margin-bottom: 8px;
+        }
+
+        .info {
+            color: #444;
+            margin-bottom: 6px;
+        }
+
+        .saldo {
+            font-size: 22px;
+            font-weight: bold;
+            color: #b00020;
+            margin: 12px 0;
+        }
+
+        .botao {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background: #1f4e79;
+            color: white;
+            border-radius: 10px;
+            text-decoration: none;
+            text-align: center;
+            box-sizing: border-box;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+
+        .voltar {
+            background: #666;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>Clientes</h1>
+
+    {% for cliente in clientes %}
+        <div class="card">
+            <div class="nome">{{ cliente[1] }}</div>
+            <div class="info">📞 {{ cliente[2] or "Telefone não informado" }}</div>
+            <div class="saldo">R$ {{ "%.2f"|format(cliente[3] or 0) }}</div>
+            <div class="info">Saldo devedor atual</div>
+
+            <a class="botao" href="/clientes/{{ cliente[0] }}">
+                Ver extrato
+            </a>
+        </div>
+    {% endfor %}
+
+    <a class="botao voltar" href="/">Voltar</a>
+
+</div>
+
+</body>
+</html>
