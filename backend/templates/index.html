@@ -1,197 +1,377 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>STL Business</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+<title>STL Business</title>
 
-        body {
-            font-family: Arial, sans-serif;
-            background: #f3f6fa;
-            min-height: 100vh;
-            padding: 20px;
-        }
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
 
-        .container {
-            max-width: 430px;
-            margin: auto;
-        }
+body {
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at top, rgba(22, 131, 255, 0.22), transparent 35%),
+        linear-gradient(180deg, #020617 0%, #050b14 100%);
+    color: #f8fafc;
+    padding: 24px;
+}
 
-        .top-card {
-            background: linear-gradient(135deg, #1f4e79, #163a5a);
-            color: white;
-            padding: 24px;
-            border-radius: 24px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.18);
-            margin-bottom: 18px;
-        }
+.app {
+    width: 100%;
+    max-width: 460px;
+    margin: 0 auto;
+    padding-bottom: 90px;
+}
 
-        .app-name {
-            font-size: 28px;
-            font-weight: bold;
-        }
+.hero {
+    text-align: center;
+    padding: 26px 0 22px;
+}
 
-        .subtitle {
-            margin-top: 6px;
-            opacity: 0.9;
-            font-size: 14px;
-        }
+    .logo-starlimp {
+    width: 280px;
+    max-width: 90%;
+    display: block;
+    margin: 0 auto 22px;
+    border-radius: 18px;
+    filter:
+        drop-shadow(0 0 25px rgba(22,131,255,.25))
+        drop-shadow(0 0 60px rgba(22,131,255,.12));
+}
 
-        .label {
-            margin-top: 24px;
-            opacity: 0.85;
-            font-size: 14px;
-        }
+.brand-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
 
-        .valor {
-            font-size: 34px;
-            font-weight: bold;
-            margin-top: 5px;
-        }
+.brand-main {
+    font-size: 38px;
+    font-weight: 900;
+    letter-spacing: -1.5px;
+}
 
-        .stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 18px;
-        }
+.brand-accent {
+    font-size: 28px;
+    font-weight: 800;
+    color: #1683ff;
+}
 
-        .stat-card {
-            background: white;
-            border-radius: 18px;
-            padding: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
+.tagline {
+    color: #7d94b2;
+    font-size: 13px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+}
 
-        .stat-title {
-            color: #666;
-            font-size: 13px;
-        }
+.panel {
+    margin-top: 26px;
+    background: rgba(10, 17, 28, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 30px;
+    padding: 24px;
+    box-shadow:
+        0 30px 70px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
 
-        .stat-value {
-            margin-top: 8px;
-            font-size: 24px;
-            font-weight: bold;
-            color: #1f4e79;
-        }
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
-        .section-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #222;
-            margin: 22px 0 12px;
-        }
+.panel-title {
+    color: #94a3b8;
+    font-size: 14px;
+}
 
-        .menu {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
+.status-pill {
+    background: rgba(22, 131, 255, 0.14);
+    color: #4ba3ff;
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    border: 1px solid rgba(22, 131, 255, 0.25);
+}
 
-        .menu-card {
-            background: white;
-            border-radius: 18px;
-            padding: 18px;
-            text-decoration: none;
-            color: #222;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
+.amount {
+    margin-top: 18px;
+    font-size: 44px;
+    font-weight: 900;
+    letter-spacing: -1.5px;
+}
 
-        .icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 14px;
-            background: #eef4fa;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-        }
+.amount-sub {
+    margin-top: 8px;
+    color: #7d94b2;
+    font-size: 14px;
+}
 
-        .menu-title {
-            font-size: 17px;
-            font-weight: bold;
-            color: #1f4e79;
-        }
+.metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 18px;
+}
 
-        .menu-desc {
-            margin-top: 4px;
-            font-size: 13px;
-            color: #666;
-        }
-    </style>
+.metric-card {
+    background: #0b1320;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 22px;
+    padding: 18px;
+}
+
+.metric-label {
+    color: #7d94b2;
+    font-size: 13px;
+}
+
+.metric-value {
+    margin-top: 10px;
+    font-size: 30px;
+    font-weight: 900;
+    color: #ffffff;
+}
+
+.section-title {
+    margin: 28px 0 14px;
+    color: #e5edf7;
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.actions {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.action {
+    background: #0b1320;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 24px;
+    padding: 18px;
+    text-decoration: none;
+    color: #f8fafc;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 18px 35px rgba(0, 0, 0, 0.22);
+}
+
+.action:hover {
+    border-color: rgba(22, 131, 255, 0.45);
+}
+
+.action-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(22,131,255,.25), rgba(22,131,255,.05));
+    border: 1px solid rgba(22, 131, 255, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1683ff;
+    font-size: 24px;
+    font-weight: 900;
+}
+
+.action-content {
+    flex: 1;
+}
+
+.action-title {
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.action-desc {
+    margin-top: 4px;
+    font-size: 13px;
+    color: #7d94b2;
+}
+
+.arrow {
+    color: #1683ff;
+    font-size: 24px;
+}
+
+.bottom-nav {
+    position: fixed;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    width: calc(100% - 36px);
+    max-width: 460px;
+    background: rgba(10, 17, 28, 0.94);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 24px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding: 10px;
+    box-shadow: 0 20px 45px rgba(0,0,0,.45);
+}
+
+.nav-item {
+    text-decoration: none;
+    color: #7d94b2;
+    text-align: center;
+    font-size: 11px;
+}
+
+.nav-icon {
+    display: block;
+    font-size: 18px;
+    margin-bottom: 3px;
+}
+
+.nav-item.active {
+    color: #1683ff;
+}
+
+@media (min-width: 900px) {
+    .app {
+        max-width: 760px;
+    }
+
+    .actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .bottom-nav {
+        max-width: 760px;
+    }
+}
+</style>
 </head>
+
 <body>
 
-<div class="container">
+<div class="app">
 
-    <div class="top-card">
-        <div class="app-name">STL Business</div>
-        <div class="subtitle">Sistema de Gestão da Star Limp</div>
+    <section class="hero">
 
-        <div class="label">Total a receber</div>
-        <div class="valor">
+        <img src="/static/logostarlimp.png.png"
+     class="logo-starlimp"
+     alt="Star Limp">
+
+        <div class="brand-row">
+            <div class="brand-main">STL</div>
+            <div class="brand-accent">Business</div>
+        </div>
+
+        <div class="tagline">
+            Private Management
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div class="panel-title">Total a receber</div>
+            <div class="status-pill">Ao vivo</div>
+        </div>
+
+        <div class="amount">
             R$ {{ "%.2f"|format(total_receber or 0)|replace(".", ",") }}
         </div>
-    </div>
 
-    <div class="stats">
-        <div class="stat-card">
-            <div class="stat-title">Clientes</div>
-            <div class="stat-value">{{ total_clientes }}</div>
+        <div class="amount-sub">
+            Controle financeiro da Star Limp
+        </div>
+    </section>
+
+    <section class="metrics">
+        <div class="metric-card">
+            <div class="metric-label">Clientes</div>
+            <div class="metric-value">{{ total_clientes }}</div>
         </div>
 
-        <div class="stat-card">
-            <div class="stat-title">Devendo</div>
-            <div class="stat-value">{{ clientes_devendo }}</div>
+        <div class="metric-card">
+            <div class="metric-label">Com saldo</div>
+            <div class="metric-value">{{ clientes_devendo }}</div>
         </div>
+    </section>
+
+    <div class="section-title">
+        Operações
     </div>
 
-    <div class="section-title">Ações rápidas</div>
+    <section class="actions">
 
-    <div class="menu">
-
-        <a class="menu-card" href="/nova-venda">
-            <div class="icon">🛒</div>
-            <div>
-                <div class="menu-title">Nova Venda</div>
-                <div class="menu-desc">Registrar venda no PDV</div>
+        <a class="action" href="/nova-venda">
+            <div class="action-icon">+</div>
+            <div class="action-content">
+                <div class="action-title">Nova Venda</div>
+                <div class="action-desc">Registrar venda ou conta cliente</div>
             </div>
+            <div class="arrow">›</div>
         </a>
 
-        <a class="menu-card" href="/receber-pagamento">
-            <div class="icon">💳</div>
-            <div>
-                <div class="menu-title">Receber Pagamento</div>
-                <div class="menu-desc">Baixar saldo de cliente</div>
+        <a class="action" href="/receber-pagamento">
+            <div class="action-icon">R$</div>
+            <div class="action-content">
+                <div class="action-title">Receber Pagamento</div>
+                <div class="action-desc">Baixar saldo devedor</div>
             </div>
+            <div class="arrow">›</div>
         </a>
 
-        <a class="menu-card" href="/clientes">
-            <div class="icon">👥</div>
-            <div>
-                <div class="menu-title">Clientes</div>
-                <div class="menu-desc">Consultar saldos e extratos</div>
+        <a class="action" href="/clientes">
+            <div class="action-icon">C</div>
+            <div class="action-content">
+                <div class="action-title">Clientes</div>
+                <div class="action-desc">Saldos, extratos e histórico</div>
             </div>
+            <div class="arrow">›</div>
         </a>
 
-        <a class="menu-card" href="#">
-            <div class="icon">📊</div>
-            <div>
-                <div class="menu-title">Relatórios</div>
-                <div class="menu-desc">Em desenvolvimento</div>
+        <a class="action" href="#">
+            <div class="action-icon">∑</div>
+            <div class="action-content">
+                <div class="action-title">Relatórios</div>
+                <div class="action-desc">Em desenvolvimento</div>
             </div>
+            <div class="arrow">›</div>
         </a>
 
-    </div>
+    </section>
 
 </div>
+
+<nav class="bottom-nav">
+    <a class="nav-item active" href="/">
+        <span class="nav-icon">⌂</span>
+        Home
+    </a>
+
+    <a class="nav-item" href="/nova-venda">
+        <span class="nav-icon">＋</span>
+        Venda
+    </a>
+
+    <a class="nav-item" href="/clientes">
+        <span class="nav-icon">◉</span>
+        Clientes
+    </a>
+
+    <a class="nav-item" href="/receber-pagamento">
+        <span class="nav-icon">R$</span>
+        Receber
+    </a>
+</nav>
 
 </body>
 </html>
