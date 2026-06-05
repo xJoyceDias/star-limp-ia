@@ -70,7 +70,9 @@
             <div class="linha">
                 💵 Pagamento recebido: R$ {{ "%.2f"|format(pagamento[1] or 0)|replace(".", ",") }}
             </div>
-
+            <div class="linha">
+                 💳 Forma: {{ pagamento[4] or "Não informado" }}
+            </div>
             <div class="linha">
                 📋 Saldo anterior: R$ {{ "%.2f"|format(pagamento[2] or 0)|replace(".", ",") }}
             </div>

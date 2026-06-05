@@ -323,8 +323,11 @@ def receber_pagamento(dados: dict = Body(...)):
     from datetime import datetime, timedelta
 
     cliente_id = int(dados.get("cliente_id"))
-    valor_pago = float(dados.get("valor_pago", 0))
-    forma_pagamento = dados.get("forma_pagamento")
+
+    valor_pago = str(dados.get("valor_pago", "0")).replace(",", ".")
+    valor_pago = float(valor_pago)
+
+    forma_pagamento = dados.get("forma_pagamento", "")
 
     data_hora = (datetime.utcnow() - timedelta(hours=3)).strftime("%Y-%m-%d %H:%M:%S")
 
@@ -359,7 +362,7 @@ def receber_pagamento(dados: dict = Body(...)):
     """, (saldo_atual, cliente_id))
 
     cursor.execute("""
-        IINSERT INTO pagamentos_fiado (
+        INSERT INTO pagamentos_fiado (
             cliente_id,
             valor_pago,
             saldo_anterior,
@@ -367,8 +370,7 @@ def receber_pagamento(dados: dict = Body(...)):
             data_hora,
             forma_pagamento
         )
-        
-        VALUES (?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?)
     """, (
         cliente_id,
         valor_pago,
@@ -376,7 +378,6 @@ def receber_pagamento(dados: dict = Body(...)):
         saldo_atual,
         data_hora,
         forma_pagamento
-
     ))
 
     conexao.commit()

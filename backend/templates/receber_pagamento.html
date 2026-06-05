@@ -47,6 +47,15 @@
             box-sizing: border-box;
         }
 
+        .saldo-box {
+            margin-top: 15px;
+            padding: 14px;
+            background: #eef4fa;
+            border-radius: 10px;
+            font-weight: bold;
+            color: #1f4e79;
+        }
+
         button, .botao {
             display: block;
             width: 100%;
@@ -80,25 +89,28 @@
     <div class="card">
 
         <label>Cliente</label>
-        <select id="clienteId">
+        <select id="clienteId" onchange="mostrarSaldoCliente()">
             {% for cliente in clientes %}
-                <option value="{{ cliente[0] }}">
-                    {{ cliente[1] }} - Saldo R$ {{ "%.2f"|format(cliente[3] or 0) }}
+                <option value="{{ cliente[0] }}" data-saldo="{{ cliente[3] or 0 }}">
+                    {{ cliente[1] }}
                 </option>
             {% endfor %}
         </select>
 
+        <div class="saldo-box" id="saldoCliente">
+            Saldo atual: R$ 0,00
+        </div>
+
         <label>Valor recebido</label>
-        <label>Forma de pagamento</label>
-
-<select id="formaPagamento">
-    <option value="PIX">PIX</option>
-    <option value="DINHEIRO">Dinheiro</option>
-    <option value="CARTAO">Cartão</option>
-    <option value="TRANSFERENCIA">Transferência</option>
-</select>
-
         <input type="number" id="valorPago" step="0.01" placeholder="Ex: 50.00">
+
+        <label>Forma de pagamento</label>
+        <select id="formaPagamento">
+            <option value="PIX">PIX</option>
+            <option value="DINHEIRO">Dinheiro</option>
+            <option value="CARTAO">Cartão</option>
+            <option value="TRANSFERENCIA">Transferência</option>
+        </select>
 
         <button onclick="registrarPagamento()">Confirmar pagamento</button>
 
@@ -109,9 +121,23 @@
 </div>
 
 <script>
+    function formatarMoeda(valor) {
+        return Number(valor).toFixed(2).replace(".", ",");
+    }
+
+    function mostrarSaldoCliente() {
+        const select = document.getElementById("clienteId");
+        const opcao = select.options[select.selectedIndex];
+        const saldo = opcao.getAttribute("data-saldo") || 0;
+
+        document.getElementById("saldoCliente").innerText =
+            `Saldo atual: R$ ${formatarMoeda(saldo)}`;
+    }
+
     async function registrarPagamento() {
         const clienteId = document.getElementById("clienteId").value;
         const valorPago = document.getElementById("valorPago").value;
+        const formaPagamento = document.getElementById("formaPagamento").value;
 
         if (!clienteId || !valorPago || Number(valorPago) <= 0) {
             alert("Informe um valor válido.");
@@ -126,7 +152,7 @@
             body: JSON.stringify({
                 cliente_id: clienteId,
                 valor_pago: valorPago,
-                forma_pagamento: document.getElementById("formaPagamento").value
+                forma_pagamento: formaPagamento
             })
         });
 
@@ -138,6 +164,8 @@
             window.location.href = "/clientes";
         }
     }
+
+    mostrarSaldoCliente();
 </script>
 
 </body>
