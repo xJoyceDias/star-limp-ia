@@ -3,48 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Star Limp IA</title>
+    <title>STL Business</title>
 
     <style>
-        body {
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+        }
+
+        body{
             font-family: Arial, sans-serif;
-            background: #f5f5f5;
-            text-align: center;
-            padding: 30px;
+            background:#f5f7fa;
+            min-height:100vh;
+            padding:20px;
         }
 
-        h1 {
-            color: #1f4e79;
+        .container{
+            max-width:430px;
+            margin:auto;
         }
 
-        .botao {
-            display: block;
-            width: 250px;
-            margin: 15px auto;
-            padding: 15px;
-            background: #1f4e79;
-            color: white;
-            text-decoration: none;
-            border-radius: 10px;
-            font-size: 18px;
+        .topo{
+            background:#1f4e79;
+            color:white;
+            padding:25px;
+            border-radius:20px;
+            margin-bottom:20px;
+            box-shadow:0 8px 20px rgba(0,0,0,0.15);
         }
 
-        .botao:hover {
-            background: #163a5a;
+        .titulo{
+            font-size:28px;
+            font-weight:bold;
         }
+
+        .subtitulo{
+            margin-top:8px;
+            opacity:0.9;
+        }
+
+        .menu{
+            display:flex;
+            flex-direction:column;
+            gap:15px;
+        }
+
+        .card{
+            background:white;
+            border-radius:18px;
+            padding:18px;
+            text-decoration:none;
+            color:#222;
+            box-shadow:0 4px 12px rgba(0,0,0,0.08);
+            transition:0.2s;
+        }
+
+        .card:hover{
+            transform:translateY(-2px);
+        }
+
+        .icone{
+            font-size:30px;
+            margin-bottom:10px;
+        }
+
+        .nome{
+            font-size:18px;
+            font-weight:bold;
+            color:#1f4e79;
+        }
+
+        .descricao{
+            margin-top:6px;
+            color:#666;
+            font-size:14px;
+        }
+
     </style>
 </head>
 <body>
 
-    <h1>🏪 Star Limp IA</h1>
+<div class="container">
 
-    <a class="botao" href="/nova-venda">🛒 Nova Venda</a>
+    <div class="topo">
+        <div class="titulo">
+            🏪 Star Limp IA
+        </div>
 
-    <a class="botao" href="/receber-pagamento">💳 Receber Pagamento</a>
+        <div class="subtitulo">
+            Gestão inteligente da Star Limp
+        </div>
+    </div>
 
-    <a class="botao" href="/clientes">👥 Clientes</a>
+    <div class="menu">
 
-    <a class="botao" href="#">📊 Relatórios</a>
+        <a class="card" href="/nova-venda">
+            <div class="icone">🛒</div>
+            <div class="nome">Nova Venda</div>
+            <div class="descricao">
+                Registrar venda e atualizar estoque
+            </div>
+        </a>
+
+        <a class="card" href="/receber-pagamento">
+            <div class="icone">💳</div>
+            <div class="nome">Receber Pagamento</div>
+            <div class="descricao">
+                Baixar saldo dos clientes
+            </div>
+        </a>
+
+        <a class="card" href="/clientes">
+            <div class="icone">👥</div>
+            <div class="nome">Clientes</div>
+            <div class="descricao">
+                Consultar extratos e saldos
+            </div>
+        </a>
+
+        <a class="card" href="#">
+            <div class="icone">📊</div>
+            <div class="nome">Relatórios</div>
+            <div class="descricao">
+                Em desenvolvimento
+            </div>
+        </a>
+
+    </div>
+
+</div>
 
 </body>
 </html>
