@@ -6,128 +6,186 @@
     <title>STL Business</title>
 
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        *{
-            margin:0;
-            padding:0;
-            box-sizing:border-box;
-        }
-
-        body{
+        body {
             font-family: Arial, sans-serif;
-            background:#f5f7fa;
-            min-height:100vh;
-            padding:20px;
+            background: #f3f6fa;
+            min-height: 100vh;
+            padding: 20px;
         }
 
-        .container{
-            max-width:430px;
-            margin:auto;
+        .container {
+            max-width: 430px;
+            margin: auto;
         }
 
-        .topo{
-            background:#1f4e79;
-            color:white;
-            padding:25px;
-            border-radius:20px;
-            margin-bottom:20px;
-            box-shadow:0 8px 20px rgba(0,0,0,0.15);
+        .top-card {
+            background: linear-gradient(135deg, #1f4e79, #163a5a);
+            color: white;
+            padding: 24px;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.18);
+            margin-bottom: 18px;
         }
 
-        .titulo{
-            font-size:28px;
-            font-weight:bold;
+        .app-name {
+            font-size: 28px;
+            font-weight: bold;
         }
 
-        .subtitulo{
-            margin-top:8px;
-            opacity:0.9;
+        .subtitle {
+            margin-top: 6px;
+            opacity: 0.9;
+            font-size: 14px;
         }
 
-        .menu{
-            display:flex;
-            flex-direction:column;
-            gap:15px;
+        .label {
+            margin-top: 24px;
+            opacity: 0.85;
+            font-size: 14px;
         }
 
-        .card{
-            background:white;
-            border-radius:18px;
-            padding:18px;
-            text-decoration:none;
-            color:#222;
-            box-shadow:0 4px 12px rgba(0,0,0,0.08);
-            transition:0.2s;
+        .valor {
+            font-size: 34px;
+            font-weight: bold;
+            margin-top: 5px;
         }
 
-        .card:hover{
-            transform:translateY(-2px);
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 18px;
         }
 
-        .icone{
-            font-size:30px;
-            margin-bottom:10px;
+        .stat-card {
+            background: white;
+            border-radius: 18px;
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
 
-        .nome{
-            font-size:18px;
-            font-weight:bold;
-            color:#1f4e79;
+        .stat-title {
+            color: #666;
+            font-size: 13px;
         }
 
-        .descricao{
-            margin-top:6px;
-            color:#666;
-            font-size:14px;
+        .stat-value {
+            margin-top: 8px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #1f4e79;
         }
 
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #222;
+            margin: 22px 0 12px;
+        }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .menu-card {
+            background: white;
+            border-radius: 18px;
+            padding: 18px;
+            text-decoration: none;
+            color: #222;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: #eef4fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .menu-title {
+            font-size: 17px;
+            font-weight: bold;
+            color: #1f4e79;
+        }
+
+        .menu-desc {
+            margin-top: 4px;
+            font-size: 13px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
 
-    <div class="topo">
-        <div class="titulo">
-            🏪 Star Limp IA
-        </div>
+    <div class="top-card">
+        <div class="app-name">STL Business</div>
+        <div class="subtitle">Sistema de Gestão da Star Limp</div>
 
-        <div class="subtitulo">
-            Gestão inteligente da Star Limp
+        <div class="label">Total a receber</div>
+        <div class="valor">
+            R$ {{ "%.2f"|format(total_receber or 0)|replace(".", ",") }}
         </div>
     </div>
 
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-title">Clientes</div>
+            <div class="stat-value">{{ total_clientes }}</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-title">Devendo</div>
+            <div class="stat-value">{{ clientes_devendo }}</div>
+        </div>
+    </div>
+
+    <div class="section-title">Ações rápidas</div>
+
     <div class="menu">
 
-        <a class="card" href="/nova-venda">
-            <div class="icone">🛒</div>
-            <div class="nome">Nova Venda</div>
-            <div class="descricao">
-                Registrar venda e atualizar estoque
+        <a class="menu-card" href="/nova-venda">
+            <div class="icon">🛒</div>
+            <div>
+                <div class="menu-title">Nova Venda</div>
+                <div class="menu-desc">Registrar venda no PDV</div>
             </div>
         </a>
 
-        <a class="card" href="/receber-pagamento">
-            <div class="icone">💳</div>
-            <div class="nome">Receber Pagamento</div>
-            <div class="descricao">
-                Baixar saldo dos clientes
+        <a class="menu-card" href="/receber-pagamento">
+            <div class="icon">💳</div>
+            <div>
+                <div class="menu-title">Receber Pagamento</div>
+                <div class="menu-desc">Baixar saldo de cliente</div>
             </div>
         </a>
 
-        <a class="card" href="/clientes">
-            <div class="icone">👥</div>
-            <div class="nome">Clientes</div>
-            <div class="descricao">
-                Consultar extratos e saldos
+        <a class="menu-card" href="/clientes">
+            <div class="icon">👥</div>
+            <div>
+                <div class="menu-title">Clientes</div>
+                <div class="menu-desc">Consultar saldos e extratos</div>
             </div>
         </a>
 
-        <a class="card" href="#">
-            <div class="icone">📊</div>
-            <div class="nome">Relatórios</div>
-            <div class="descricao">
-                Em desenvolvimento
+        <a class="menu-card" href="#">
+            <div class="icon">📊</div>
+            <div>
+                <div class="menu-title">Relatórios</div>
+                <div class="menu-desc">Em desenvolvimento</div>
             </div>
         </a>
 

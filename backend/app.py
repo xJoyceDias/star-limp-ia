@@ -60,9 +60,28 @@ def buscar_produtos_banco(termo):
 
 @app.get("/")
 def inicio(request: Request):
+    conexao = sqlite3.connect(BANCO)
+    cursor = conexao.cursor()
+
+    cursor.execute("SELECT COUNT(*) FROM clientes")
+    total_clientes = cursor.fetchone()[0] or 0
+
+    cursor.execute("SELECT COUNT(*) FROM clientes WHERE saldo_fiado > 0")
+    clientes_devendo = cursor.fetchone()[0] or 0
+
+    cursor.execute("SELECT SUM(saldo_fiado) FROM clientes")
+    total_receber = cursor.fetchone()[0] or 0
+
+    conexao.close()
+
     return templates.TemplateResponse(
         request,
-        "index.html"
+        "index.html",
+        {
+            "total_clientes": total_clientes,
+            "clientes_devendo": clientes_devendo,
+            "total_receber": total_receber
+        }
     )
 @app.get("/nova-venda")
 def nova_venda(request: Request):
