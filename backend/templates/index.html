@@ -17,33 +17,33 @@
 body {
     min-height: 100vh;
     background:
-        radial-gradient(circle at top, rgba(22, 131, 255, 0.22), transparent 35%),
+        radial-gradient(circle at top, rgba(22, 131, 255, 0.24), transparent 34%),
         linear-gradient(180deg, #020617 0%, #050b14 100%);
     color: #f8fafc;
-    padding: 24px;
+    padding: 22px;
 }
 
 .app {
     width: 100%;
-    max-width: 460px;
+    max-width: 760px;
     margin: 0 auto;
-    padding-bottom: 90px;
+    padding-bottom: 96px;
 }
 
 .hero {
     text-align: center;
-    padding: 26px 0 22px;
+    padding: 18px 0 18px;
 }
 
-    .logo-starlimp {
+.logo-starlimp {
     width: 280px;
     max-width: 90%;
     display: block;
-    margin: 0 auto 22px;
+    margin: 0 auto 12px;
     border-radius: 18px;
     filter:
-        drop-shadow(0 0 25px rgba(22,131,255,.25))
-        drop-shadow(0 0 60px rgba(22,131,255,.12));
+        drop-shadow(0 0 25px rgba(22,131,255,.22))
+        drop-shadow(0 0 60px rgba(22,131,255,.10));
 }
 
 .brand-row {
@@ -51,30 +51,104 @@ body {
     align-items: center;
     justify-content: center;
     gap: 10px;
-    margin-bottom: 10px;
+    margin-top: 6px;
 }
 
 .brand-main {
-    font-size: 38px;
+    font-size: 34px;
     font-weight: 900;
     letter-spacing: -1.5px;
 }
 
 .brand-accent {
-    font-size: 28px;
+    font-size: 25px;
     font-weight: 800;
     color: #1683ff;
 }
 
 .tagline {
+    margin-top: 8px;
     color: #7d94b2;
-    font-size: 13px;
+    font-size: 12px;
     letter-spacing: 5px;
     text-transform: uppercase;
 }
 
+.section-title {
+    margin: 24px 0 14px;
+    color: #e5edf7;
+    font-size: 19px;
+    font-weight: 900;
+}
+
+.actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+}
+
+.action {
+    background: linear-gradient(180deg, #0d1726, #0a111d);
+    border: 1px solid rgba(255, 255, 255, 0.075);
+    border-radius: 26px;
+    padding: 20px;
+    text-decoration: none;
+    color: #f8fafc;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow:
+        0 20px 40px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.action.primary {
+    background:
+        radial-gradient(circle at top left, rgba(22,131,255,.28), transparent 38%),
+        linear-gradient(180deg, #0e1d32, #0a111d);
+    border-color: rgba(22, 131, 255, 0.30);
+}
+
+.action-icon {
+    width: 58px;
+    height: 58px;
+    border-radius: 19px;
+    background: linear-gradient(135deg, rgba(22,131,255,.28), rgba(22,131,255,.06));
+    border: 1px solid rgba(22, 131, 255, 0.30);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1683ff;
+    font-size: 23px;
+    font-weight: 900;
+    flex-shrink: 0;
+}
+
+.action-content {
+    flex: 1;
+}
+
+.action-title {
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.action-desc {
+    margin-top: 5px;
+    font-size: 13px;
+    color: #8aa4c1;
+}
+
+.arrow {
+    color: #1683ff;
+    font-size: 26px;
+}
+
+.finance-title {
+    margin-top: 30px;
+}
+
 .panel {
-    margin-top: 26px;
     background: rgba(10, 17, 28, 0.92);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 30px;
@@ -121,7 +195,7 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 14px;
-    margin-top: 18px;
+    margin-top: 16px;
 }
 
 .metric-card {
@@ -143,77 +217,13 @@ body {
     color: #ffffff;
 }
 
-.section-title {
-    margin: 28px 0 14px;
-    color: #e5edf7;
-    font-size: 18px;
-    font-weight: 800;
-}
-
-.actions {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-
-.action {
-    background: #0b1320;
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 24px;
-    padding: 18px;
-    text-decoration: none;
-    color: #f8fafc;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    box-shadow: 0 18px 35px rgba(0, 0, 0, 0.22);
-}
-
-.action:hover {
-    border-color: rgba(22, 131, 255, 0.45);
-}
-
-.action-icon {
-    width: 54px;
-    height: 54px;
-    border-radius: 18px;
-    background: linear-gradient(135deg, rgba(22,131,255,.25), rgba(22,131,255,.05));
-    border: 1px solid rgba(22, 131, 255, 0.25);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #1683ff;
-    font-size: 24px;
-    font-weight: 900;
-}
-
-.action-content {
-    flex: 1;
-}
-
-.action-title {
-    font-size: 17px;
-    font-weight: 800;
-}
-
-.action-desc {
-    margin-top: 4px;
-    font-size: 13px;
-    color: #7d94b2;
-}
-
-.arrow {
-    color: #1683ff;
-    font-size: 24px;
-}
-
 .bottom-nav {
     position: fixed;
     left: 50%;
     bottom: 18px;
     transform: translateX(-50%);
     width: calc(100% - 36px);
-    max-width: 460px;
+    max-width: 760px;
     background: rgba(10, 17, 28, 0.94);
     backdrop-filter: blur(16px);
     border: 1px solid rgba(255,255,255,0.08);
@@ -241,18 +251,13 @@ body {
     color: #1683ff;
 }
 
-@media (min-width: 900px) {
-    .app {
-        max-width: 760px;
-    }
-
+@media (min-width: 720px) {
     .actions {
-        display: grid;
         grid-template-columns: 1fr 1fr;
     }
 
-    .bottom-nav {
-        max-width: 760px;
+    .logo-starlimp {
+        width: 330px;
     }
 }
 </style>
@@ -265,8 +270,8 @@ body {
     <section class="hero">
 
         <img src="/static/logostarlimp.png.png"
-     class="logo-starlimp"
-     alt="Star Limp">
+             class="logo-starlimp"
+             alt="Star Limp">
 
         <div class="brand-row">
             <div class="brand-main">STL</div>
@@ -276,33 +281,7 @@ body {
         <div class="tagline">
             Private Management
         </div>
-    </section>
 
-    <section class="panel">
-        <div class="panel-header">
-            <div class="panel-title">Total a receber</div>
-            <div class="status-pill">Ao vivo</div>
-        </div>
-
-        <div class="amount">
-            R$ {{ "%.2f"|format(total_receber or 0)|replace(".", ",") }}
-        </div>
-
-        <div class="amount-sub">
-            Controle financeiro da Star Limp
-        </div>
-    </section>
-
-    <section class="metrics">
-        <div class="metric-card">
-            <div class="metric-label">Clientes</div>
-            <div class="metric-value">{{ total_clientes }}</div>
-        </div>
-
-        <div class="metric-card">
-            <div class="metric-label">Com saldo</div>
-            <div class="metric-value">{{ clientes_devendo }}</div>
-        </div>
     </section>
 
     <div class="section-title">
@@ -311,7 +290,7 @@ body {
 
     <section class="actions">
 
-        <a class="action" href="/nova-venda">
+        <a class="action primary" href="/nova-venda">
             <div class="action-icon">+</div>
             <div class="action-content">
                 <div class="action-title">Nova Venda</div>
@@ -320,7 +299,7 @@ body {
             <div class="arrow">›</div>
         </a>
 
-        <a class="action" href="/receber-pagamento">
+        <a class="action primary" href="/receber-pagamento">
             <div class="action-icon">R$</div>
             <div class="action-content">
                 <div class="action-title">Receber Pagamento</div>
@@ -347,6 +326,37 @@ body {
             <div class="arrow">›</div>
         </a>
 
+    </section>
+
+    <div class="section-title finance-title">
+        Fiado
+    </div>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div class="panel-title">Total a receber</div>
+            <div class="status-pill">Ao vivo</div>
+        </div>
+
+        <div class="amount">
+            R$ {{ "%.2f"|format(total_receber or 0)|replace(".", ",") }}
+        </div>
+
+        <div class="amount-sub">
+            Controle financeiro da Star Limp
+        </div>
+    </section>
+
+    <section class="metrics">
+        <div class="metric-card">
+            <div class="metric-label">Clientes</div>
+            <div class="metric-value">{{ total_clientes }}</div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-label">Com saldo</div>
+            <div class="metric-value">{{ clientes_devendo }}</div>
+        </div>
     </section>
 
 </div>
