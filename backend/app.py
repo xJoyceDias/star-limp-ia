@@ -162,7 +162,7 @@ def finalizar_venda(dados: dict = Body(...)):
     WHERE id = ?
     """, (saldo_atual, telefone, cliente_id))
 
-    cursor.execute("""
+    cursor.execute ("""
         INSERT INTO fiados (
             venda_id,
             cliente_id,
@@ -188,10 +188,29 @@ def finalizar_venda(dados: dict = Body(...)):
         data_hora,
         "ABERTO"
     ))
+    mensagem_whatsapp = ""
+
+    if forma_pagamento == "fiado":
+        mensagem_whatsapp = (
+            f"STAR LIMP FRAGRANCIAS E PRODUTOS\n\n"
+            f"Olá {cliente_nome}!\n\n"
+            f"Sua compra foi registrada com sucesso.\n\n"
+            f"Data/Hora: {data_hora}\n\n"
+            f"Valor da compra: R$ {total:.2f}\n"
+            f"Saldo anterior: R$ {saldo_anterior:.2f}\n"
+            f"Compra atual: R$ {total:.2f}\n\n"
+            f"Saldo devedor atual: R$ {saldo_atual:.2f}\n\n"
+            f"Retirado por: {retirado_por}\n\n"
+            f"Agradecemos a preferência!\n"
+            f"Star Limp Fragrâncias e Produtos"
+        )
+
     conexao.commit()
     conexao.close()
 
     return {
         "sucesso": True,
-        "mensagem": f"Venda Nº {venda_id} registrada com sucesso"
+        "mensagem": f"Venda Nº {venda_id} registrada com sucesso",
+        "mensagem_whatsapp": mensagem_whatsapp,
+        "telefone_whatsapp": telefone
     }

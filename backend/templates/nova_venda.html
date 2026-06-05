@@ -278,7 +278,21 @@
             
         const resultado = await resposta.json();
 
-        alert(resultado.mensagem);
+alert(resultado.mensagem);
+
+if (resultado.telefone_whatsapp && resultado.mensagem_whatsapp) {
+
+    const telefone = resultado.telefone_whatsapp.replace(/\D/g, "");
+
+    const mensagem = encodeURIComponent(
+        resultado.mensagem_whatsapp
+    );
+
+    window.open(
+        `https://wa.me/55${telefone}?text=${mensagem}`,
+        "_blank"
+    );
+}
     }
 </script>
 
