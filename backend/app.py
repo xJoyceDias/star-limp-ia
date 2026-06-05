@@ -102,6 +102,8 @@ def finalizar_venda(dados: dict = Body(...)):
     venda_id = cursor.lastrowid
     cliente_nome = dados.get("cliente_nome", "").strip()
     retirado_por = dados.get("retirado_por", "").strip()
+    cliente_telefone = dados.get("cliente_telefone", "").strip()
+
     for item in itens:
         cursor.execute("""
             INSERT INTO itens_venda (
@@ -140,12 +142,12 @@ def finalizar_venda(dados: dict = Body(...)):
     if cliente:
         cliente_id = cliente[0]
         saldo_anterior = cliente[1] or 0
-        telefone = cliente[2] or ""
+        telefone = cliente_telefone or cliente[2] or ""
     else:
         cursor.execute("""
             INSERT INTO clientes (nome, telefone, saldo_fiado, data_cadastro)
             VALUES (?, ?, ?, ?)
-        """, (cliente_nome, "", 0, data_hora))
+        """, (cliente_nome, cliente_telefone, 0, data_hora))
 
         cliente_id = cursor.lastrowid
         saldo_anterior = 0
@@ -154,10 +156,11 @@ def finalizar_venda(dados: dict = Body(...)):
     saldo_atual = saldo_anterior + total
 
     cursor.execute("""
-        UPDATE clientes
-        SET saldo_fiado = ?
-        WHERE id = ?
-    """, (saldo_atual, cliente_id))
+    UPDATE clientes
+    SET saldo_fiado = ?,
+        telefone = ?
+    WHERE id = ?
+    """, (saldo_atual, telefone, cliente_id))
 
     cursor.execute("""
         INSERT INTO fiados (

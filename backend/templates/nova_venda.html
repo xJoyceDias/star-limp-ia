@@ -131,8 +131,12 @@
     <label>Nome do cliente</label>
     <input type="text" id="clienteNome" placeholder="Ex: João Silva">
 
+    <label>Telefone / WhatsApp</label>
+    <input type="text" id="clienteTelefone" placeholder="Ex: 62999999999">
+
     <label>Retirado por</label>
-    <input type="text" id="retiradoPor" placeholder="Ex: Joyce">
+    <input type="text" id="retiradoPor" placeholder="Ex: Mariona">
+
 </div>
         <button onclick="finalizarVenda()">
             Finalizar venda
@@ -267,6 +271,7 @@
         total: total,
         forma_pagamento: formaPagamento,
         cliente_nome: document.getElementById("clienteNome").value,
+        cliente_telefone: document.getElementById("clienteTelefone").value,
         retirado_por: document.getElementById("retiradoPor").value
     })
 });
