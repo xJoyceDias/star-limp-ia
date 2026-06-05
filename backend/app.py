@@ -100,7 +100,8 @@ def finalizar_venda(dados: dict = Body(...)):
     """, (data_hora, total, forma_pagamento))
 
     venda_id = cursor.lastrowid
-
+    cliente_nome = dados.get("cliente_nome", "").strip()
+    retirado_por = dados.get("retirado_por", "").strip()
     for item in itens:
         cursor.execute("""
             INSERT INTO itens_venda (
@@ -120,7 +121,70 @@ def finalizar_venda(dados: dict = Body(...)):
             item.get("preco"),
             item.get("subtotal")
         ))
+    if forma_pagamento == "fiado":
+     if not cliente_nome:
+        conexao.close()
+        return {
+            "sucesso": False,
+            "mensagem": "Informe o nome do cliente para venda fiada."
+        }
 
+    cursor.execute("""
+        SELECT id, saldo_fiado, telefone
+        FROM clientes
+        WHERE lower(nome) = lower(?)
+    """, (cliente_nome,))
+
+    cliente = cursor.fetchone()
+
+    if cliente:
+        cliente_id = cliente[0]
+        saldo_anterior = cliente[1] or 0
+        telefone = cliente[2] or ""
+    else:
+        cursor.execute("""
+            INSERT INTO clientes (nome, telefone, saldo_fiado, data_cadastro)
+            VALUES (?, ?, ?, ?)
+        """, (cliente_nome, "", 0, data_hora))
+
+        cliente_id = cursor.lastrowid
+        saldo_anterior = 0
+        telefone = ""
+
+    saldo_atual = saldo_anterior + total
+
+    cursor.execute("""
+        UPDATE clientes
+        SET saldo_fiado = ?
+        WHERE id = ?
+    """, (saldo_atual, cliente_id))
+
+    cursor.execute("""
+        INSERT INTO fiados (
+            venda_id,
+            cliente_id,
+            cliente_nome,
+            telefone,
+            retirado_por,
+            valor_compra,
+            saldo_anterior,
+            saldo_atual,
+            data_hora,
+            status
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        venda_id,
+        cliente_id,
+        cliente_nome,
+        telefone,
+        retirado_por,
+        total,
+        saldo_anterior,
+        saldo_atual,
+        data_hora,
+        "ABERTO"
+    ))
     conexao.commit()
     conexao.close()
 
