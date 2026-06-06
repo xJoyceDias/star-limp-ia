@@ -1,90 +1,196 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receber Pagamento</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f5f7fa;
-            margin: 0;
-            padding: 20px;
-        }
+<title>Receber Pagamento - STL Business</title>
 
-        .container {
-            max-width: 430px;
-            margin: auto;
-        }
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, Helvetica, sans-serif;
+}
 
-        h1 {
-            color: #1f4e79;
-            text-align: center;
-        }
+body{
+    min-height:100vh;
+    background:
+        radial-gradient(circle at top, rgba(22,131,255,.18), transparent 35%),
+        linear-gradient(180deg,#020617 0%,#050b14 100%);
+    color:#f8fafc;
+    padding:22px;
+}
 
-        .card {
-            background: white;
-            padding: 18px;
-            border-radius: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            margin-bottom: 15px;
-        }
+.container{
+    max-width:760px;
+    margin:auto;
+    padding-bottom:100px;
+}
 
-        label {
-            font-weight: bold;
-            display: block;
-            margin-top: 14px;
-        }
+.header{
+    margin-bottom:22px;
+}
 
-        select, input {
-            width: 100%;
-            padding: 14px;
-            margin-top: 6px;
-            border-radius: 10px;
-            border: 1px solid #ccc;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
+.voltar-topo{
+    color:#7d94b2;
+    text-decoration:none;
+    font-size:14px;
+}
 
-        .saldo-box {
-            margin-top: 15px;
-            padding: 14px;
-            background: #eef4fa;
-            border-radius: 10px;
-            font-weight: bold;
-            color: #1f4e79;
-        }
+h1{
+    margin-top:18px;
+    font-size:34px;
+    font-weight:900;
+}
 
-        button, .botao {
-            display: block;
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 10px;
-            margin-top: 15px;
-            font-size: 16px;
-            text-align: center;
-            text-decoration: none;
-            box-sizing: border-box;
-        }
+.subtitulo{
+    margin-top:6px;
+    color:#7d94b2;
+    font-size:14px;
+}
 
-        button {
-            background: #1f4e79;
-            color: white;
-        }
+.card{
+    background:
+        radial-gradient(circle at top left, rgba(22,131,255,.18), transparent 36%),
+        linear-gradient(180deg,#0e1d32,#0a111d);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:30px;
+    padding:24px;
+    margin-bottom:18px;
+    box-shadow:
+        0 30px 70px rgba(0,0,0,.45),
+        inset 0 1px 0 rgba(255,255,255,.05);
+}
 
-        .voltar {
-            background: #666;
-            color: white;
-        }
-    </style>
+label{
+    display:block;
+    color:#94a3b8;
+    font-size:13px;
+    margin:16px 0 7px;
+}
+
+select, input{
+    width:100%;
+    padding:16px;
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,.08);
+    background:#0b1320;
+    color:#f8fafc;
+    font-size:16px;
+    outline:none;
+}
+
+input::placeholder{
+    color:#52677f;
+}
+
+select:focus,
+input:focus{
+    border-color:rgba(22,131,255,.55);
+    box-shadow:0 0 0 3px rgba(22,131,255,.12);
+}
+
+.saldo-box{
+    margin-top:20px;
+    padding:22px;
+    border-radius:24px;
+    background:#0b1320;
+    border:1px solid rgba(22,131,255,.22);
+}
+
+.saldo-label{
+    color:#94a3b8;
+    font-size:13px;
+}
+
+.saldo-valor{
+    margin-top:8px;
+    color:#ffffff;
+    font-size:36px;
+    font-weight:900;
+    letter-spacing:-1px;
+}
+
+button, .botao{
+    display:block;
+    width:100%;
+    padding:16px;
+    border:none;
+    border-radius:20px;
+    margin-top:18px;
+    font-size:16px;
+    text-align:center;
+    text-decoration:none;
+    box-sizing:border-box;
+    font-weight:900;
+}
+
+button{
+    background:linear-gradient(135deg,#1683ff,#0b65d8);
+    color:white;
+    cursor:pointer;
+    box-shadow:0 18px 35px rgba(22,131,255,.24);
+}
+
+.botao{
+    background:#0b1320;
+    border:1px solid rgba(255,255,255,.08);
+    color:#94a3b8;
+}
+
+.bottom-nav{
+    position:fixed;
+    left:50%;
+    bottom:18px;
+    transform:translateX(-50%);
+    width:calc(100% - 36px);
+    max-width:760px;
+    background:rgba(10,17,28,.94);
+    backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:24px;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    padding:10px;
+    box-shadow:0 20px 45px rgba(0,0,0,.45);
+}
+
+.nav-item{
+    text-decoration:none;
+    color:#7d94b2;
+    text-align:center;
+    font-size:11px;
+}
+
+.nav-icon{
+    display:block;
+    font-size:18px;
+    margin-bottom:3px;
+}
+
+.nav-item.active{
+    color:#1683ff;
+}
+</style>
 </head>
+
 <body>
 
 <div class="container">
 
-    <h1>Receber Pagamento</h1>
+    <div class="header">
+        <a class="voltar-topo" href="/">
+            ← Voltar ao painel
+        </a>
+
+        <h1>Receber Pagamento</h1>
+
+        <div class="subtitulo">
+            Baixa de saldo da Conta Cliente
+        </div>
+    </div>
 
     <div class="card">
 
@@ -97,8 +203,14 @@
             {% endfor %}
         </select>
 
-        <div class="saldo-box" id="saldoCliente">
-            Saldo atual: R$ 0,00
+        <div class="saldo-box">
+            <div class="saldo-label">
+                Saldo atual
+            </div>
+
+            <div class="saldo-valor" id="saldoCliente">
+                R$ 0,00
+            </div>
         </div>
 
         <label>Valor recebido</label>
@@ -112,60 +224,94 @@
             <option value="TRANSFERENCIA">Transferência</option>
         </select>
 
-        <button onclick="registrarPagamento()">Confirmar pagamento</button>
+        <button onclick="registrarPagamento()">
+            Confirmar pagamento
+        </button>
 
     </div>
 
-    <a class="botao voltar" href="/">Voltar</a>
+    <a class="botao" href="/">
+        Voltar
+    </a>
 
 </div>
 
+<nav class="bottom-nav">
+
+    <a class="nav-item" href="/">
+        <span class="nav-icon">⌂</span>
+        Home
+    </a>
+
+    <a class="nav-item" href="/nova-venda">
+        <span class="nav-icon">＋</span>
+        Venda
+    </a>
+
+    <a class="nav-item" href="/clientes">
+        <span class="nav-icon">◉</span>
+        Clientes
+    </a>
+
+    <a class="nav-item active" href="/receber-pagamento">
+        <span class="nav-icon">R$</span>
+        Receber
+    </a>
+
+</nav>
+
 <script>
-    function formatarMoeda(valor) {
-        return Number(valor).toFixed(2).replace(".", ",");
+function formatarMoeda(valor) {
+    return Number(valor).toFixed(2).replace(".", ",");
+}
+
+function mostrarSaldoCliente() {
+    const select = document.getElementById("clienteId");
+    const opcao = select.options[select.selectedIndex];
+
+    if (!opcao) {
+        document.getElementById("saldoCliente").innerText = "R$ 0,00";
+        return;
     }
 
-    function mostrarSaldoCliente() {
-        const select = document.getElementById("clienteId");
-        const opcao = select.options[select.selectedIndex];
-        const saldo = opcao.getAttribute("data-saldo") || 0;
+    const saldo = opcao.getAttribute("data-saldo") || 0;
 
-        document.getElementById("saldoCliente").innerText =
-            `Saldo atual: R$ ${formatarMoeda(saldo)}`;
+    document.getElementById("saldoCliente").innerText =
+        `R$ ${formatarMoeda(saldo)}`;
+}
+
+async function registrarPagamento() {
+    const clienteId = document.getElementById("clienteId").value;
+    const valorPago = document.getElementById("valorPago").value;
+    const formaPagamento = document.getElementById("formaPagamento").value;
+
+    if (!clienteId || !valorPago || Number(valorPago) <= 0) {
+        alert("Informe um valor válido.");
+        return;
     }
 
-    async function registrarPagamento() {
-        const clienteId = document.getElementById("clienteId").value;
-        const valorPago = document.getElementById("valorPago").value;
-        const formaPagamento = document.getElementById("formaPagamento").value;
+    const resposta = await fetch("/receber-pagamento", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            cliente_id: clienteId,
+            valor_pago: valorPago,
+            forma_pagamento: formaPagamento
+        })
+    });
 
-        if (!clienteId || !valorPago || Number(valorPago) <= 0) {
-            alert("Informe um valor válido.");
-            return;
-        }
+    const resultado = await resposta.json();
 
-        const resposta = await fetch("/receber-pagamento", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                cliente_id: clienteId,
-                valor_pago: valorPago,
-                forma_pagamento: formaPagamento
-            })
-        });
+    alert(resultado.mensagem);
 
-        const resultado = await resposta.json();
-
-        alert(resultado.mensagem);
-
-        if (resultado.sucesso) {
-            window.location.href = "/clientes";
-        }
+    if (resultado.sucesso) {
+        window.location.href = "/clientes";
     }
+}
 
-    mostrarSaldoCliente();
+mostrarSaldoCliente();
 </script>
 
 </body>

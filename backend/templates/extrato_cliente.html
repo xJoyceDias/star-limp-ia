@@ -1,91 +1,426 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Extrato do Cliente</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <style>
-        body { font-family: Arial, sans-serif; background: #f5f7fa; margin: 0; padding: 20px; }
-        .container { max-width: 430px; margin: auto; }
-        h1, h2 { color: #1f4e79; text-align: center; }
-        .cliente-card, .compra { background: white; padding: 18px; border-radius: 16px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        .nome { font-size: 24px; font-weight: bold; color: #1f4e79; }
-        .telefone { margin-top: 10px; font-size: 18px; color: #444; }
-        .saldo { margin-top: 15px; font-size: 28px; font-weight: bold; color: #b00020; }
-        .saldo-label { color: #666; margin-top: 5px; }
-        .data { font-weight: bold; color: #1f4e79; margin-bottom: 10px; }
-        .linha { margin-bottom: 7px; color: #333; }
-        details { margin-top: 12px; background: #f1f4f8; padding: 12px; border-radius: 10px; }
-        summary { cursor: pointer; font-weight: bold; color: #1f4e79; }
-        .botao { display: block; width: 100%; padding: 14px; text-align: center; background: #666; color: white; text-decoration: none; border-radius: 10px; box-sizing: border-box; margin-top: 15px; font-size: 16px; }
-    </style>
+<title>Extrato do Cliente - STL Business</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+body{
+    min-height:100vh;
+    background:
+        radial-gradient(circle at top, rgba(22,131,255,.18), transparent 35%),
+        linear-gradient(180deg,#020617 0%,#050b14 100%);
+    color:#f8fafc;
+    padding:22px;
+}
+
+.container{
+    max-width:760px;
+    margin:auto;
+    padding-bottom:100px;
+}
+
+.header{
+    margin-bottom:22px;
+}
+
+.voltar-topo{
+    color:#7d94b2;
+    text-decoration:none;
+    font-size:14px;
+}
+
+h1{
+    margin-top:18px;
+    font-size:34px;
+    font-weight:900;
+}
+
+.subtitulo{
+    margin-top:6px;
+    color:#7d94b2;
+    font-size:14px;
+}
+
+.cliente-card{
+    background:
+        radial-gradient(circle at top left, rgba(22,131,255,.25), transparent 38%),
+        linear-gradient(180deg,#0e1d32,#0a111d);
+
+    border:1px solid rgba(22,131,255,.25);
+    border-radius:30px;
+    padding:24px;
+    margin-bottom:24px;
+
+    box-shadow:
+        0 30px 70px rgba(0,0,0,.45),
+        inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+.nome{
+    font-size:26px;
+    font-weight:900;
+}
+
+.telefone{
+    margin-top:8px;
+    color:#8aa4c1;
+    font-size:14px;
+}
+
+.saldo-label{
+    margin-top:22px;
+    color:#94a3b8;
+    font-size:14px;
+}
+
+.saldo{
+    margin-top:6px;
+    font-size:42px;
+    font-weight:900;
+    letter-spacing:-1px;
+    color:#ffffff;
+}
+
+.section-title{
+    margin:28px 0 14px;
+    font-size:19px;
+    font-weight:900;
+    color:#e5edf7;
+}
+
+.movimento{
+    background:#0b1320;
+    border:1px solid rgba(255,255,255,.07);
+    border-radius:24px;
+    padding:20px;
+    margin-bottom:14px;
+
+    box-shadow:
+        0 20px 40px rgba(0,0,0,.22);
+}
+
+.movimento.compra{
+    border-color:rgba(255,107,107,.18);
+}
+
+.movimento.pagamento{
+    border-color:rgba(22,131,255,.25);
+}
+
+.movimento-topo{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+    margin-bottom:14px;
+}
+
+.tipo{
+    font-size:17px;
+    font-weight:900;
+}
+
+.tipo.compra{
+    color:#ff6b6b;
+}
+
+.tipo.pagamento{
+    color:#4ba3ff;
+}
+
+.data{
+    color:#7d94b2;
+    font-size:13px;
+    text-align:right;
+}
+
+.valor{
+    font-size:28px;
+    font-weight:900;
+    margin-bottom:12px;
+}
+
+.valor.compra{
+    color:#ff6b6b;
+}
+
+.valor.pagamento{
+    color:#4ba3ff;
+}
+
+.linha{
+    margin-top:7px;
+    color:#9fb4cc;
+    font-size:14px;
+}
+
+details{
+    margin-top:14px;
+    background:#08111d;
+    border:1px solid rgba(255,255,255,.06);
+    padding:14px;
+    border-radius:18px;
+}
+
+summary{
+    cursor:pointer;
+    font-weight:800;
+    color:#1683ff;
+}
+
+.produto-item{
+    margin-top:10px;
+    color:#d8e7f3;
+    font-size:14px;
+}
+
+.botao{
+    display:block;
+    width:100%;
+    padding:15px;
+    text-align:center;
+    background:#0b1320;
+    color:#94a3b8;
+    text-decoration:none;
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,.08);
+    margin-top:20px;
+    font-weight:800;
+}
+
+.bottom-nav{
+    position:fixed;
+    left:50%;
+    bottom:18px;
+    transform:translateX(-50%);
+    width:calc(100% - 36px);
+    max-width:760px;
+    background:rgba(10,17,28,.94);
+    backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:24px;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    padding:10px;
+    box-shadow:0 20px 45px rgba(0,0,0,.45);
+}
+
+.nav-item{
+    text-decoration:none;
+    color:#7d94b2;
+    text-align:center;
+    font-size:11px;
+}
+
+.nav-icon{
+    display:block;
+    font-size:18px;
+    margin-bottom:3px;
+}
+
+.nav-item.active{
+    color:#1683ff;
+}
+
+.empty{
+    color:#7d94b2;
+    text-align:center;
+    padding:25px 0;
+}
+</style>
 </head>
+
 <body>
 
 <div class="container">
 
-    <h1>Extrato</h1>
+    <div class="header">
+        <a class="voltar-topo" href="/clientes">
+            ← Voltar para clientes
+        </a>
 
-    <div class="cliente-card">
-        <div class="nome">{{ cliente[1] }}</div>
-        <div class="telefone">📞 {{ cliente[2] or "Telefone não informado" }}</div>
-        <div class="saldo">R$ {{ "%.2f"|format(cliente[3] or 0)|replace(".", ",") }}</div>
-        <div class="saldo-label">Saldo devedor atual</div>
+        <h1>Extrato</h1>
+
+        <div class="subtitulo">
+            Histórico financeiro do cliente
+        </div>
     </div>
 
-    {% for registro in compras %}
-        {% set compra = registro.compra %}
+    <div class="cliente-card">
 
-        <div class="compra">
-            <div class="data">
-                📅 {{ compra[2][8:10] }}/{{ compra[2][5:7] }}/{{ compra[2][0:4] }} às {{ compra[2][11:16] }}
-            </div>
+        <div class="nome">
+            {{ cliente[1] }}
+        </div>
 
-            <div class="linha">💰 Compra: R$ {{ "%.2f"|format(compra[3] or 0)|replace(".", ",") }}</div>
-            <div class="linha">📋 Saldo anterior: R$ {{ "%.2f"|format(compra[4] or 0)|replace(".", ",") }}</div>
-            <div class="linha">📈 Saldo após compra: R$ {{ "%.2f"|format(compra[5] or 0)|replace(".", ",") }}</div>
-            <div class="linha">👤 Retirado por: {{ compra[6] or "Não informado" }}</div>
+        <div class="telefone">
+            📞 {{ cliente[2] or "Telefone não informado" }}
+        </div>
 
-            <details>
-                <summary>Ver produtos desta compra</summary>
+        <div class="saldo-label">
+            Saldo devedor atual
+        </div>
 
-                {% for item in registro.itens %}
-                    <div class="linha">
-                        • {{ item[1] }}x {{ item[0] }} - R$ {{ "%.2f"|format(item[3] or 0)|replace(".", ",") }}
+        <div class="saldo">
+            R$ {{ "%.2f"|format(cliente[3] or 0)|replace(".", ",") }}
+        </div>
+
+    </div>
+
+    <div class="section-title">
+        Compras realizadas
+    </div>
+
+    {% if compras %}
+
+        {% for registro in compras %}
+            {% set compra = registro.compra %}
+
+            <div class="movimento compra">
+
+                <div class="movimento-topo">
+                    <div>
+                        <div class="tipo compra">
+                            Compra registrada
+                        </div>
                     </div>
-                {% endfor %}
-            </details>
+
+                    <div class="data">
+                        {{ compra[2][8:10] }}/{{ compra[2][5:7] }}/{{ compra[2][0:4] }}
+                        <br>
+                        {{ compra[2][11:16] }}
+                    </div>
+                </div>
+
+                <div class="valor compra">
+                    R$ {{ "%.2f"|format(compra[3] or 0)|replace(".", ",") }}
+                </div>
+
+                <div class="linha">
+                    Saldo anterior: R$ {{ "%.2f"|format(compra[4] or 0)|replace(".", ",") }}
+                </div>
+
+                <div class="linha">
+                    Saldo após compra: R$ {{ "%.2f"|format(compra[5] or 0)|replace(".", ",") }}
+                </div>
+
+                <div class="linha">
+                    Retirado por: {{ compra[6] or "Não informado" }}
+                </div>
+
+                <details>
+                    <summary>Ver produtos desta compra</summary>
+
+                    {% for item in registro.itens %}
+                        <div class="produto-item">
+                            • {{ item[1] }}x {{ item[0] }} -
+                            R$ {{ "%.2f"|format(item[3] or 0)|replace(".", ",") }}
+                        </div>
+                    {% endfor %}
+                </details>
+
+            </div>
+
+        {% endfor %}
+
+    {% else %}
+
+        <div class="empty">
+            Nenhuma compra registrada.
         </div>
-    {% endfor %}
 
-    <h2>Pagamentos realizados</h2>
+    {% endif %}
 
-    {% for pagamento in pagamentos %}
-        <div class="compra">
-            <div class="data">
-                📅 {{ pagamento[0][8:10] }}/{{ pagamento[0][5:7] }}/{{ pagamento[0][0:4] }} às {{ pagamento[0][11:16] }}
+    <div class="section-title">
+        Pagamentos realizados
+    </div>
+
+    {% if pagamentos %}
+
+        {% for pagamento in pagamentos %}
+
+            <div class="movimento pagamento">
+
+                <div class="movimento-topo">
+                    <div>
+                        <div class="tipo pagamento">
+                            Pagamento recebido
+                        </div>
+                    </div>
+
+                    <div class="data">
+                        {{ pagamento[0][8:10] }}/{{ pagamento[0][5:7] }}/{{ pagamento[0][0:4] }}
+                        <br>
+                        {{ pagamento[0][11:16] }}
+                    </div>
+                </div>
+
+                <div class="valor pagamento">
+                    R$ {{ "%.2f"|format(pagamento[1] or 0)|replace(".", ",") }}
+                </div>
+
+                <div class="linha">
+                    Forma: {{ pagamento[4] or "Não informado" }}
+                </div>
+
+                <div class="linha">
+                    Saldo anterior: R$ {{ "%.2f"|format(pagamento[2] or 0)|replace(".", ",") }}
+                </div>
+
+                <div class="linha">
+                    Saldo após pagamento: R$ {{ "%.2f"|format(pagamento[3] or 0)|replace(".", ",") }}
+                </div>
+
             </div>
 
-            <div class="linha">
-                💵 Pagamento recebido: R$ {{ "%.2f"|format(pagamento[1] or 0)|replace(".", ",") }}
-            </div>
-            <div class="linha">
-                 💳 Forma: {{ pagamento[4] or "Não informado" }}
-            </div>
-            <div class="linha">
-                📋 Saldo anterior: R$ {{ "%.2f"|format(pagamento[2] or 0)|replace(".", ",") }}
-            </div>
+        {% endfor %}
 
-            <div class="linha">
-                ✅ Saldo após pagamento: R$ {{ "%.2f"|format(pagamento[3] or 0)|replace(".", ",") }}
-            </div>
+    {% else %}
+
+        <div class="empty">
+            Nenhum pagamento registrado.
         </div>
-    {% endfor %}
 
-    <a class="botao" href="/clientes">Voltar</a>
+    {% endif %}
+
+    <a class="botao" href="/clientes">
+        Voltar
+    </a>
 
 </div>
+
+<nav class="bottom-nav">
+
+    <a class="nav-item" href="/">
+        <span class="nav-icon">⌂</span>
+        Home
+    </a>
+
+    <a class="nav-item" href="/nova-venda">
+        <span class="nav-icon">＋</span>
+        Venda
+    </a>
+
+    <a class="nav-item active" href="/clientes">
+        <span class="nav-icon">◉</span>
+        Clientes
+    </a>
+
+    <a class="nav-item" href="/receber-pagamento">
+        <span class="nav-icon">R$</span>
+        Receber
+    </a>
+
+</nav>
 
 </body>
 </html>
