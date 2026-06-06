@@ -2,7 +2,7 @@ import sqlite3
 import unicodedata
 import os
 import shutil
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import FastAPI, Request, Body
 from fastapi.templating import Jinja2Templates
@@ -15,6 +15,14 @@ app.mount("/static", StaticFiles(directory="backend/static"), name="static")
 templates = Jinja2Templates(directory="backend/templates")
 BANCO = "database/starlimp.db"
 PASTA_BACKUPS = "backups"
+
+
+def moeda(valor):
+    try:
+        valor = float(valor or 0)
+        return f"{valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    except:
+        return "0,00"
 
 
 def criar_backup_banco():
@@ -42,9 +50,11 @@ def criar_backup_banco():
         backup_antigo = backups.pop(0)
         os.remove(backup_antigo)
 
+
 @app.on_event("startup")
 def ao_iniciar_sistema():
     criar_backup_banco()
+
 
 def normalizar(texto):
     texto = str(texto).lower().strip()
@@ -95,10 +105,9 @@ def buscar_produtos_banco(termo):
 
     return encontrados[:5]
 
+
 @app.get("/")
 def inicio(request: Request):
-    from datetime import datetime, timedelta
-
     agora = datetime.utcnow() - timedelta(hours=3)
 
     hoje = agora.strftime("%Y-%m-%d")
@@ -160,25 +169,30 @@ def inicio(request: Request):
             "recebido_hoje": recebido_hoje
         }
     )
-    
+
+
 @app.get("/nova-venda")
 def nova_venda(request: Request):
     return templates.TemplateResponse(
         request,
         "nova_venda.html"
-    )    
+    )
+
+
 @app.get("/buscar-produtos")
 def buscar_produtos(termo: str):
     return buscar_produtos_banco(termo)
-from fastapi import Body
+
 
 @app.post("/finalizar-venda")
 def finalizar_venda(dados: dict = Body(...)):
-    from datetime import datetime, timedelta
-
     itens = dados.get("itens", [])
-    total = dados.get("total", 0)
-    forma_pagamento = dados.get("forma_pagamento", "")
+    total = float(dados.get("total", 0) or 0)
+    forma_pagamento = dados.get("forma_pagamento", "").strip().lower()
+
+    cliente_nome = dados.get("cliente_nome", "").strip()
+    retirado_por = dados.get("retirado_por", "").strip()
+    cliente_telefone = dados.get("cliente_telefone", "").strip()
 
     if not itens:
         return {
@@ -186,124 +200,156 @@ def finalizar_venda(dados: dict = Body(...)):
             "mensagem": "Nenhum produto foi adicionado à venda."
         }
 
-    data_hora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    conexao = sqlite3.connect(BANCO)
-    cursor = conexao.cursor()
-
-    cursor.execute("""
-        INSERT INTO vendas (data_hora, valor_total, forma_pagamento)
-        VALUES (?, ?, ?)
-    """, (data_hora, total, forma_pagamento))
-
-    venda_id = cursor.lastrowid
-    cliente_nome = dados.get("cliente_nome", "").strip()
-    retirado_por = dados.get("retirado_por", "").strip()
-    cliente_telefone = dados.get("cliente_telefone", "").strip()
-
-    for item in itens:
-        cursor.execute("""
-            INSERT INTO itens_venda (
-                venda_id,
-                codigo_produto,
-                descricao,
-                quantidade,
-                preco_unitario,
-                subtotal
-            )
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (
-            venda_id,
-            item.get("codigo"),
-            item.get("produto"),
-            item.get("quantidade"),
-            item.get("preco"),
-            item.get("subtotal")
-        ))
-    if forma_pagamento == "fiado":
-     if not cliente_nome:
-        conexao.close()
+    if forma_pagamento == "fiado" and not cliente_nome:
         return {
             "sucesso": False,
             "mensagem": "Informe o nome do cliente para venda fiada."
         }
 
-    cursor.execute("""
-        SELECT id, saldo_fiado, telefone
-        FROM clientes
-        WHERE lower(nome) = lower(?)
-    """, (cliente_nome,))
+    agora = datetime.utcnow() - timedelta(hours=3)
 
-    cliente = cursor.fetchone()
+    data_hora = agora.strftime("%Y-%m-%d %H:%M:%S")
 
-    if cliente:
-        cliente_id = cliente[0]
-        saldo_anterior = cliente[1] or 0
-        telefone = cliente_telefone or cliente[2] or ""
-    else:
-        cursor.execute("""
-            INSERT INTO clientes (nome, telefone, saldo_fiado, data_cadastro)
-            VALUES (?, ?, ?, ?)
-        """, (cliente_nome, cliente_telefone, 0, data_hora))
+    conexao = sqlite3.connect(BANCO)
+    cursor = conexao.cursor()
 
-        cliente_id = cursor.lastrowid
-        saldo_anterior = 0
-        telefone = ""
-
-    saldo_atual = saldo_anterior + total
-
-    cursor.execute("""
-    UPDATE clientes
-    SET saldo_fiado = ?,
-        telefone = ?
-    WHERE id = ?
-    """, (saldo_atual, telefone, cliente_id))
-
-    cursor.execute ("""
-        INSERT INTO fiados (
-            venda_id,
-            cliente_id,
-            cliente_nome,
-            telefone,
-            retirado_por,
-            valor_compra,
-            saldo_anterior,
-            saldo_atual,
-            data_hora,
-            status
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        venda_id,
-        cliente_id,
-        cliente_nome,
-        telefone,
-        retirado_por,
-        total,
-        saldo_anterior,
-        saldo_atual,
-        data_hora,
-        "ABERTO"
-    ))
     mensagem_whatsapp = ""
+    telefone = cliente_telefone
+    saldo_anterior = 0
+    saldo_atual = 0
 
-    if forma_pagamento == "fiado":
-        mensagem_whatsapp = (
-            f"STAR LIMP FRAGRANCIAS E PRODUTOS\n\n"
-            f"Olá {cliente_nome}!\n\n"
-            f"Sua compra foi registrada com sucesso.\n\n"
-            f"Data/Hora: {data_hora}\n\n"
-            f"Valor da compra: R$ {total:.2f}\n"
-            f"Saldo anterior: R$ {saldo_anterior:.2f}\n"
-            f"Compra atual: R$ {total:.2f}\n\n"
-            f"Saldo devedor atual: R$ {saldo_atual:.2f}\n\n"
-            f"Retirado por: {retirado_por}\n\n"
-            f"Agradecemos a preferência!\n"
-            f"Star Limp Fragrâncias e Produtos"
-        )
+    try:
+        cursor.execute("""
+            INSERT INTO vendas (data_hora, valor_total, forma_pagamento)
+            VALUES (?, ?, ?)
+        """, (data_hora, total, forma_pagamento))
 
-    conexao.commit()
-    conexao.close()
+        venda_id = cursor.lastrowid
+
+        for item in itens:
+            cursor.execute("""
+                INSERT INTO itens_venda (
+                    venda_id,
+                    codigo_produto,
+                    descricao,
+                    quantidade,
+                    preco_unitario,
+                    subtotal
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (
+                venda_id,
+                item.get("codigo"),
+                item.get("produto"),
+                item.get("quantidade"),
+                item.get("preco"),
+                item.get("subtotal")
+            ))
+
+        if forma_pagamento == "fiado":
+            cursor.execute("""
+                SELECT id, saldo_fiado, telefone
+                FROM clientes
+                WHERE lower(nome) = lower(?)
+            """, (cliente_nome,))
+
+            cliente = cursor.fetchone()
+
+            if cliente:
+                cliente_id = cliente[0]
+                saldo_anterior = cliente[1] or 0
+                telefone = cliente_telefone or cliente[2] or ""
+            else:
+                cursor.execute("""
+                    INSERT INTO clientes (nome, telefone, saldo_fiado, data_cadastro)
+                    VALUES (?, ?, ?, ?)
+                """, (cliente_nome, cliente_telefone, 0, data_hora))
+
+                cliente_id = cursor.lastrowid
+                saldo_anterior = 0
+                telefone = cliente_telefone
+
+            saldo_atual = saldo_anterior + total
+
+            cursor.execute("""
+                UPDATE clientes
+                SET saldo_fiado = ?,
+                    telefone = ?
+                WHERE id = ?
+            """, (saldo_atual, telefone, cliente_id))
+
+            cursor.execute("""
+                INSERT INTO fiados (
+                    venda_id,
+                    cliente_id,
+                    cliente_nome,
+                    telefone,
+                    retirado_por,
+                    valor_compra,
+                    saldo_anterior,
+                    saldo_atual,
+                    data_hora,
+                    status
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                venda_id,
+                cliente_id,
+                cliente_nome,
+                telefone,
+                retirado_por,
+                total,
+                saldo_anterior,
+                saldo_atual,
+                data_hora,
+                "ABERTO"
+            ))
+
+            itens_mensagem = ""
+
+            for item in itens:
+                produto = item.get("produto", "")
+                quantidade = item.get("quantidade", 0)
+                preco = float(item.get("preco", 0) or 0)
+                subtotal = float(item.get("subtotal", 0) or 0)
+
+                itens_mensagem += (
+                    f"• {produto}\n"
+                    f"{quantidade}x R$ {moeda(preco)} = R$ {moeda(subtotal)}\n\n"
+                )
+
+            data_formatada = agora.strftime("%d/%m/%Y às %H:%M")
+
+            mensagem_whatsapp = (
+                f"STAR LIMP FRAGRÂNCIAS E PRODUTOS\n\n"
+                f"Olá {cliente_nome}!\n\n"
+                f"Sua compra foi registrada com sucesso.\n\n"
+                f"Data: {data_formatada}\n"
+                f"Retirado por: {retirado_por}\n\n"
+                f"PRODUTOS RETIRADOS:\n\n"
+                f"{itens_mensagem}"
+                f"━━━━━━━━━━━━━━━\n"
+                f" TOTAL DA COMPRA: R$ {moeda(total)}\n"
+                f"━━━━━━━━━━━━━━━\n\n"
+                f"Saldo anterior: R$ {moeda(saldo_anterior)}\n"
+                f"Compra atual: R$ {moeda(total)}\n"
+                f"Saldo devedor atual: R$ {moeda(saldo_atual)}\n\n"
+                f"Agradecemos a preferência!\n\n"
+                f"Star Limp Fragrâncias e Produtos \n"
+                f"(62) 98436-2772"
+            )
+
+        conexao.commit()
+
+    except Exception as erro:
+        conexao.rollback()
+        return {
+            "sucesso": False,
+            "mensagem": f"Erro ao finalizar venda: {erro}"
+        }
+
+    finally:
+        conexao.close()
 
     criar_backup_banco()
 
@@ -314,17 +360,18 @@ def finalizar_venda(dados: dict = Body(...)):
         "telefone_whatsapp": telefone
     }
 
+
 @app.get("/clientes")
 def pagina_clientes(request: Request):
     conexao = sqlite3.connect(BANCO)
     cursor = conexao.cursor()
 
     cursor.execute("""
-    SELECT id, nome, telefone, saldo_fiado
-    FROM clientes
-    WHERE saldo_fiado > 0
-    ORDER BY nome
-""")
+        SELECT id, nome, telefone, saldo_fiado
+        FROM clientes
+        WHERE saldo_fiado > 0
+        ORDER BY nome
+    """)
 
     clientes = cursor.fetchall()
     conexao.close()
@@ -396,10 +443,10 @@ def extrato_cliente(request: Request, cliente_id: int):
             "pagamentos": pagamentos
         }
     )
+
+
 @app.get("/relatorios")
 def pagina_relatorios(request: Request):
-    from datetime import datetime, timedelta
-
     hoje = (datetime.utcnow() - timedelta(hours=3)).strftime("%Y-%m-%d")
 
     conexao = sqlite3.connect(BANCO)
@@ -461,6 +508,7 @@ def pagina_relatorios(request: Request):
         }
     )
 
+
 @app.get("/receber-pagamento")
 def pagina_receber_pagamento(request: Request):
     conexao = sqlite3.connect(BANCO)
@@ -487,8 +535,6 @@ def pagina_receber_pagamento(request: Request):
 
 @app.post("/receber-pagamento")
 def receber_pagamento(dados: dict = Body(...)):
-    from datetime import datetime
-
     cliente_id = dados.get("cliente_id")
     valor_pago = dados.get("valor_pago")
     forma_pagamento = dados.get("forma_pagamento", "").strip()
@@ -505,7 +551,9 @@ def receber_pagamento(dados: dict = Body(...)):
     if valor_pago <= 0:
         return {"sucesso": False, "mensagem": "Informe um valor maior que zero."}
 
-    data_hora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    agora = datetime.utcnow() - timedelta(hours=3)
+
+    data_hora = agora.strftime("%Y-%m-%d %H:%M:%S")
 
     conexao = sqlite3.connect(BANCO)
     cursor = conexao.cursor()
@@ -562,6 +610,7 @@ def receber_pagamento(dados: dict = Body(...)):
         "sucesso": True,
         "mensagem": "Pagamento registrado com sucesso."
     }
+
 
 @app.get("/cancelar-venda")
 def pagina_cancelar_venda(request: Request):
@@ -629,6 +678,8 @@ def pagina_cancelar_venda(request: Request):
             "vendas": vendas
         }
     )
+
+
 @app.post("/cancelar-venda")
 def cancelar_venda(dados: dict = Body(...)):
     venda_id = int(dados.get("venda_id"))
@@ -654,7 +705,6 @@ def cancelar_venda(dados: dict = Body(...)):
     forma_pagamento = venda[1]
 
     if forma_pagamento == "fiado":
-
         cursor.execute("""
             SELECT cliente_id, valor_compra
             FROM fiados
@@ -664,7 +714,6 @@ def cancelar_venda(dados: dict = Body(...)):
         fiado = cursor.fetchone()
 
         if fiado:
-
             cliente_id = fiado[0]
             valor_compra = fiado[1]
 
@@ -677,7 +726,6 @@ def cancelar_venda(dados: dict = Body(...)):
             cliente = cursor.fetchone()
 
             if cliente:
-
                 saldo_atual = cliente[0] or 0
                 novo_saldo = saldo_atual - valor_compra
 

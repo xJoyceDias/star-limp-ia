@@ -486,6 +486,7 @@ async function finalizarVenda() {
 
     alert(resultado.mensagem);
 
+if (resultado.sucesso) {
     if (resultado.telefone_whatsapp && resultado.mensagem_whatsapp) {
         const telefone = resultado.telefone_whatsapp.replace(/\D/g, "");
         const mensagem = encodeURIComponent(resultado.mensagem_whatsapp);
@@ -495,7 +496,12 @@ async function finalizarVenda() {
             "_blank"
         );
     }
+
+    setTimeout(() => {
+        window.location.href = "/nova-venda";
+    }, 800);
 }
+
 </script>
 
 </body>
