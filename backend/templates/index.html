@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>STL Business</title>
+<link rel="manifest" href="/static/manifest.json">
+<meta name="theme-color" content="#1683ff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="STL Business">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/static/logostarlimp.png.png">
 
 <style>
 *{
@@ -653,6 +659,13 @@ body::after{
     Receber
   </a>
 </nav>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("/static/service-worker.js");
+  });
+}
+</script>
 
 </body>
 </html>

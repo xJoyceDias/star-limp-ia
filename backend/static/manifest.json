@@ -1,0 +1,17 @@
+{
+  "name": "STL Business",
+  "short_name": "STL",
+  "description": "Sistema de gestão Star Limp",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#00030a",
+  "theme_color": "#1683ff",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/static/logostarlimp.png.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
