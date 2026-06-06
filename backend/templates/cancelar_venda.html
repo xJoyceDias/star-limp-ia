@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cancelar Venda</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+
+body{
+    min-height:100vh;
+    background:
+        radial-gradient(circle at top, rgba(22,131,255,.22), transparent 35%),
+        linear-gradient(180deg,#020817,#05101d);
+    color:white;
+    padding:25px;
+}
+
+.container{max-width:1100px;margin:auto}
+
+h1{margin-bottom:10px;font-size:38px}
+
+.subtitulo{color:#8aa4c1;margin-bottom:25px}
+
+.voltar{
+    display:inline-block;
+    margin-bottom:20px;
+    color:#4ba3ff;
+    text-decoration:none;
+    font-weight:bold;
+}
+
+.card{
+    background:#0b1628;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:22px;
+    padding:22px;
+    margin-bottom:18px;
+    box-shadow:0 15px 35px rgba(0,0,0,.25);
+}
+
+.topo{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    flex-wrap:wrap;
+    gap:15px;
+}
+
+.numero{font-size:23px;font-weight:900}
+
+.data{color:#8aa4c1;margin-top:5px}
+
+.pagamento{
+    display:inline-block;
+    background:rgba(22,131,255,.15);
+    color:#4ba3ff;
+    padding:6px 12px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:bold;
+    margin-top:8px;
+}
+
+.valor{
+    font-size:30px;
+    font-weight:900;
+}
+
+.produtos{
+    margin-top:18px;
+    padding-top:15px;
+    border-top:1px solid rgba(255,255,255,.08);
+}
+
+.produto{
+    display:flex;
+    justify-content:space-between;
+    gap:15px;
+    padding:10px 0;
+    border-bottom:1px solid rgba(255,255,255,.06);
+}
+
+.produto:last-child{border-bottom:none}
+
+.produto-nome{font-weight:800}
+
+.produto-info{
+    margin-top:4px;
+    color:#8aa4c1;
+    font-size:13px;
+}
+
+.produto-total{
+    font-weight:900;
+    white-space:nowrap;
+}
+
+.cancelar-btn{
+    margin-top:18px;
+    background:#ef4444;
+    border:none;
+    color:white;
+    padding:12px 18px;
+    border-radius:12px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.cancelar-btn:hover{background:#dc2626}
+
+@media(max-width:640px){
+    .valor{font-size:25px}
+    .produto{flex-direction:column}
+    .cancelar-btn{width:100%}
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<a href="/" class="voltar">← Voltar</a>
+
+<h1>Cancelar Venda</h1>
+
+<div class="subtitulo">
+Confira a venda, os produtos e remova lançamentos incorretos.
+</div>
+
+{% for venda in vendas %}
+
+<div class="card">
+
+    <div class="topo">
+        <div>
+            <div class="numero">Venda Nº {{ venda.id }}</div>
+            <div class="data">{{ venda.data_hora }}</div>
+            <div class="pagamento">{{ venda.forma_pagamento }}</div>
+        </div>
+
+        <div class="valor">
+            R$ {{ "%.2f"|format(venda.valor_total)|replace(".", ",") }}
+        </div>
+    </div>
+
+    <div class="produtos">
+        {% for item in venda.itens %}
+        <div class="produto">
+            <div>
+                <div class="produto-nome">{{ item[0] }}</div>
+                <div class="produto-info">
+                    {{ item[1] }} x R$ {{ "%.2f"|format(item[2])|replace(".", ",") }}
+                </div>
+            </div>
+
+            <div class="produto-total">
+                R$ {{ "%.2f"|format(item[3])|replace(".", ",") }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <button class="cancelar-btn" onclick="cancelarVenda({{ venda.id }})">
+        Cancelar Venda Nº {{ venda.id }}
+    </button>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+<script>
+async function cancelarVenda(vendaId){
+
+    if(!confirm("Deseja realmente cancelar esta venda?")){
+        return;
+    }
+
+    const resposta = await fetch("/cancelar-venda",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            venda_id:vendaId
+        })
+    });
+
+    const dados = await resposta.json();
+
+    alert(dados.mensagem);
+
+    if(dados.sucesso){
+        location.reload();
+    }
+}
+</script>
+
+</body>
+</html>

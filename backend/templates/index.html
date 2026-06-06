@@ -3,384 +3,655 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>STL Business</title>
 
 <style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: Arial, Helvetica, sans-serif;
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
-body {
-    min-height: 100vh;
-    background:
-        radial-gradient(circle at top, rgba(22, 131, 255, 0.24), transparent 34%),
-        linear-gradient(180deg, #020617 0%, #050b14 100%);
-    color: #f8fafc;
-    padding: 22px;
+:root{
+  --bg-deep:#00030a;
+  --bg-panel:rgba(5,15,35,.92);
+  --bg-card:rgba(5,15,35,.88);
+  --glass:rgba(22,53,107,.22);
+  --glass-strong:rgba(22,53,107,.30);
+  --stroke:rgba(255,255,255,.08);
+  --stroke-strong:rgba(22,131,255,.22);
+  --txt:#f8fafc;
+  --muted:#8fa5c2;
+  --muted-2:#9fb3d1;
+  --brand:#1683ff;
+  --brand-2:#0a6fe6;
+  --shadow:0 30px 70px rgba(0,0,0,.55);
+  --radius-xl:30px;
+  --radius-lg:28px;
+  --radius-md:22px;
+  --radius-sm:18px;
 }
 
-.app {
-    width: 100%;
-    max-width: 760px;
-    margin: 0 auto;
-    padding-bottom: 96px;
+html, body{
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  color:var(--txt);
+  background:
+    radial-gradient(1200px 700px at 50% 14%, rgba(0,120,255,.18), transparent 60%),
+    radial-gradient(900px 520px at 50% 23%, rgba(0,82,220,.22), transparent 62%),
+    radial-gradient(500px 420px at 50% 17%, rgba(0,38,120,.65), transparent 58%),
+    var(--bg-deep);
+  min-height:100vh;
+  padding:22px;
+  overflow-x:hidden;
 }
 
-.hero {
-    text-align: center;
-    padding: 18px 0 18px;
+body::after{
+  content:"";
+  position:fixed;
+  inset:-10px;
+  pointer-events:none;
+  background:
+    radial-gradient(1200px 900px at 50% -10%, transparent 35%, rgba(0,0,0,.15) 70%),
+    radial-gradient(1400px 1000px at 50% 120%, rgba(0,0,0,.25), transparent 60%);
+  z-index:0;
 }
 
-.logo-starlimp {
-    width: 280px;
-    max-width: 90%;
-    display: block;
-    margin: 0 auto 12px;
-    border-radius: 18px;
-    filter:
-        drop-shadow(0 0 25px rgba(22,131,255,.22))
-        drop-shadow(0 0 60px rgba(22,131,255,.10));
+.app{
+  width:100%;
+  max-width:760px;
+  margin:0 auto;
+  padding-bottom:120px;
+  position:relative;
+  z-index:1;
 }
 
-.brand-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 6px;
+.hero{
+  text-align:center;
+  padding:12px 0 20px;
+  position:relative;
 }
 
-.brand-main {
-    font-size: 34px;
-    font-weight: 900;
-    letter-spacing: -1.5px;
+.logo-wrapper{
+  position:relative;
+  width:340px;
+  max-width:92%;
+  margin:0 auto 10px;
 }
 
-.brand-accent {
-    font-size: 25px;
-    font-weight: 800;
-    color: #1683ff;
+.logo-glow{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  width:420px;
+  height:420px;
+  background:
+    radial-gradient(circle,
+      rgba(22,131,255,.45) 0%,
+      rgba(22,131,255,.18) 35%,
+      rgba(22,131,255,.08) 55%,
+      transparent 75%);
+  filter:blur(50px);
+  opacity:.9;
+  z-index:0;
 }
 
-.tagline {
-    margin-top: 8px;
-    color: #7d94b2;
-    font-size: 12px;
-    letter-spacing: 5px;
-    text-transform: uppercase;
+.logo-ring{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  width:230px;
+  height:230px;
+  border-radius:50%;
+  border:1px solid rgba(22,131,255,.22);
+  box-shadow:
+    0 0 20px rgba(22,131,255,.20),
+    inset 0 0 20px rgba(22,131,255,.15);
+  z-index:1;
 }
 
-.section-title {
-    margin: 24px 0 14px;
-    color: #e5edf7;
-    font-size: 19px;
-    font-weight: 900;
+.logo-ring::before{
+  content:"";
+  position:absolute;
+  inset:-18px;
+  border-radius:50%;
+  border:1px solid rgba(22,131,255,.10);
+  clip-path: polygon(
+    0% 0%,
+    100% 0%,
+    100% 30%,
+    75% 30%,
+    75% 70%,
+    100% 70%,
+    100% 100%,
+    0% 100%,
+    0% 70%,
+    25% 70%,
+    25% 30%,
+    0% 30%
+  );
+  transform:rotate(20deg);
 }
 
-.actions {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 14px;
+.logo-ring::after{
+  content:"";
+  position:absolute;
+  top:18px;
+  left:42px;
+  width:86px;
+  height:2px;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.95), transparent);
+  border-radius:999px;
+  transform:rotate(-28deg);
+  box-shadow:
+    0 0 8px rgba(255,255,255,.9),
+    0 0 18px rgba(22,131,255,.75);
 }
 
-.action {
-    background: linear-gradient(180deg, #0d1726, #0a111d);
-    border: 1px solid rgba(255, 255, 255, 0.075);
-    border-radius: 26px;
-    padding: 20px;
-    text-decoration: none;
-    color: #f8fafc;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    box-shadow:
-        0 20px 40px rgba(0, 0, 0, 0.28),
-        inset 0 1px 0 rgba(255,255,255,0.04);
+.logo-magic{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  width:320px;
+  height:320px;
+  z-index:1;
+  pointer-events:none;
+  animation: magicOrbit 14s linear infinite;
 }
 
-.action.primary {
-    background:
-        radial-gradient(circle at top left, rgba(22,131,255,.28), transparent 38%),
-        linear-gradient(180deg, #0e1d32, #0a111d);
-    border-color: rgba(22, 131, 255, 0.30);
+.logo-magic::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+  background:
+    conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      rgba(22,131,255,.65) 35deg,
+      transparent 70deg,
+      transparent 180deg,
+      rgba(255,255,255,.45) 220deg,
+      transparent 260deg,
+      transparent 360deg
+    );
+  filter:blur(8px);
+  mask: radial-gradient(circle, transparent 58%, #000 60%, #000 65%, transparent 67%);
+  -webkit-mask: radial-gradient(circle, transparent 58%, #000 60%, #000 65%, transparent 67%);
 }
 
-.action-icon {
-    width: 58px;
-    height: 58px;
-    border-radius: 19px;
-    background: linear-gradient(135deg, rgba(22,131,255,.28), rgba(22,131,255,.06));
-    border: 1px solid rgba(22, 131, 255, 0.30);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #1683ff;
-    font-size: 23px;
-    font-weight: 900;
-    flex-shrink: 0;
+.logo-starlimp{
+  position:relative;
+  z-index:3;
+  width:315px;
+  max-width:90%;
+  display:block;
+  margin:auto;
+  border-radius:18px;
+  filter:
+    drop-shadow(0 10px 40px rgba(0,132,255,.75))
+    drop-shadow(0 2px 10px rgba(0,0,0,.45));
 }
 
-.action-content {
-    flex: 1;
+.brand-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  margin-top:4px;
 }
 
-.action-title {
-    font-size: 18px;
-    font-weight: 900;
+.brand-main{
+  font-size:36px;
+  font-weight:1000;
+  letter-spacing:-1.4px;
+  color:#fff;
 }
 
-.action-desc {
-    margin-top: 5px;
-    font-size: 13px;
-    color: #8aa4c1;
+.brand-accent{
+  font-size:28px;
+  font-weight:1000;
+  color:var(--brand);
+  text-shadow:0 0 18px rgba(22,131,255,.45);
 }
 
-.arrow {
-    color: #1683ff;
-    font-size: 26px;
+.tagline{
+  margin-top:8px;
+  color:var(--muted-2);
+  font-size:12px;
+  letter-spacing:6px;
+  text-transform:uppercase;
 }
 
-.finance-title {
-    margin-top: 30px;
+.section-title{
+  position:relative;
+  display:inline-block;
+  margin:22px 0 28px;
+  color:#ffffff;
+  font-size:20px;
+  font-weight:900;
+  letter-spacing:-.2px;
 }
 
-.panel {
-    background: rgba(10, 17, 28, 0.92);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 30px;
-    padding: 24px;
-    box-shadow:
-        0 30px 70px rgba(0, 0, 0, 0.45),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+.section-title::after{
+  content:"";
+  position:absolute;
+  left:0;
+  bottom:-11px;
+  width:30px;
+  height:3px;
+  background:var(--brand);
+  border-radius:20px;
+  box-shadow:0 0 14px rgba(22,131,255,.9);
 }
 
-.panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.actions{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:14px;
 }
 
-.panel-title {
-    color: #94a3b8;
-    font-size: 14px;
+.action{
+  min-height:86px;
+  background:var(--glass);
+  border:1px solid var(--stroke);
+  border-radius:var(--radius-lg);
+  padding:19px 20px;
+  text-decoration:none;
+  color:var(--txt);
+  display:flex;
+  align-items:center;
+  gap:18px;
+  backdrop-filter:blur(8px) saturate(120%);
+  -webkit-backdrop-filter:blur(8px) saturate(120%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.07),
+    0 10px 28px rgba(0,0,0,.28);
 }
 
-.status-pill {
-    background: rgba(22, 131, 255, 0.14);
-    color: #4ba3ff;
-    padding: 8px 12px;
-    border-radius: 999px;
-    font-size: 12px;
-    border: 1px solid rgba(22, 131, 255, 0.25);
+.action:hover{
+  background:var(--glass-strong);
+  transform:translateY(-2px);
 }
 
-.amount {
-    margin-top: 18px;
-    font-size: 44px;
-    font-weight: 900;
-    letter-spacing: -1.5px;
+.action-icon{
+  width:58px;
+  height:58px;
+  border-radius:var(--radius-sm);
+  background: rgba(0, 31, 80, .66);
+  border:1px solid rgba(22,131,255,.26);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--brand);
+  font-size:24px;
+  font-weight:900;
+  flex-shrink:0;
 }
 
-.amount-sub {
-    margin-top: 8px;
-    color: #7d94b2;
-    font-size: 14px;
+.action-content{
+  flex:1;
 }
 
-.metrics {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-    margin-top: 16px;
+.action-title{
+  font-size:18px;
+  font-weight:900;
+  color:#fff;
 }
 
-.metric-card {
-    background: #0b1320;
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 22px;
-    padding: 18px;
+.action-desc{
+  margin-top:6px;
+  font-size:13px;
+  color:#b8c7df;
 }
 
-.metric-label {
-    color: #7d94b2;
-    font-size: 13px;
+.arrow{
+  color:var(--brand);
+  font-size:30px;
+  font-weight:700;
 }
 
-.metric-value {
-    margin-top: 10px;
-    font-size: 30px;
-    font-weight: 900;
-    color: #ffffff;
+.finance-title{
+  margin-top:30px;
 }
 
-.bottom-nav {
-    position: fixed;
-    left: 50%;
-    bottom: 18px;
-    transform: translateX(-50%);
-    width: calc(100% - 36px);
-    max-width: 760px;
-    background: rgba(10, 17, 28, 0.94);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 24px;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    padding: 10px;
-    box-shadow: 0 20px 45px rgba(0,0,0,.45);
+.panel{
+  position:relative;
+  background:
+    radial-gradient(600px 300px at top left, rgba(22,131,255,.18), transparent 45%),
+    var(--bg-panel);
+  border:1px solid rgba(22,131,255,.18);
+  border-radius:var(--radius-xl);
+  padding:24px;
+  box-shadow:
+    var(--shadow),
+    inset 0 1px 0 rgba(255,255,255,.06);
 }
 
-.nav-item {
-    text-decoration: none;
-    color: #7d94b2;
-    text-align: center;
-    font-size: 11px;
+.panel-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
 
-.nav-icon {
-    display: block;
-    font-size: 18px;
-    margin-bottom: 3px;
+.panel-title{
+  color:#a6b6cf;
+  font-size:14px;
 }
 
-.nav-item.active {
-    color: #1683ff;
+.status-pill{
+  background:rgba(22,131,255,.16);
+  color:#4ba3ff;
+  padding:8px 12px;
+  border-radius:999px;
+  font-size:12px;
+  border:1px solid rgba(22,131,255,.28);
 }
 
-@media (min-width: 720px) {
-    .actions {
-        grid-template-columns: 1fr 1fr;
-    }
+.amount{
+  margin-top:18px;
+  font-size:44px;
+  font-weight:1000;
+  letter-spacing:-1.4px;
+  color:#fff;
+  text-shadow:0 0 14px rgba(22,131,255,.25);
+}
 
-    .logo-starlimp {
-        width: 330px;
-    }
+.amount-sub{
+  margin-top:8px;
+  color:var(--muted);
+  font-size:14px;
+}
+
+.metrics{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  margin-top:16px;
+}
+
+.metric-card{
+  background:var(--bg-card);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:var(--radius-md);
+  padding:18px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.04),
+    0 12px 28px rgba(0,0,0,.28);
+}
+
+.metric-card.highlight{
+  border-color:var(--stroke-strong);
+  background:
+    radial-gradient(420px 180px at top left, rgba(22,131,255,.18), transparent 45%),
+    var(--bg-card);
+}
+
+.metric-label{
+  color:var(--muted);
+  font-size:13px;
+}
+
+.metric-value{
+  margin-top:10px;
+  font-size:30px;
+  font-weight:1000;
+  color:#fff;
+}
+
+.metric-money{
+  font-size:22px;
+}
+
+.bottom-nav{
+  position:fixed;
+  left:50%;
+  bottom:18px;
+  transform:translateX(-50%);
+  width:calc(100% - 36px);
+  max-width:760px;
+  background:rgba(3,14,35,.86);
+  backdrop-filter:blur(20px) saturate(130%);
+  -webkit-backdrop-filter:blur(20px) saturate(130%);
+  border:1px solid rgba(22,131,255,.16);
+  border-radius:var(--radius-xl);
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  padding:12px 10px;
+  box-shadow:
+    0 20px 45px rgba(0,0,0,.50),
+    inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+.nav-item{
+  text-decoration:none;
+  color:var(--muted);
+  text-align:center;
+  font-size:12px;
+  font-weight:600;
+}
+
+.nav-icon{
+  display:block;
+  font-size:21px;
+  margin-bottom:4px;
+  font-weight:900;
+  color:#c4d4ee;
+}
+
+.nav-item.active{
+  color:var(--brand);
+}
+
+.nav-item.active .nav-icon{
+  color:var(--brand);
+}
+
+.nav-item.active::after{
+  content:"";
+  display:block;
+  width:34px;
+  height:3px;
+  background:var(--brand);
+  border-radius:20px;
+  margin:8px auto 0;
+}
+
+@media (min-width:720px){
+  .actions{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .action:last-child{
+    grid-column:span 2;
+  }
+}
+
+@media (max-width:540px){
+  body{
+    padding:18px;
+  }
+
+  .logo-wrapper{
+    width:310px;
+  }
+
+  .logo-glow{
+    width:320px;
+    height:320px;
+    filter:blur(38px);
+  }
+
+  .logo-ring{
+    width:218px;
+    height:218px;
+  }
+
+  .logo-starlimp{
+    width:245px;
+  }
+
+  .brand-main{
+    font-size:34px;
+  }
+
+  .brand-accent{
+    font-size:25px;
+  }
+
+  .tagline{
+    font-size:11px;
+    letter-spacing:4px;
+  }
+
+  .amount{
+    font-size:38px;
+  }
+
+  .metrics{
+    grid-template-columns:1fr;
+  }
+}
+
+@keyframes magicOrbit{
+  from{
+    transform:translate(-50%,-50%) rotate(0deg);
+  }
+
+  to{
+    transform:translate(-50%,-50%) rotate(360deg);
+  }
 }
 </style>
 </head>
 
 <body>
-
 <div class="app">
 
-    <section class="hero">
+  <section class="hero">
+    <div class="logo-wrapper">
+      <div class="logo-glow"></div>
+      <div class="logo-magic"></div>
+      <div class="logo-ring"></div>
 
-        <img src="/static/logostarlimp.png.png"
-             class="logo-starlimp"
-             alt="Star Limp">
-
-        <div class="brand-row">
-            <div class="brand-main">STL</div>
-            <div class="brand-accent">Business</div>
-        </div>
-
-        <div class="tagline">
-            Private Management
-        </div>
-
-    </section>
-
-    <div class="section-title">
-        Operações
+      <img src="/static/logostarlimp.png.png" class="logo-starlimp">
     </div>
 
-    <section class="actions">
-
-        <a class="action primary" href="/nova-venda">
-            <div class="action-icon">+</div>
-            <div class="action-content">
-                <div class="action-title">Nova Venda</div>
-                <div class="action-desc">Registrar venda ou conta cliente</div>
-            </div>
-            <div class="arrow">›</div>
-        </a>
-
-        <a class="action primary" href="/receber-pagamento">
-            <div class="action-icon">R$</div>
-            <div class="action-content">
-                <div class="action-title">Receber Pagamento</div>
-                <div class="action-desc">Baixar saldo devedor</div>
-            </div>
-            <div class="arrow">›</div>
-        </a>
-
-        <a class="action" href="/clientes">
-            <div class="action-icon">C</div>
-            <div class="action-content">
-                <div class="action-title">Clientes</div>
-                <div class="action-desc">Saldos, extratos e histórico</div>
-            </div>
-            <div class="arrow">›</div>
-        </a>
-
-        <a class="action" href="#">
-            <div class="action-icon">∑</div>
-            <div class="action-content">
-                <div class="action-title">Relatórios</div>
-                <div class="action-desc">Em desenvolvimento</div>
-            </div>
-            <div class="arrow">›</div>
-        </a>
-
-    </section>
-
-    <div class="section-title finance-title">
-        Fiado
+    <div class="brand-row">
+      <div class="brand-main">STL</div>
+      <div class="brand-accent">Business</div>
     </div>
 
-    <section class="panel">
-        <div class="panel-header">
-            <div class="panel-title">Total a receber</div>
-            <div class="status-pill">Ao vivo</div>
-        </div>
+    <div class="tagline">Private Management</div>
+  </section>
 
-        <div class="amount">
-            R$ {{ "%.2f"|format(total_receber or 0)|replace(".", ",") }}
-        </div>
+  <div class="section-title">Operações</div>
 
-        <div class="amount-sub">
-            Controle financeiro da Star Limp
-        </div>
-    </section>
+  <section class="actions">
+    <a class="action primary" href="/nova-venda">
+      <div class="action-icon">+</div>
+      <div class="action-content">
+        <div class="action-title">Nova Venda</div>
+        <div class="action-desc">Registrar venda ou conta cliente</div>
+      </div>
+      <div class="arrow">›</div>
+    </a>
 
-    <section class="metrics">
-        <div class="metric-card">
-            <div class="metric-label">Clientes</div>
-            <div class="metric-value">{{ total_clientes }}</div>
-        </div>
+    <a class="action primary" href="/receber-pagamento">
+      <div class="action-icon">R$</div>
+      <div class="action-content">
+        <div class="action-title">Receber Pagamento</div>
+        <div class="action-desc">Baixar saldo devedor</div>
+      </div>
+      <div class="arrow">›</div>
+    </a>
 
-        <div class="metric-card">
-            <div class="metric-label">Com saldo</div>
-            <div class="metric-value">{{ clientes_devendo }}</div>
-        </div>
-    </section>
+    <a class="action" href="/clientes">
+      <div class="action-icon">C</div>
+      <div class="action-content">
+        <div class="action-title">Clientes</div>
+        <div class="action-desc">Saldos, extratos e histórico</div>
+      </div>
+      <div class="arrow">›</div>
+    </a>
+
+    <a class="action" href="/relatorios">
+      <div class="action-icon">∑</div>
+      <div class="action-content">
+        <div class="action-title">Relatórios</div>
+        <div class="action-desc">Vendas e movimentações do PDV</div>
+      </div>
+      <div class="arrow">›</div>
+    </a>
+
+    <a class="action" href="/cancelar-venda">
+      <div class="action-icon">×</div>
+      <div class="action-content">
+        <div class="action-title">Cancelar Venda</div>
+        <div class="action-desc">Excluir venda lançada errado</div>
+      </div>
+      <div class="arrow">›</div>
+    </a>
+  </section>
+
+  <div class="section-title finance-title">Financeiro</div>
+
+  <section class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Vendas do mês</div>
+      <div class="status-pill">Ao vivo</div>
+    </div>
+
+    <div class="amount">
+      R$ {{ "{:,.2f}".format(vendas_mes or 0).replace(",", "X").replace(".", ",").replace("X", ".") }}
+    </div>
+
+    <div class="amount-sub">
+      Resultado acumulado no mês
+    </div>
+  </section>
+
+  <section class="metrics">
+    <div class="metric-card highlight">
+      <div class="metric-label">Vendas hoje</div>
+      <div class="metric-value metric-money">
+        R$ {{ "{:,.2f}".format(vendas_hoje or 0).replace(",", "X").replace(".", ",").replace("X", ".") }}
+      </div>
+    </div>
+
+    <div class="metric-card highlight">
+      <div class="metric-label">Vendas da semana</div>
+      <div class="metric-value metric-money">
+        R$ {{ "{:,.2f}".format(vendas_semana or 0).replace(",", "X").replace(".", ",").replace("X", ".") }}
+      </div>
+    </div>
+  </section>
 
 </div>
 
 <nav class="bottom-nav">
-    <a class="nav-item active" href="/">
-        <span class="nav-icon">⌂</span>
-        Home
-    </a>
+  <a class="nav-item active" href="/">
+    <span class="nav-icon">⌂</span>
+    Home
+  </a>
 
-    <a class="nav-item" href="/nova-venda">
-        <span class="nav-icon">＋</span>
-        Venda
-    </a>
+  <a class="nav-item" href="/nova-venda">
+    <span class="nav-icon">＋</span>
+    Venda
+  </a>
 
-    <a class="nav-item" href="/clientes">
-        <span class="nav-icon">◉</span>
-        Clientes
-    </a>
+  <a class="nav-item" href="/clientes">
+    <span class="nav-icon">◉</span>
+    Clientes
+  </a>
 
-    <a class="nav-item" href="/receber-pagamento">
-        <span class="nav-icon">R$</span>
-        Receber
-    </a>
+  <a class="nav-item" href="/receber-pagamento">
+    <span class="nav-icon">R$</span>
+    Receber
+  </a>
 </nav>
 
 </body>

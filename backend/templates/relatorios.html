@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Relatórios - STL Business</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+body{
+    min-height:100vh;
+    background:
+        radial-gradient(circle at top, rgba(22,131,255,.18), transparent 35%),
+        linear-gradient(180deg,#020617 0%,#050b14 100%);
+    color:#f8fafc;
+    padding:22px;
+}
+
+.container{
+    max-width:760px;
+    margin:auto;
+    padding-bottom:100px;
+}
+
+.voltar-topo{
+    color:#7d94b2;
+    text-decoration:none;
+    font-size:14px;
+}
+
+h1{
+    margin-top:18px;
+    font-size:34px;
+    font-weight:900;
+}
+
+.subtitulo{
+    margin-top:6px;
+    color:#7d94b2;
+    font-size:14px;
+}
+
+.resumo{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    margin-top:24px;
+}
+
+.card-resumo{
+    background:#0b1320;
+    border:1px solid rgba(255,255,255,.07);
+    border-radius:24px;
+    padding:20px;
+}
+
+.label{
+    color:#7d94b2;
+    font-size:13px;
+}
+
+.valor{
+    margin-top:10px;
+    font-size:28px;
+    font-weight:900;
+}
+
+.section-title{
+    margin:28px 0 14px;
+    font-size:19px;
+    font-weight:900;
+}
+
+.venda{
+    background:#0b1320;
+    border:1px solid rgba(255,255,255,.07);
+    border-radius:24px;
+    padding:20px;
+    margin-bottom:14px;
+}
+
+.venda-topo{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+}
+
+.venda-numero{
+    font-weight:900;
+    font-size:17px;
+}
+
+.data{
+    color:#7d94b2;
+    font-size:13px;
+    text-align:right;
+}
+
+.total{
+    margin-top:14px;
+    font-size:30px;
+    font-weight:900;
+    color:#4ba3ff;
+}
+
+.forma{
+    margin-top:6px;
+    color:#9fb4cc;
+    font-size:14px;
+}
+
+details{
+    margin-top:14px;
+    background:#08111d;
+    border:1px solid rgba(255,255,255,.06);
+    padding:14px;
+    border-radius:18px;
+}
+
+summary{
+    cursor:pointer;
+    font-weight:800;
+    color:#1683ff;
+}
+
+.item{
+    margin-top:10px;
+    color:#d8e7f3;
+    font-size:14px;
+}
+
+.empty{
+    text-align:center;
+    color:#7d94b2;
+    padding:40px 0;
+}
+
+.bottom-nav{
+    position:fixed;
+    left:50%;
+    bottom:18px;
+    transform:translateX(-50%);
+    width:calc(100% - 36px);
+    max-width:760px;
+    background:rgba(10,17,28,.94);
+    backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:24px;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    padding:10px;
+    box-shadow:0 20px 45px rgba(0,0,0,.45);
+}
+
+.nav-item{
+    text-decoration:none;
+    color:#7d94b2;
+    text-align:center;
+    font-size:11px;
+}
+
+.nav-icon{
+    display:block;
+    font-size:18px;
+    margin-bottom:3px;
+}
+
+.nav-item.active{
+    color:#1683ff;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <a class="voltar-topo" href="/">
+        ← Voltar ao painel
+    </a>
+
+    <h1>Relatórios</h1>
+
+    <div class="subtitulo">
+        Vendas registradas no PDV hoje
+    </div>
+
+    <section class="resumo">
+
+        <div class="card-resumo">
+            <div class="label">Vendido hoje</div>
+            <div class="valor">
+                R$ {{ "%.2f"|format(total_vendido or 0)|replace(".", ",") }}
+            </div>
+        </div>
+
+        <div class="card-resumo">
+            <div class="label">Qtd. vendas</div>
+            <div class="valor">
+                {{ quantidade_vendas }}
+            </div>
+        </div>
+
+    </section>
+
+    <div class="section-title">
+        Últimas vendas
+    </div>
+
+    {% if vendas %}
+
+        {% for registro in vendas %}
+            {% set venda = registro.venda %}
+
+            <div class="venda">
+
+                <div class="venda-topo">
+                    <div class="venda-numero">
+                        Venda Nº {{ venda[0] }}
+                    </div>
+
+                    <div class="data">
+                        {{ venda[1][8:10] }}/{{ venda[1][5:7] }}/{{ venda[1][0:4] }}
+                        <br>
+                        {{ venda[1][11:16] }}
+                    </div>
+                </div>
+
+                <div class="total">
+                    R$ {{ "%.2f"|format(venda[2] or 0)|replace(".", ",") }}
+                </div>
+
+                <div class="forma">
+                    Forma: {{ venda[3] or "Não informado" }}
+                </div>
+
+                <details>
+                    <summary>Ver itens vendidos</summary>
+
+                    {% for item in registro.itens %}
+                        <div class="item">
+                            • {{ item[1] }}x {{ item[0] }} -
+                            R$ {{ "%.2f"|format(item[3] or 0)|replace(".", ",") }}
+                        </div>
+                    {% endfor %}
+
+                </details>
+
+            </div>
+
+        {% endfor %}
+
+    {% else %}
+
+        <div class="empty">
+            Nenhuma venda registrada hoje.
+        </div>
+
+    {% endif %}
+
+</div>
+
+<nav class="bottom-nav">
+
+    <a class="nav-item" href="/">
+        <span class="nav-icon">⌂</span>
+        Home
+    </a>
+
+    <a class="nav-item" href="/nova-venda">
+        <span class="nav-icon">＋</span>
+        Venda
+    </a>
+
+    <a class="nav-item" href="/clientes">
+        <span class="nav-icon">◉</span>
+        Clientes
+    </a>
+
+    <a class="nav-item" href="/receber-pagamento">
+        <span class="nav-icon">R$</span>
+        Receber
+
+        <a class="action" href="/relatorios"></a>
+    </a>
+
+</nav>
+
+</body>
+</html>
