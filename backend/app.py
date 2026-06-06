@@ -1,5 +1,7 @@
 import sqlite3
 import unicodedata
+import os
+import shutil
 from datetime import datetime
 
 from fastapi import FastAPI, Request, Body
@@ -12,7 +14,37 @@ app.mount("/static", StaticFiles(directory="backend/static"), name="static")
 
 templates = Jinja2Templates(directory="backend/templates")
 BANCO = "database/starlimp.db"
+PASTA_BACKUPS = "backups"
 
+
+def criar_backup_banco():
+    if not os.path.exists(BANCO):
+        return
+
+    os.makedirs(PASTA_BACKUPS, exist_ok=True)
+
+    agora = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    nome_backup = f"starlimp_{agora}.db"
+    caminho_backup = os.path.join(PASTA_BACKUPS, nome_backup)
+
+    shutil.copy2(BANCO, caminho_backup)
+
+    backups = sorted(
+        [
+            os.path.join(PASTA_BACKUPS, arquivo)
+            for arquivo in os.listdir(PASTA_BACKUPS)
+            if arquivo.endswith(".db")
+        ],
+        key=os.path.getmtime
+    )
+
+    while len(backups) > 30:
+        backup_antigo = backups.pop(0)
+        os.remove(backup_antigo)
+
+@app.on_event("startup")
+def ao_iniciar_sistema():
+    criar_backup_banco()
 
 def normalizar(texto):
     texto = str(texto).lower().strip()
@@ -273,6 +305,8 @@ def finalizar_venda(dados: dict = Body(...)):
     conexao.commit()
     conexao.close()
 
+    criar_backup_banco()
+
     return {
         "sucesso": True,
         "mensagem": f"Venda Nº {venda_id} registrada com sucesso",
@@ -445,8 +479,89 @@ def pagina_receber_pagamento(request: Request):
     return templates.TemplateResponse(
         request,
         "receber_pagamento.html",
-        {"clientes": clientes}
+        {
+            "clientes": clientes
+        }
     )
+
+
+@app.post("/receber-pagamento")
+def receber_pagamento(dados: dict = Body(...)):
+    from datetime import datetime
+
+    cliente_id = dados.get("cliente_id")
+    valor_pago = dados.get("valor_pago")
+    forma_pagamento = dados.get("forma_pagamento", "").strip()
+
+    if not cliente_id:
+        return {"sucesso": False, "mensagem": "Selecione um cliente."}
+
+    try:
+        cliente_id = int(cliente_id)
+        valor_pago = float(valor_pago)
+    except:
+        return {"sucesso": False, "mensagem": "Informe um valor válido."}
+
+    if valor_pago <= 0:
+        return {"sucesso": False, "mensagem": "Informe um valor maior que zero."}
+
+    data_hora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    conexao = sqlite3.connect(BANCO)
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT id, nome, saldo_fiado
+        FROM clientes
+        WHERE id = ?
+    """, (cliente_id,))
+
+    cliente = cursor.fetchone()
+
+    if not cliente:
+        conexao.close()
+        return {"sucesso": False, "mensagem": "Cliente não encontrado."}
+
+    saldo_anterior = cliente[2] or 0
+    saldo_atual = saldo_anterior - valor_pago
+
+    if saldo_atual < 0:
+        saldo_atual = 0
+
+    cursor.execute("""
+        UPDATE clientes
+        SET saldo_fiado = ?
+        WHERE id = ?
+    """, (saldo_atual, cliente_id))
+
+    cursor.execute("""
+        INSERT INTO pagamentos_fiado (
+            cliente_id,
+            valor_pago,
+            saldo_anterior,
+            saldo_atual,
+            forma_pagamento,
+            data_hora
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (
+        cliente_id,
+        valor_pago,
+        saldo_anterior,
+        saldo_atual,
+        forma_pagamento,
+        data_hora
+    ))
+
+    conexao.commit()
+    conexao.close()
+
+    criar_backup_banco()
+
+    return {
+        "sucesso": True,
+        "mensagem": "Pagamento registrado com sucesso."
+    }
 
 @app.get("/cancelar-venda")
 def pagina_cancelar_venda(request: Request):
@@ -595,6 +710,8 @@ def cancelar_venda(dados: dict = Body(...)):
 
     conexao.commit()
     conexao.close()
+
+    criar_backup_banco()
 
     return {
         "sucesso": True,
