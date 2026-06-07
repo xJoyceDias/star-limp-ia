@@ -3,4 +3,5 @@ uvicorn
 jinja2
 python-multipart
 SQLAlchemy
+psycopg2-binary
 xlrd
