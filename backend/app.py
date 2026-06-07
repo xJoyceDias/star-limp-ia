@@ -223,6 +223,36 @@ def bling_callback(code: str = None, state: str = None, error: str = None):
         "mensagem": "Bling conectado com sucesso ao Star Limp IA."
     }
 
+@app.get("/bling/status")
+def bling_status():
+
+    conexao = sqlite3.connect(BANCO)
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT access_token, criado_em
+        FROM bling_tokens
+        ORDER BY id DESC
+        LIMIT 1
+    """)
+
+    token = cursor.fetchone()
+
+    conexao.close()
+
+    if not token:
+        return {
+            "sucesso": False,
+            "mensagem": "Nenhum token do Bling encontrado."
+        }
+
+    return {
+        "sucesso": True,
+        "mensagem": "Token encontrado.",
+        "criado_em": token[1]
+    }
+
+
 @app.get("/")
 def inicio(request: Request):
     agora = datetime.utcnow() - timedelta(hours=3)
