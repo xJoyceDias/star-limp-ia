@@ -267,6 +267,9 @@ button, .button-link {
                 <label>Quantidade</label>
                 <input type="number" id="quantidade" value="1">
 
+                <label>Desconto no item (R$)</label>
+                <input type="number" id="descontoItem" value="0" min="0" step="0.01">
+
                 <button onclick="adicionarProduto()">
                     Adicionar produto
                 </button>
@@ -356,6 +359,10 @@ button, .button-link {
 let carrinho = [];
 let total = 0;
 
+function formatarMoeda(valor) {
+    return Number(valor || 0).toFixed(2).replace(".", ",");
+}
+
 function mostrarCamposCliente() {
     const formaPagamento = document.getElementById("formaPagamento").value;
     const dadosContaCliente = document.getElementById("dadosContaCliente");
@@ -368,7 +375,7 @@ function mostrarCamposCliente() {
 }
 
 async function buscarProdutos() {
-    const termo = document.getElementById("produto").value;
+    const termo = document.getElementById("produto").value.trim();
     const sugestoes = document.getElementById("sugestoes");
 
     if (termo.length < 2) {
@@ -376,28 +383,39 @@ async function buscarProdutos() {
         return;
     }
 
-    const resposta = await fetch(`/buscar-produtos?termo=${encodeURIComponent(termo)}`);
-    const produtos = await resposta.json();
+    try {
+        const resposta = await fetch(`/buscar-produtos?termo=${encodeURIComponent(termo)}`);
+        const produtos = await resposta.json();
 
-    sugestoes.innerHTML = "";
+        sugestoes.innerHTML = "";
 
-    produtos.forEach(produto => {
-        const div = document.createElement("div");
-        div.className = "sugestao";
+        if (produtos.length === 0) {
+            sugestoes.innerHTML = `<div class="sugestao">Nenhum produto encontrado.</div>`;
+            return;
+        }
 
-        div.innerHTML = `
-            <strong>${produto.descricao}</strong>
-            <span>R$ ${produto.preco.toFixed(2).replace(".", ",")}</span>
-        `;
+        produtos.forEach(produto => {
+            const div = document.createElement("div");
+            div.className = "sugestao";
 
-        div.onclick = () => {
-            document.getElementById("produto").value = produto.descricao;
-            document.getElementById("produtoSelecionado").value = JSON.stringify(produto);
-            sugestoes.innerHTML = "";
-        };
+            div.innerHTML = `
+                <strong>${produto.descricao}</strong>
+                <span>R$ ${formatarMoeda(produto.preco)}</span>
+            `;
 
-        sugestoes.appendChild(div);
-    });
+            div.onclick = () => {
+                document.getElementById("produto").value = produto.descricao;
+                document.getElementById("produtoSelecionado").value = JSON.stringify(produto);
+                sugestoes.innerHTML = "";
+            };
+
+            sugestoes.appendChild(div);
+        });
+
+    } catch (erro) {
+        console.error("Erro ao buscar produtos:", erro);
+        sugestoes.innerHTML = `<div class="sugestao">Erro ao buscar produtos.</div>`;
+    }
 }
 
 function adicionarProduto() {
@@ -410,19 +428,33 @@ function adicionarProduto() {
 
     const produto = JSON.parse(produtoJson);
     const quantidade = parseFloat(document.getElementById("quantidade").value);
+    const desconto = parseFloat(document.getElementById("descontoItem").value) || 0;
 
     if (!quantidade || quantidade <= 0) {
         alert("Informe uma quantidade válida.");
         return;
     }
 
-    const subtotal = produto.preco * quantidade;
+    if (desconto < 0) {
+        alert("O desconto não pode ser negativo.");
+        return;
+    }
+
+    const valorBruto = produto.preco * quantidade;
+
+    if (desconto > valorBruto) {
+        alert("O desconto não pode ser maior que o valor do item.");
+        return;
+    }
+
+    const subtotal = valorBruto - desconto;
 
     carrinho.push({
         codigo: produto.codigo,
         produto: produto.descricao,
         quantidade: quantidade,
         preco: produto.preco,
+        desconto: desconto,
         subtotal: subtotal
     });
 
@@ -431,6 +463,8 @@ function adicionarProduto() {
     document.getElementById("produto").value = "";
     document.getElementById("produtoSelecionado").value = "";
     document.getElementById("quantidade").value = "1";
+    document.getElementById("descontoItem").value = "0";
+    document.getElementById("sugestoes").innerHTML = "";
 }
 
 function atualizarCarrinho() {
@@ -443,20 +477,67 @@ function atualizarCarrinho() {
         itensVenda.innerHTML = `<div class="empty">Nenhum produto adicionado ainda.</div>`;
     }
 
-    carrinho.forEach(item => {
+    carrinho.forEach((item, index) => {
         total += item.subtotal;
 
         const div = document.createElement("div");
         div.className = "item";
 
-        div.innerHTML =
-            `${item.quantidade}x ${item.produto}<br><strong>R$ ${item.subtotal.toFixed(2).replace(".", ",")}</strong>`;
+        let descontoTexto = "";
+
+        if (item.desconto && item.desconto > 0) {
+            descontoTexto = `<br>Desconto: R$ ${formatarMoeda(item.desconto)}`;
+        }
+
+        div.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+                <div style="flex:1;">
+                    ${item.quantidade}x ${item.produto}
+                    <br>
+                    Unitário: R$ ${formatarMoeda(item.preco)}
+                    ${descontoTexto}
+                    <br>
+                    <strong>Subtotal: R$ ${formatarMoeda(item.subtotal)}</strong>
+                </div>
+
+                <button
+                    onclick="removerItem(${index})"
+                    style="
+                        width:38px;
+                        height:38px;
+                        border-radius:12px;
+                        background:#7f1d1d;
+                        border:none;
+                        color:white;
+                        cursor:pointer;
+                        font-size:16px;
+                        margin:0;
+                        padding:0;
+                        flex-shrink:0;
+                        box-shadow:none;
+                    "
+                >
+                    🗑️
+                </button>
+            </div>
+        `;
 
         itensVenda.appendChild(div);
     });
 
     document.getElementById("totalVenda").innerHTML =
-        `R$ ${total.toFixed(2).replace(".", ",")}`;
+        `R$ ${formatarMoeda(total)}`;
+}
+
+function removerItem(index) {
+    const confirmar = confirm("Deseja remover este produto da venda?");
+
+    if (!confirmar) {
+        return;
+    }
+
+    carrinho.splice(index, 1);
+    atualizarCarrinho();
 }
 
 async function finalizarVenda() {
@@ -486,21 +567,21 @@ async function finalizarVenda() {
 
     alert(resultado.mensagem);
 
-if (resultado.sucesso) {
-    if (resultado.telefone_whatsapp && resultado.mensagem_whatsapp) {
-        const telefone = resultado.telefone_whatsapp.replace(/\D/g, "");
-        const mensagem = encodeURIComponent(resultado.mensagem_whatsapp);
+    if (resultado.sucesso) {
+        if (resultado.telefone_whatsapp && resultado.mensagem_whatsapp) {
+            const telefone = resultado.telefone_whatsapp.replace(/\D/g, "");
+            const mensagem = encodeURIComponent(resultado.mensagem_whatsapp);
 
-        window.open(
-            `https://wa.me/55${telefone}?text=${mensagem}`,
-            "_blank"
-        );
+            window.open(
+                `https://wa.me/55${telefone}?text=${mensagem}`,
+                "_blank"
+            );
+        }
+
+        setTimeout(() => {
+            window.location.href = "/nova-venda";
+        }, 800);
     }
-
-    setTimeout(() => {
-        window.location.href = "/nova-venda";
-    }, 800);
-}
 }
 </script>
 
