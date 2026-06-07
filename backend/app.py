@@ -3,8 +3,11 @@ import unicodedata
 import os
 import shutil
 from datetime import datetime, timedelta
+import requests
+from urllib.parse import urlencode
 
 from fastapi import FastAPI, Request, Body
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
@@ -15,6 +18,15 @@ app.mount("/static", StaticFiles(directory="backend/static"), name="static")
 templates = Jinja2Templates(directory="backend/templates")
 BANCO = "database/starlimp.db"
 PASTA_BACKUPS = "backups"
+BLING_CLIENT_ID = os.getenv("BLING_CLIENT_ID")
+BLING_CLIENT_SECRET = os.getenv("BLING_CLIENT_SECRET")
+BLING_REDIRECT_URI = os.getenv(
+    "BLING_REDIRECT_URI",
+    "https://starlimpia-production.up.railway.app/bling/callback"
+)
+
+BLING_AUTH_URL = "https://www.bling.com.br/Api/v3/oauth/authorize"
+BLING_TOKEN_URL = "https://www.bling.com.br/Api/v3/oauth/token"
 
 
 def moeda(valor):
@@ -105,6 +117,111 @@ def buscar_produtos_banco(termo):
 
     return encontrados[:5]
 
+@app.get("/bling/login")
+def bling_login():
+    if not BLING_CLIENT_ID or not BLING_REDIRECT_URI:
+        return {
+            "sucesso": False,
+            "mensagem": "Configurações do Bling não encontradas."
+        }
+
+    parametros = {
+        "response_type": "code",
+        "client_id": BLING_CLIENT_ID,
+        "redirect_uri": BLING_REDIRECT_URI,
+        "state": "starlimpia"
+    }
+
+    url = f"{BLING_AUTH_URL}?{urlencode(parametros)}"
+
+    return RedirectResponse(url)
+
+
+@app.get("/bling/callback")
+def bling_callback(code: str = None, state: str = None, error: str = None):
+    if error:
+        return {
+            "sucesso": False,
+            "mensagem": f"Autorização negada pelo Bling: {error}"
+        }
+
+    if not code:
+        return {
+            "sucesso": False,
+            "mensagem": "Código de autorização não recebido."
+        }
+
+    if not BLING_CLIENT_ID or not BLING_CLIENT_SECRET:
+        return {
+            "sucesso": False,
+            "mensagem": "Client ID ou Client Secret do Bling não configurados."
+        }
+
+    resposta = requests.post(
+        BLING_TOKEN_URL,
+        data={
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": BLING_REDIRECT_URI
+        },
+        auth=(BLING_CLIENT_ID, BLING_CLIENT_SECRET),
+        headers={
+            "Accept": "application/json",
+            "enable-jwt": "1"
+        }
+    )
+
+    if resposta.status_code not in [200, 201]:
+        return {
+            "sucesso": False,
+            "mensagem": "Erro ao trocar código por token no Bling.",
+            "status_code": resposta.status_code,
+            "resposta": resposta.text
+        }
+
+    dados_token = resposta.json()
+
+    access_token = dados_token.get("access_token")
+    refresh_token = dados_token.get("refresh_token")
+    expires_in = dados_token.get("expires_in")
+
+    conexao = sqlite3.connect(BANCO)
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS bling_tokens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            access_token TEXT,
+            refresh_token TEXT,
+            expires_in INTEGER,
+            criado_em TEXT
+        )
+    """)
+
+    cursor.execute("DELETE FROM bling_tokens")
+
+    cursor.execute("""
+        INSERT INTO bling_tokens (
+            access_token,
+            refresh_token,
+            expires_in,
+            criado_em
+        )
+        VALUES (?, ?, ?, ?)
+    """, (
+        access_token,
+        refresh_token,
+        expires_in,
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ))
+
+    conexao.commit()
+    conexao.close()
+
+    return {
+        "sucesso": True,
+        "mensagem": "Bling conectado com sucesso ao Star Limp IA."
+    }
 
 @app.get("/")
 def inicio(request: Request):
