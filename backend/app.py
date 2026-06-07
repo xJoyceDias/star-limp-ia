@@ -252,6 +252,66 @@ def bling_status():
         "criado_em": token[1]
     }
 
+@app.get("/bling/preparar-sincronizacao")
+def preparar_sincronizacao():
+
+    conexao = sqlite3.connect(BANCO)
+    conexao.row_factory = sqlite3.Row
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT *
+        FROM bling_sync
+        WHERE status = 'PENDENTE'
+        ORDER BY id
+    """)
+
+    pendencias = cursor.fetchall()
+
+    resultado = []
+
+    for pendencia in pendencias:
+
+        venda_id = pendencia["venda_id"]
+
+        cursor.execute("""
+            SELECT *
+            FROM vendas
+            WHERE id = ?
+        """, (venda_id,))
+
+        venda = cursor.fetchone()
+
+        if not venda:
+            continue
+
+        cursor.execute("""
+            SELECT
+                codigo_produto,
+                descricao,
+                quantidade,
+                preco_unitario,
+                subtotal
+            FROM itens_venda
+            WHERE venda_id = ?
+        """, (venda_id,))
+
+        itens = [dict(item) for item in cursor.fetchall()]
+
+        resultado.append({
+            "venda_id": venda["id"],
+            "data_hora": venda["data_hora"],
+            "valor_total": venda["valor_total"],
+            "forma_pagamento": venda["forma_pagamento"],
+            "itens": itens
+        })
+
+    conexao.close()
+
+    return {
+        "quantidade_pendencias": len(resultado),
+        "vendas": resultado
+    }
 
 @app.get("/")
 def inicio(request: Request):
