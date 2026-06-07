@@ -13,7 +13,7 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="backend/static"), name="static")
 
 templates = Jinja2Templates(directory="backend/templates")
-BANCO = "starlimp.db"
+BANCO = "database/starlimp.db"
 PASTA_BACKUPS = "backups"
 
 
