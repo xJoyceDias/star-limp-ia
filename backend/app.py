@@ -338,6 +338,19 @@ def finalizar_venda(dados: dict = Body(...)):
                 f"Star Limp Fragrâncias e Produtos \n"
                 f"(62) 98436-2772"
             )
+        
+        cursor.execute("""
+            INSERT INTO bling_sync (
+                venda_id,
+                status,
+                data_criacao
+            )
+            VALUES (?, ?, ?)
+        """, (
+            venda_id,
+            "PENDENTE",
+            data_hora
+        ))
 
         conexao.commit()
 
