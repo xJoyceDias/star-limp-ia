@@ -459,9 +459,10 @@ def criar_contato_bling(nome, telefone=None, documento=None):
     url = "https://api.bling.com.br/Api/v3/contatos"
 
     payload = {
-        "nome": nome,
-        "tipo": "F"
-    }
+    "nome": nome,
+    "tipo": "F",
+    "situacao": "A"
+}
 
     if telefone:
         payload["telefone"] = telefone
