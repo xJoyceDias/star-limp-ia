@@ -22,7 +22,7 @@ if os.getenv("RAILWAY_ENVIRONMENT"):
 if os.getenv("RAILWAY_ENVIRONMENT") and not os.path.exists(BANCO):
     os.makedirs("/data", exist_ok=True)
     shutil.copyfile("database/starlimp.db", BANCO)
-    
+
 else:
     BANCO = "database/starlimp.db"
 PASTA_BACKUPS = "backups"
@@ -1011,15 +1011,26 @@ def finalizar_venda(dados: dict = Body(...)):
     finally:
         conexao.close()
 
-    criar_backup_banco()
+        criar_backup_banco()
+
+    resultado_bling = bling_enviar_venda(venda_id)
+
+    if resultado_bling.get("sucesso"):
+        mensagem_final = f"Venda Nº {venda_id} registrada e sincronizada com o Bling com sucesso"
+    else:
+        mensagem_final = (
+            f"Venda Nº {venda_id} registrada com sucesso, "
+            f"mas não foi possível sincronizar com o Bling automaticamente"
+        )
 
     return {
         "sucesso": True,
-        "mensagem": f"Venda Nº {venda_id} registrada com sucesso",
+        "mensagem": mensagem_final,
         "mensagem_whatsapp": mensagem_whatsapp,
-        "telefone_whatsapp": telefone
+        "telefone_whatsapp": telefone,
+        "bling": resultado_bling
     }
-
+    
 
 @app.get("/clientes")
 def pagina_clientes(request: Request):
