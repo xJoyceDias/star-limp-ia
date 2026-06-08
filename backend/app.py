@@ -446,6 +446,96 @@ def bling_payload_teste(venda_id: int):
         "payload": payload
     }
 
+@app.post("/bling/enviar-venda/{venda_id}")
+def bling_enviar_venda(venda_id: int):
+
+    payload = montar_payload_bling(venda_id)
+
+    if not payload:
+        return {
+            "sucesso": False,
+            "mensagem": "Venda não encontrada."
+        }
+
+    conexao = sqlite3.connect(BANCO)
+    conexao.row_factory = sqlite3.Row
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT access_token
+        FROM bling_tokens
+        ORDER BY id DESC
+        LIMIT 1
+    """)
+
+    token = cursor.fetchone()
+
+    if not token:
+        conexao.close()
+        return {
+            "sucesso": False,
+            "mensagem": "Token do Bling não encontrado."
+        }
+
+    url = "https://api.bling.com.br/Api/v3/pedidos/vendas"
+
+    headers = {
+        "Authorization": f"Bearer {token['access_token']}",
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
+
+    resposta = requests.post(url, json=payload, headers=headers)
+
+    try:
+        resposta_json = resposta.json()
+    except Exception:
+        resposta_json = {"erro": resposta.text}
+
+    if resposta.status_code in [200, 201]:
+        bling_id = None
+
+        if isinstance(resposta_json, dict):
+            bling_id = resposta_json.get("data", {}).get("id")
+
+        cursor.execute("""
+            UPDATE bling_sync
+            SET status = 'SINCRONIZADO',
+                bling_id = ?,
+                data_sincronizacao = datetime('now', '-3 hours'),
+                erro = NULL
+            WHERE venda_id = ?
+        """, (bling_id, venda_id))
+
+        conexao.commit()
+        conexao.close()
+
+        return {
+            "sucesso": True,
+            "mensagem": "Venda enviada ao Bling com sucesso.",
+            "venda_id": venda_id,
+            "bling_id": bling_id,
+            "resposta_bling": resposta_json
+        }
+
+    cursor.execute("""
+        UPDATE bling_sync
+        SET status = 'ERRO',
+            erro = ?
+        WHERE venda_id = ?
+    """, (str(resposta_json), venda_id))
+
+    conexao.commit()
+    conexao.close()
+
+    return {
+        "sucesso": False,
+        "mensagem": "Erro ao enviar venda para o Bling.",
+        "status_code": resposta.status_code,
+        "payload_enviado": payload,
+        "resposta_bling": resposta_json
+    }
+
 @app.get("/")
 def inicio(request: Request):
     agora = datetime.utcnow() - timedelta(hours=3)
