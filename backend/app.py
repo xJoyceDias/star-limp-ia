@@ -16,7 +16,10 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="backend/static"), name="static")
 
 templates = Jinja2Templates(directory="backend/templates")
-BANCO = "database/starlimp.db"
+if os.getenv("RAILWAY_ENVIRONMENT"):
+    BANCO = "/data/starlimp.db"
+else:
+    BANCO = "database/starlimp.db"
 PASTA_BACKUPS = "backups"
 BLING_CLIENT_ID = os.getenv("BLING_CLIENT_ID")
 BLING_CLIENT_SECRET = os.getenv("BLING_CLIENT_SECRET")
