@@ -877,8 +877,8 @@ def finalizar_venda(dados: dict = Body(...)):
                 item.get("subtotal")
             ))
 
-            if forma_pagamento == "fiado":
-                telefone_limpo = ''.join(filter(str.isdigit, cliente_telefone or ""))
+        if forma_pagamento == "fiado":
+            telefone_limpo = ''.join(filter(str.isdigit, cliente_telefone or ""))
 
             cliente = None
 
@@ -886,7 +886,7 @@ def finalizar_venda(dados: dict = Body(...)):
                 cursor.execute("""
                     SELECT id, saldo_fiado, telefone
                     FROM clientes
-                    WHERE REPLACE(REPLACE(REPLACE(REPLACE(telefone, '(', ''), ')', ''), '-', ''), ' ', '') = ?
+                    WHERE REPLACE(REPLACE(REPLACE(REPLACE(telefone, '(', ''), ')', ''), '-',''), ' ', '') = ?
                     LIMIT 1
                 """, (telefone_limpo,))
 
