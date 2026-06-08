@@ -313,6 +313,139 @@ def preparar_sincronizacao():
         "vendas": resultado
     }
 
+def montar_payload_bling(venda_id: int):
+
+    conexao = sqlite3.connect(BANCO)
+    conexao.row_factory = sqlite3.Row
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT *
+        FROM vendas
+        WHERE id = ?
+    """, (venda_id,))
+
+    venda = cursor.fetchone()
+
+    if not venda:
+        conexao.close()
+        return None
+
+    cursor.execute("""
+        SELECT
+            codigo_produto,
+            descricao,
+            quantidade,
+            preco_unitario,
+            subtotal
+        FROM itens_venda
+        WHERE venda_id = ?
+    """, (venda_id,))
+
+    itens = cursor.fetchall()
+
+    cursor.execute("""
+        SELECT *
+        FROM fiados
+        WHERE venda_id = ?
+        LIMIT 1
+    """, (venda_id,))
+
+    fiado = cursor.fetchone()
+
+    contato = {
+        "nome": "Consumidor Final"
+    }
+
+    origem_cliente = "consumidor_final"
+
+    if fiado:
+        contato = {
+            "nome": fiado["cliente_nome"] or "Cliente Fiado"
+        }
+
+        if fiado["telefone"]:
+            contato["telefone"] = fiado["telefone"]
+
+        origem_cliente = "fiado"
+
+    elif venda["pedido_bling_solicitado"] == 1:
+        contato = {
+            "nome": venda["cliente_nome_bling"] or "Cliente"
+        }
+
+        if venda["cliente_telefone_bling"]:
+            contato["telefone"] = venda["cliente_telefone_bling"]
+
+        if venda["cliente_documento_bling"]:
+            contato["numeroDocumento"] = venda["cliente_documento_bling"]
+
+        origem_cliente = "pedido_solicitado"
+
+    itens_bling = []
+    total_itens = 0
+
+
+    for item in itens:
+        quantidade = float(item["quantidade"])
+        valor_unitario = float(item["preco_unitario"])
+        subtotal = float(item["subtotal"])
+
+        total_itens += quantidade * valor_unitario
+
+        itens_bling.append({
+            "codigo": str(item["codigo_produto"]),
+            "descricao": item["descricao"],
+            "quantidade": quantidade,
+            "valor": valor_unitario
+    })
+
+    valor_total_venda = float(venda["valor_total"])
+    desconto = round(total_itens - valor_total_venda, 2)
+        
+
+    data_venda = venda["data_hora"][:10] if venda["data_hora"] else None
+
+    payload = {
+        "data": data_venda,
+        "contato": contato,
+        "itens": itens_bling,
+        "parcelas": [
+            {
+                "dataVencimento": data_venda,
+                "valor": float(venda["valor_total"]),
+                "observacoes": f"Forma de pagamento: {venda['forma_pagamento']}"
+            }
+        ],
+        "observacoes": f"Venda gerada pelo Star Limp IA. Forma de pagamento: {venda['forma_pagamento']}. Origem cliente: {origem_cliente}."
+    }
+    if desconto > 0:
+        payload["desconto"] = {
+            "valor": desconto
+    }
+
+    conexao.close()
+
+    return payload
+
+
+@app.get("/bling/payload-teste/{venda_id}")
+def bling_payload_teste(venda_id: int):
+
+    payload = montar_payload_bling(venda_id)
+
+    if not payload:
+        return {
+            "sucesso": False,
+            "mensagem": "Venda não encontrada."
+        }
+
+    return {
+        "sucesso": True,
+        "venda_id": venda_id,
+        "payload": payload
+    }
+
 @app.get("/")
 def inicio(request: Request):
     agora = datetime.utcnow() - timedelta(hours=3)
