@@ -546,6 +546,41 @@ def obter_ou_criar_contato_bling_para_venda(venda_id: int):
 
     return contato_id, resposta
 
+def buscar_produto_bling_por_codigo(codigo):
+    access_token = obter_token_bling()
+
+    if not access_token:
+        return None, {
+            "erro": "Token do Bling não encontrado."
+        }
+
+    url = "https://api.bling.com.br/Api/v3/produtos"
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Accept": "application/json"
+    }
+
+    params = {
+        "codigo": str(codigo)
+    }
+
+    resposta = requests.get(url, headers=headers, params=params)
+
+    try:
+        resposta_json = resposta.json()
+    except Exception:
+        resposta_json = {"erro": resposta.text}
+
+    if resposta.status_code == 200:
+        produtos = resposta_json.get("data", [])
+
+        if produtos:
+            produto_id = produtos[0].get("id")
+            return produto_id, resposta_json
+
+    return None, resposta_json
+
 @app.post("/bling/testar-contato")
 def testar_contato_bling():
     contato_id, resposta = criar_contato_bling(
@@ -556,6 +591,17 @@ def testar_contato_bling():
     return {
         "sucesso": contato_id is not None,
         "contato_id": contato_id,
+        "resposta_bling": resposta
+    }
+
+@app.get("/bling/testar-produto/{codigo}")
+def testar_produto_bling(codigo: str):
+
+    produto_id, resposta = buscar_produto_bling_por_codigo(codigo)
+
+    return {
+        "sucesso": produto_id is not None,
+        "produto_id": produto_id,
         "resposta_bling": resposta
     }
 
