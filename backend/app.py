@@ -398,7 +398,7 @@ def montar_payload_bling(venda_id: int):
             "descricao": item["descricao"],
             "quantidade": quantidade,
             "valor": valor_unitario
-    })
+        })
 
     valor_total_venda = float(venda["valor_total"])
     desconto = round(total_itens - valor_total_venda, 2)
@@ -422,12 +422,84 @@ def montar_payload_bling(venda_id: int):
     if desconto > 0:
         payload["desconto"] = {
             "valor": desconto
-    }
+        }
 
     conexao.close()
 
     return payload
 
+def obter_token_bling():
+    conexao = sqlite3.connect(BANCO)
+    conexao.row_factory = sqlite3.Row
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT access_token
+        FROM bling_tokens
+        ORDER BY id DESC
+        LIMIT 1
+    """)
+
+    token = cursor.fetchone()
+    conexao.close()
+
+    if not token:
+        return None
+
+    return token["access_token"]
+
+def criar_contato_bling(nome, telefone=None, documento=None):
+    access_token = obter_token_bling()
+
+    if not access_token:
+        return None, {
+            "erro": "Token do Bling não encontrado."
+        }
+
+    url = "https://api.bling.com.br/Api/v3/contatos"
+
+    payload = {
+        "nome": nome,
+        "tipo": "F"
+    }
+
+    if telefone:
+        payload["telefone"] = telefone
+
+    if documento:
+        payload["numeroDocumento"] = documento
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
+
+    resposta = requests.post(url, json=payload, headers=headers)
+
+    try:
+        resposta_json = resposta.json()
+    except Exception:
+        resposta_json = {"erro": resposta.text}
+
+    if resposta.status_code in [200, 201]:
+        contato_id = resposta_json.get("data", {}).get("id")
+        return contato_id, resposta_json
+
+    return None, resposta_json
+
+@app.post("/bling/testar-contato")
+def testar_contato_bling():
+    contato_id, resposta = criar_contato_bling(
+        nome="Teste Star Limp IA",
+        telefone="62999999999"
+    )
+
+    return {
+        "sucesso": contato_id is not None,
+        "contato_id": contato_id,
+        "resposta_bling": resposta
+    }
 
 @app.get("/bling/payload-teste/{venda_id}")
 def bling_payload_teste(venda_id: int):
