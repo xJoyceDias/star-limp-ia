@@ -565,6 +565,51 @@ def obter_ou_criar_contato_bling_para_venda(venda_id: int):
 
     return contato_id, resposta
 
+def obter_ou_criar_consumidor_final_bling():
+    conexao = sqlite3.connect(BANCO)
+    conexao.row_factory = sqlite3.Row
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS configuracoes (
+            chave TEXT PRIMARY KEY,
+            valor TEXT
+        )
+    """)
+
+    cursor.execute("""
+        SELECT valor
+        FROM configuracoes
+        WHERE chave = 'bling_consumidor_final_id'
+        LIMIT 1
+    """)
+
+    config = cursor.fetchone()
+
+    if config and config["valor"]:
+        conexao.close()
+        return config["valor"], {
+            "origem": "configuracoes",
+            "contato_id": config["valor"]
+        }
+
+    contato_id, resposta = criar_contato_bling(
+        nome="Consumidor Final",
+        telefone=None
+    )
+
+    if contato_id:
+        cursor.execute("""
+            INSERT OR REPLACE INTO configuracoes (chave, valor)
+            VALUES (?, ?)
+        """, ("bling_consumidor_final_id", str(contato_id)))
+
+        conexao.commit()
+
+    conexao.close()
+
+    return contato_id, resposta
+
 def buscar_produto_bling_por_codigo(codigo):
     access_token = obter_token_bling()
 
@@ -652,13 +697,16 @@ def bling_enviar_venda(venda_id: int):
             "mensagem": "Venda não encontrada."
         }
 
-    contato_id, resposta_contato = obter_ou_criar_contato_bling_para_venda(venda_id)
+        contato_id, resposta_contato = obter_ou_criar_contato_bling_para_venda(venda_id)
+
+    if not contato_id and payload.get("contato", {}).get("nome") == "Consumidor Final":
+        contato_id, resposta_contato = obter_ou_criar_consumidor_final_bling()
 
     if contato_id:
         payload["contato"] = {
             "id": int(contato_id)
         }
-    elif payload.get("contato", {}).get("nome") != "Consumidor Final":
+    else:
         return {
             "sucesso": False,
             "mensagem": "Não foi possível obter ou criar contato no Bling.",
