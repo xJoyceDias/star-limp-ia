@@ -393,12 +393,23 @@ def montar_payload_bling(venda_id: int):
 
         total_itens += quantidade * valor_unitario
 
-        itens_bling.append({
-            "codigo": str(item["codigo_produto"]),
-            "descricao": item["descricao"],
-            "quantidade": quantidade,
-            "valor": valor_unitario
-        })
+        produto_id, resposta_produto = buscar_produto_bling_por_codigo(item["codigo_produto"])
+
+        if produto_id:
+            itens_bling.append({
+                "produto": {
+                    "id": int(produto_id)
+                },
+                "descricao": item["descricao"],
+                "quantidade": quantidade,
+                "valor": valor_unitario
+            })
+        else:
+            itens_bling.append({
+                "descricao": item["descricao"],
+                "quantidade": quantidade,
+                "valor": valor_unitario
+            })
 
     valor_total_venda = float(venda["valor_total"])
     desconto = round(total_itens - valor_total_venda, 2)
