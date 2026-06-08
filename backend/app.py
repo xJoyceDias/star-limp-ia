@@ -489,6 +489,63 @@ def criar_contato_bling(nome, telefone=None, documento=None):
 
     return None, resposta_json
 
+def obter_ou_criar_contato_bling_para_venda(venda_id: int):
+    conexao = sqlite3.connect(BANCO)
+    conexao.row_factory = sqlite3.Row
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT *
+        FROM fiados
+        WHERE venda_id = ?
+        LIMIT 1
+    """, (venda_id,))
+
+    fiado = cursor.fetchone()
+
+    if not fiado:
+        conexao.close()
+        return None, None
+
+    cliente_id = fiado["cliente_id"]
+    nome = fiado["cliente_nome"] or "Cliente"
+    telefone = fiado["telefone"]
+
+    cursor.execute("""
+        SELECT bling_contato_id
+        FROM clientes
+        WHERE id = ?
+        LIMIT 1
+    """, (cliente_id,))
+
+    cliente = cursor.fetchone()
+
+    if cliente and cliente["bling_contato_id"]:
+        contato_id = cliente["bling_contato_id"]
+        conexao.close()
+        return contato_id, {
+            "origem": "cliente_local",
+            "contato_id": contato_id
+        }
+
+    contato_id, resposta = criar_contato_bling(
+        nome=nome,
+        telefone=telefone
+    )
+
+    if contato_id:
+        cursor.execute("""
+            UPDATE clientes
+            SET bling_contato_id = ?
+            WHERE id = ?
+        """, (str(contato_id), cliente_id))
+
+        conexao.commit()
+
+    conexao.close()
+
+    return contato_id, resposta
+
 @app.post("/bling/testar-contato")
 def testar_contato_bling():
     contato_id, resposta = criar_contato_bling(
@@ -530,30 +587,36 @@ def bling_enviar_venda(venda_id: int):
             "mensagem": "Venda não encontrada."
         }
 
-    conexao = sqlite3.connect(BANCO)
-    conexao.row_factory = sqlite3.Row
-    cursor = conexao.cursor()
+    contato_id, resposta_contato = obter_ou_criar_contato_bling_para_venda(venda_id)
 
-    cursor.execute("""
-        SELECT access_token
-        FROM bling_tokens
-        ORDER BY id DESC
-        LIMIT 1
-    """)
+    if contato_id:
+        payload["contato"] = {
+            "id": int(contato_id)
+        }
+    elif payload.get("contato", {}).get("nome") != "Consumidor Final":
+        return {
+            "sucesso": False,
+            "mensagem": "Não foi possível obter ou criar contato no Bling.",
+            "resposta_contato": resposta_contato,
+            "payload": payload
+        }
 
-    token = cursor.fetchone()
+    access_token = obter_token_bling()
 
-    if not token:
-        conexao.close()
+    if not access_token:
         return {
             "sucesso": False,
             "mensagem": "Token do Bling não encontrado."
         }
 
+    conexao = sqlite3.connect(BANCO)
+    conexao.row_factory = sqlite3.Row
+    cursor = conexao.cursor()
+
     url = "https://api.bling.com.br/Api/v3/pedidos/vendas"
 
     headers = {
-        "Authorization": f"Bearer {token['access_token']}",
+        "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json",
         "Accept": "application/json"
     }
