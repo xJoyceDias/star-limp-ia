@@ -18,6 +18,11 @@ app.mount("/static", StaticFiles(directory="backend/static"), name="static")
 templates = Jinja2Templates(directory="backend/templates")
 if os.getenv("RAILWAY_ENVIRONMENT"):
     BANCO = "/data/starlimp.db"
+
+if os.getenv("RAILWAY_ENVIRONMENT") and not os.path.exists(BANCO):
+    os.makedirs("/data", exist_ok=True)
+    shutil.copyfile("database/starlimp.db", BANCO)
+    
 else:
     BANCO = "database/starlimp.db"
 PASTA_BACKUPS = "backups"
