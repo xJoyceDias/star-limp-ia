@@ -21,12 +21,10 @@ if os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("RAILWAY_SERVICE_NAME"):
 else:
     BANCO = "database/starlimp.db"
 
-if os.getenv("RAILWAY_ENVIRONMENT") and not os.path.exists(BANCO):
+if BANCO.startswith("/data") and not os.path.exists(BANCO):
     os.makedirs("/data", exist_ok=True)
     shutil.copyfile("database/starlimp.db", BANCO)
 
-else:
-    BANCO = "database/starlimp.db"
 PASTA_BACKUPS = "backups"
 BLING_CLIENT_ID = os.getenv("BLING_CLIENT_ID")
 BLING_CLIENT_SECRET = os.getenv("BLING_CLIENT_SECRET")
