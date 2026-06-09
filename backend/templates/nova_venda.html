@@ -548,39 +548,53 @@ async function finalizarVenda() {
 
     const formaPagamento = document.getElementById("formaPagamento").value;
 
-    const resposta = await fetch("/finalizar-venda", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            itens: carrinho,
-            total: total,
-            forma_pagamento: formaPagamento,
-            cliente_nome: document.getElementById("clienteNome").value,
-            cliente_telefone: document.getElementById("clienteTelefone").value,
-            retirado_por: document.getElementById("retiradoPor").value
-        })
-    });
+    try {
+        const resposta = await fetch("/finalizar-venda", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                itens: carrinho,
+                total: total,
+                forma_pagamento: formaPagamento,
+                cliente_nome: document.getElementById("clienteNome").value,
+                cliente_telefone: document.getElementById("clienteTelefone").value,
+                retirado_por: document.getElementById("retiradoPor").value
+            })
+        });
 
-    const resultado = await resposta.json();
+        const texto = await resposta.text();
 
-    alert(resultado.mensagem);
+        let resultado;
 
-    if (resultado.sucesso) {
-        if (resultado.telefone_whatsapp && resultado.mensagem_whatsapp) {
-            const telefone = resultado.telefone_whatsapp.replace(/\D/g, "");
-            const mensagem = encodeURIComponent(resultado.mensagem_whatsapp);
-
-            window.open(
-                `https://wa.me/55${telefone}?text=${mensagem}`,
-                "_blank"
-            );
+        try {
+            resultado = JSON.parse(texto);
+        } catch {
+            alert("Erro retornado pelo servidor:\n\n" + texto);
+            return;
         }
 
-        setTimeout(() => {
-            window.location.href = "/nova-venda";
-        }, 800);
+        alert(resultado.mensagem);
+
+        if (resultado.sucesso) {
+            if (resultado.telefone_whatsapp && resultado.mensagem_whatsapp) {
+                const telefone = resultado.telefone_whatsapp.replace(/\D/g, "");
+                const mensagem = encodeURIComponent(resultado.mensagem_whatsapp);
+
+                window.open(
+                    `https://wa.me/55${telefone}?text=${mensagem}`,
+                    "_blank"
+                );
+            }
+
+            setTimeout(() => {
+                window.location.href = "/nova-venda";
+            }, 800);
+        }
+
+    } catch (erro) {
+        alert("Erro ao finalizar venda:\n\n" + erro);
     }
 }
 </script>
