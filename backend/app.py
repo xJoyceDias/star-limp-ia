@@ -21,9 +21,23 @@ if os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("RAILWAY_SERVICE_NAME"):
 else:
     BANCO = "database/starlimp.db"
 
-if BANCO.startswith("/data") and not os.path.exists(BANCO):
+if BANCO.startswith("/data"):
     os.makedirs("/data", exist_ok=True)
-    shutil.copyfile("database/starlimp.db", BANCO)
+
+    precisa_copiar_banco = not os.path.exists(BANCO)
+
+    if not precisa_copiar_banco:
+        try:
+            conexao_teste = sqlite3.connect(BANCO)
+            cursor_teste = conexao_teste.cursor()
+            cursor_teste.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='produtos'")
+            precisa_copiar_banco = cursor_teste.fetchone() is None
+            conexao_teste.close()
+        except Exception:
+            precisa_copiar_banco = True
+
+    if precisa_copiar_banco:
+        shutil.copyfile("database/starlimp.db", BANCO)
 
 PASTA_BACKUPS = "backups"
 BLING_CLIENT_ID = os.getenv("BLING_CLIENT_ID")
