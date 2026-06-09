@@ -453,6 +453,16 @@ def obter_token_bling():
     cursor = conexao.cursor()
 
     cursor.execute("""
+        CREATE TABLE IF NOT EXISTS bling_tokens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            access_token TEXT NOT NULL,
+            refresh_token TEXT,
+            expires_in INTEGER,
+            criado_em TEXT
+        )
+    """)
+
+    cursor.execute("""
         SELECT access_token
         FROM bling_tokens
         ORDER BY id DESC
