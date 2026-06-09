@@ -697,7 +697,10 @@ def bling_enviar_venda(venda_id: int):
             "mensagem": "Venda não encontrada."
         }
 
-        contato_id, resposta_contato = obter_ou_criar_contato_bling_para_venda(venda_id)
+    contato_id = None
+    resposta_contato = None
+    
+    contato_id, resposta_contato = obter_ou_criar_contato_bling_para_venda(venda_id)
 
     if not contato_id and payload.get("contato", {}).get("nome") == "Consumidor Final":
         contato_id, resposta_contato = obter_ou_criar_consumidor_final_bling()
