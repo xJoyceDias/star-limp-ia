@@ -303,17 +303,17 @@ def pagina_bling(request: Request):
 
     conexao.close()
 
-        return templates.TemplateResponse(
-        request,
-        "bling.html",
-        {
-            "total": total,
-            "sincronizadas": sincronizadas,
-            "pendentes": pendentes,
-            "erros": erros,
-            "registros": registros
-        }
-    )
+    return templates.TemplateResponse(
+    request,
+    "bling.html",
+    {
+        "total": total,
+        "sincronizadas": sincronizadas,
+        "pendentes": pendentes,
+        "erros": erros,
+        "registros": registros
+    }
+)
 
 @app.get("/bling/preparar-sincronizacao")
 def preparar_sincronizacao():
