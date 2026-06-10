@@ -274,6 +274,44 @@ def bling_status():
         "criado_em": token[1]
     }
 
+@app.get("/bling")
+def pagina_bling(request: Request):
+    conexao = sqlite3.connect(BANCO)
+    conexao.row_factory = sqlite3.Row
+    cursor = conexao.cursor()
+
+    cursor.execute("SELECT COUNT(*) FROM bling_sync")
+    total = cursor.fetchone()[0] or 0
+
+    cursor.execute("SELECT COUNT(*) FROM bling_sync WHERE status = 'SINCRONIZADO'")
+    sincronizadas = cursor.fetchone()[0] or 0
+
+    cursor.execute("SELECT COUNT(*) FROM bling_sync WHERE status = 'PENDENTE'")
+    pendentes = cursor.fetchone()[0] or 0
+
+    cursor.execute("SELECT COUNT(*) FROM bling_sync WHERE status = 'ERRO'")
+    erros = cursor.fetchone()[0] or 0
+
+    cursor.execute("""
+        SELECT *
+        FROM bling_sync
+        ORDER BY id DESC
+        LIMIT 50
+    """)
+
+    registros = cursor.fetchall()
+
+    conexao.close()
+
+    return templates.TemplateResponse("bling.html", {
+        "request": request,
+        "total": total,
+        "sincronizadas": sincronizadas,
+        "pendentes": pendentes,
+        "erros": erros,
+        "registros": registros
+    })
+
 @app.get("/bling/preparar-sincronizacao")
 def preparar_sincronizacao():
 
