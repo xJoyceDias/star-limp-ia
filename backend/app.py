@@ -730,6 +730,21 @@ def bling_debug_token():
         "banco": BANCO
     }
 
+@app.get("/bling/debug-sync-schema")
+def bling_debug_sync_schema():
+    conexao = sqlite3.connect(BANCO)
+    cursor = conexao.cursor()
+
+    cursor.execute("PRAGMA table_info(bling_sync)")
+    colunas = cursor.fetchall()
+
+    conexao.close()
+
+    return {
+        "banco": BANCO,
+        "colunas": colunas
+    }
+
 @app.get("/bling/testar-produto/{codigo}")
 def testar_produto_bling(codigo: str):
 
