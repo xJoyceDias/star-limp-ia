@@ -770,6 +770,28 @@ def bling_debug_sync_schema():
         "colunas": colunas
     }
 
+@app.get("/bling/pedidos")
+def listar_pedidos_bling():
+
+    conexao = sqlite3.connect(BANCO)
+    conexao.row_factory = sqlite3.Row
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT *
+        FROM bling_pedidos
+        ORDER BY id DESC
+    """)
+
+    pedidos = [dict(linha) for linha in cursor.fetchall()]
+
+    conexao.close()
+
+    return {
+        "total": len(pedidos),
+        "pedidos": pedidos
+    }
+
 @app.post("/bling/corrigir-status-sincronizados")
 def corrigir_status_sincronizados_bling():
     conexao = sqlite3.connect(BANCO)
