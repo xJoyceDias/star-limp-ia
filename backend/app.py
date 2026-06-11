@@ -1128,6 +1128,37 @@ def gerar_pedido_bling(venda_id: int):
         "pedido": dict(pedido)
     }
 
+@app.get("/bling/consultar-pedido/{bling_id}")
+def consultar_pedido_bling(bling_id: str):
+    access_token = obter_token_bling()
+
+    if not access_token:
+        return {
+            "sucesso": False,
+            "mensagem": "Token do Bling não encontrado."
+        }
+
+    url = f"https://api.bling.com.br/Api/v3/pedidos/vendas/{bling_id}"
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Accept": "application/json"
+    }
+
+    resposta = requests.get(url, headers=headers)
+
+    try:
+        resposta_json = resposta.json()
+    except Exception:
+        resposta_json = {"erro": resposta.text}
+
+    return {
+        "sucesso": resposta.status_code == 200,
+        "status_code": resposta.status_code,
+        "bling_id": bling_id,
+        "resposta_bling": resposta_json
+    }
+
 @app.get("/")
 def inicio(request: Request):
     agora = datetime.utcnow() - timedelta(hours=3)
