@@ -748,6 +748,30 @@ def bling_debug_sync_schema():
         "colunas": colunas
     }
 
+@app.post("/bling/corrigir-status-sincronizados")
+def corrigir_status_sincronizados_bling():
+    conexao = sqlite3.connect(BANCO)
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        UPDATE bling_sync
+        SET status = 'SINCRONIZADO',
+            erro = NULL
+        WHERE bling_id IS NOT NULL
+          AND bling_id != ''
+    """)
+
+    total_corrigidos = cursor.rowcount
+
+    conexao.commit()
+    conexao.close()
+
+    return {
+        "sucesso": True,
+        "mensagem": "Status das vendas com Bling ID corrigido.",
+        "total_corrigidos": total_corrigidos
+    }
+
 @app.get("/bling/testar-produto/{codigo}")
 def testar_produto_bling(codigo: str):
 
