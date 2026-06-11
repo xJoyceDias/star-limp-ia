@@ -50,6 +50,28 @@ BLING_REDIRECT_URI = os.getenv(
 BLING_AUTH_URL = "https://www.bling.com.br/Api/v3/oauth/authorize"
 BLING_TOKEN_URL = "https://www.bling.com.br/Api/v3/oauth/token"
 
+def garantir_tabela_bling_pedidos():
+    conexao = sqlite3.connect(BANCO)
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS bling_pedidos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            venda_id INTEGER NOT NULL,
+            bling_venda_id TEXT,
+            bling_pedido_id TEXT,
+            status TEXT DEFAULT 'PENDENTE',
+            data_criacao TEXT,
+            data_atualizacao TEXT,
+            erro TEXT
+        )
+    """)
+
+    conexao.commit()
+    conexao.close()
+
+
+garantir_tabela_bling_pedidos()
 
 def moeda(valor):
     try:
