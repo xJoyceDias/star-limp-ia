@@ -1046,6 +1046,88 @@ def gerar_pedido_bling(venda_id: int):
         "pedido": dict(pedido)
     }
 
+@app.post("/bling/gerar-pedido/{venda_id}")
+def gerar_pedido_bling(venda_id: int):
+
+    conexao = sqlite3.connect(BANCO)
+    conexao.row_factory = sqlite3.Row
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT venda_id, bling_id, status
+        FROM bling_sync
+        WHERE venda_id = ?
+        LIMIT 1
+    """, (venda_id,))
+
+    sincronizacao = cursor.fetchone()
+
+    if not sincronizacao:
+        conexao.close()
+        return {
+            "sucesso": False,
+            "mensagem": "Venda não encontrada na sincronização Bling."
+        }
+
+    if not sincronizacao["bling_id"]:
+        conexao.close()
+        return {
+            "sucesso": False,
+            "mensagem": "Venda ainda não possui Bling ID. Sincronize a venda antes de gerar pedido."
+        }
+
+    cursor.execute("""
+        SELECT *
+        FROM bling_pedidos
+        WHERE venda_id = ?
+        LIMIT 1
+    """, (venda_id,))
+
+    pedido_existente = cursor.fetchone()
+
+    if pedido_existente:
+        conexao.close()
+        return {
+            "sucesso": True,
+            "mensagem": "Pedido já registrado para esta venda.",
+            "pedido": dict(pedido_existente)
+        }
+
+    cursor.execute("""
+        INSERT INTO bling_pedidos (
+            venda_id,
+            bling_venda_id,
+            status,
+            data_criacao,
+            data_atualizacao
+        )
+        VALUES (?, ?, ?, datetime('now', '-3 hours'), datetime('now', '-3 hours'))
+    """, (
+        venda_id,
+        sincronizacao["bling_id"],
+        "PENDENTE"
+    ))
+
+    pedido_id_local = cursor.lastrowid
+
+    conexao.commit()
+
+    cursor.execute("""
+        SELECT *
+        FROM bling_pedidos
+        WHERE id = ?
+    """, (pedido_id_local,))
+
+    pedido = cursor.fetchone()
+
+    conexao.close()
+
+    return {
+        "sucesso": True,
+        "mensagem": "Pedido registrado localmente. Próximo passo: integrar criação real no Bling.",
+        "pedido": dict(pedido)
+    }
+
 @app.get("/")
 def inicio(request: Request):
     agora = datetime.utcnow() - timedelta(hours=3)
