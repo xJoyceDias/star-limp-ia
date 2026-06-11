@@ -819,6 +819,24 @@ def bling_enviar_venda(venda_id: int):
     conexao.row_factory = sqlite3.Row
     cursor = conexao.cursor()
 
+    cursor.execute("""
+        SELECT bling_id, status
+        FROM bling_sync
+        WHERE venda_id = ?
+        LIMIT 1
+    """, (venda_id,))
+
+    sync_existente = cursor.fetchone()
+
+    if sync_existente and sync_existente["bling_id"]:
+        conexao.close()
+        return {
+            "sucesso": True,
+            "mensagem": "Venda já estava sincronizada com o Bling.",
+            "venda_id": venda_id,
+            "bling_id": sync_existente["bling_id"]
+        }
+
     url = "https://api.bling.com.br/Api/v3/pedidos/vendas"
 
     headers = {
