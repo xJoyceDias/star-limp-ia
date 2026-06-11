@@ -1046,36 +1046,6 @@ def gerar_pedido_bling(venda_id: int):
         "pedido": dict(pedido)
     }
 
-@app.get("/bling/consultar-pedido/{bling_id}")
-def consultar_pedido_bling(bling_id: str):
-    access_token = obter_token_bling()
-
-    if not access_token:
-        return {
-            "sucesso": False,
-            "mensagem": "Token do Bling não encontrado."
-        }
-
-    url = f"https://api.bling.com.br/Api/v3/pedidos/vendas/{bling_id}"
-
-    headers = {
-        "Authorization": f"Bearer {access_token}",
-        "Accept": "application/json"
-    }
-
-    resposta = requests.get(url, headers=headers)
-
-    try:
-        resposta_json = resposta.json()
-    except Exception:
-        resposta_json = {"erro": resposta.text}
-
-    return {
-        "sucesso": resposta.status_code == 200,
-        "status_code": resposta.status_code,
-        "bling_id": bling_id,
-        "resposta_bling": resposta_json
-    }
 
 @app.get("/bling/consultar-pedido/{bling_id}")
 def consultar_pedido_bling(bling_id: str):
@@ -1106,6 +1076,87 @@ def consultar_pedido_bling(bling_id: str):
         "status_code": resposta.status_code,
         "bling_id": bling_id,
         "resposta_bling": resposta_json
+    }
+
+@app.post("/bling/confirmar-pedido/{venda_id}")
+def confirmar_pedido_bling(venda_id: int):
+    conexao = sqlite3.connect(BANCO)
+    conexao.row_factory = sqlite3.Row
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT venda_id, bling_id
+        FROM bling_sync
+        WHERE venda_id = ?
+        LIMIT 1
+    """, (venda_id,))
+
+    sync = cursor.fetchone()
+
+    if not sync or not sync["bling_id"]:
+        conexao.close()
+        return {
+            "sucesso": False,
+            "mensagem": "Venda ainda não possui pedido no Bling."
+        }
+
+    cursor.execute("""
+        SELECT *
+        FROM bling_pedidos
+        WHERE venda_id = ?
+        LIMIT 1
+    """, (venda_id,))
+
+    pedido = cursor.fetchone()
+
+    if pedido:
+        cursor.execute("""
+            UPDATE bling_pedidos
+            SET bling_venda_id = ?,
+                bling_pedido_id = ?,
+                status = 'GERADO',
+                erro = NULL,
+                data_atualizacao = datetime('now', '-3 hours')
+            WHERE venda_id = ?
+        """, (
+            sync["bling_id"],
+            sync["bling_id"],
+            venda_id
+        ))
+    else:
+        cursor.execute("""
+            INSERT INTO bling_pedidos (
+                venda_id,
+                bling_venda_id,
+                bling_pedido_id,
+                status,
+                data_criacao,
+                data_atualizacao
+            )
+            VALUES (?, ?, ?, 'GERADO', datetime('now', '-3 hours'), datetime('now', '-3 hours'))
+        """, (
+            venda_id,
+            sync["bling_id"],
+            sync["bling_id"]
+        ))
+
+    conexao.commit()
+
+    cursor.execute("""
+        SELECT *
+        FROM bling_pedidos
+        WHERE venda_id = ?
+        LIMIT 1
+    """, (venda_id,))
+
+    pedido_atualizado = cursor.fetchone()
+
+    conexao.close()
+
+    return {
+        "sucesso": True,
+        "mensagem": "Pedido confirmado como gerado no Bling.",
+        "pedido": dict(pedido_atualizado)
     }
 
 @app.get("/")
