@@ -1439,7 +1439,7 @@ def pagina_pedido_cliente(venda_id: int):
 
             <div class="topo">
 
-                <img src="/static/logostarlimp.png.png" class="logo">
+                <img src="/static/logo.png?v=2" class="logo">
 
                 <div class="empresa">
                     STAR LIMP FRAGRÂNCIAS E PRODUTOS
