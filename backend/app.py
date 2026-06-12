@@ -1323,7 +1323,7 @@ def pagina_pedido_cliente(venda_id: int):
         }}
 
         .card {{
-            max-width: 850px;
+            max-width: 720px;
             margin: auto;
             background: white;
             border-radius: 24px;
@@ -1338,12 +1338,13 @@ def pagina_pedido_cliente(venda_id: int):
         }}
 
         .logo {{
-            width: 130px;
-            margin-bottom: 10px;
+            width: 180px;
+            max-width: 80%;
+            margin-bottom: 14px;
         }}
 
         .empresa {{
-            font-size: 28px;
+            font-size: 24px;
             font-weight: 900;
             color: #020617;
         }}
@@ -1356,10 +1357,11 @@ def pagina_pedido_cliente(venda_id: int):
         .box {{
             margin-top: 18px;
             background: #f8fafc;
-            border: 1px solid #e5e7eb;
-            border-radius: 14px;
-            padding: 15px;
-            line-height: 1.7;
+            border: 1px solid #dbe3ef;
+            border-left: 5px solid #0f172a;
+            border-radius: 16px;
+            padding: 18px;
+            line-height: 1.8;
         }}
 
         .destaque {{
