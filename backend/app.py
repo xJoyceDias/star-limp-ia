@@ -1313,60 +1313,91 @@ def pagina_pedido_cliente(venda_id: int):
 
         <style>
 
-        body {{
-            margin: 0;
-            padding: 20px;
+        body{{
+            margin:0;
+            padding:25px;
+            min-height:100vh;
+
             background:
-                radial-gradient(circle at top, rgba(22,131,255,.15), transparent 35%),
+                radial-gradient(circle at top, rgba(22,131,255,.20), transparent 35%),
                 linear-gradient(180deg,#020617,#0f172a);
-            font-family: Arial, Helvetica, sans-serif;
+
+            font-family:Arial, Helvetica, sans-serif;
         }}
 
         .card {{
-            max-width: 720px;
-            margin: auto;
-            background: white;
-            border-radius: 24px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,.35);
+            max-width:760px;
+            margin:auto;
+            background:white;
+            border-radius:28px;
+            padding:35px;
+            box-shadow:
+                0 30px 80px rgba(0,0,0,.35);
+
+            overflow:hidden;
         }}
 
         .topo {{
-            text-align: center;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #e5e7eb;
+            text-align:center;
+            position:relative;
+            padding-bottom:25px;
+        }}
+
+        .topo::after{{
+            content:"";
+            display:block;
+            height:1px;
+            background:#e5e7eb;
+            margin-top:20px;
         }}
 
         .logo {{
             width: 180px;
-            max-width: 80%;
-            margin-bottom: 14px;
+            max-width: 85%;
+            margin-bottom: 12px;
         }}
 
         .empresa {{
             font-size: 24px;
             font-weight: 900;
             color: #020617;
+            letter-spacing:.5px;
         }}
 
         .sub {{
             color: #64748b;
-            margin-top: 6px;
+            margin-top: 8px;
+            font-size:18px;
+        }}
+
+        .status{{
+            display:inline-block;
+            margin-top:15px;
+            padding:8px 16px;
+
+            background:#dcfce7;
+            color:#166534;
+
+            border-radius:999px;
+
+            font-size:13px;
+            font-weight:bold;
         }}
 
         .box {{
-            margin-top: 18px;
+            margin-top: 22px;
             background: #f8fafc;
             border: 1px solid #dbe3ef;
-            border-left: 5px solid #0f172a;
-            border-radius: 16px;
+            border-left:5px solid #1683ff;
+            border-radius: 18px;
             padding: 18px;
-            line-height: 1.8;
+            line-height: 1.9;
+            font-size:16px;
         }}
 
         .destaque {{
             background: #ecfdf5;
-            border-color: #86efac;
+            border-left:5px solid #22c55e;
         }}
 
         table {{
@@ -1378,41 +1409,66 @@ def pagina_pedido_cliente(venda_id: int):
         th {{
             background: #020617;
             color: white;
-            padding: 12px;
-            text-align: left;
+            padding:14px;
+            font-size:14px;
+            text-transform:uppercase;
         }}
 
         td {{
-            padding: 12px;
+            padding: 14px;
             border-bottom: 1px solid #e5e7eb;
+            font-size:15px;
+        }}
+
+        tbody tr:hover{{
+            background:#f8fafc;
+
         }}
 
         .total {{
             text-align: right;
-            margin-top: 20px;
-            font-size: 28px;
-            font-weight: bold;
+            margin-top: 25px;
+        }}
+
+        .total-label{{
+            color:#64748b;
+            font-size:14px;
+        }}
+
+        .total-valor{{
+            font-size:42px;
+            font-weight:900;
+            color:#020617;
         }}
 
         .acoes {{
-            margin-top: 25px;
-            text-align: center;
+            display:flex;
+            justify-content:center;
+            margin-top:30px;
         }}
 
         .btn {{
-            background: #020617;
-            color: white;
-            border: none;
-            padding: 14px 22px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: bold;
+            bbackground:#020617;
+            color:white;
+            border:none;
+            padding:16px 30px;
+            border-radius:999px;
+            cursor:pointer;
+            font-size:16px;
+            font-weight:bold;
+            transition:.25s;
+        }}
+
+        .btn:hover{{
+            transform:translateY(-2px);
         }}
 
         .rodape {{
-            text-align: center;
-            margin-top: 25px;
-            color: #64748b;
+            margin-top:35px;
+            text-align:center;
+            color:#64748b;
+            font-size:14px;
+            line-height:1.8;
         }}
 
         @media print {{
@@ -1425,6 +1481,7 @@ def pagina_pedido_cliente(venda_id: int):
             .card {{
                 box-shadow: none;
                 border-radius: 0;
+                max-width:none;
             }}
 
             .acoes {{
@@ -1451,6 +1508,9 @@ def pagina_pedido_cliente(venda_id: int):
                     Pedido / Comprovante de Compra
                 </div>
 
+                <div class="status">
+                ✓ Pedido Confirmado
+                </div>
             </div>
 
             <div class="box">
@@ -1480,9 +1540,15 @@ def pagina_pedido_cliente(venda_id: int):
 
             </table>
 
-            <div class="total">
-                Total: R$ {moeda(venda["valor_total"])}
+                <div class="total">
+                    <div class="total-label">
+                    VALOR TOTAL
+                </div>
+
+                <div class="total-valor">
+                    R$ {moeda(venda["valor_total"])}
             </div>
+        </div>
 
             <div class="acoes">
                 <button class="btn" onclick="window.print()">
