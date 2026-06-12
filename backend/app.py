@@ -1358,10 +1358,10 @@ def pagina_pedido_cliente(venda_id: int):
         }}
 
         .empresa {{
-            font-size: 16px;
-            font-weight: 700;
-            color: #64748b;
-            letter-spacing:2px;
+            font-size:15px;
+            font-weight:700;
+            color:#1683ff;
+            letter-spacing:3px;
             text-transform:uppercase;
         }}
 
@@ -1386,16 +1386,38 @@ def pagina_pedido_cliente(venda_id: int):
         }}
 
         .box {{
-            margin-top: 22px;
-            background: #f8fafc;
-            border: 1px solid #dbe3ef;
-            border-left:5px solid #1683ff;
-            border-radius: 18px;
-            padding: 18px;
-            line-height: 1.9;
-            font-size:16px;
+            margin-top:18px;
+            background:#f8fafc;
+            border:1px solid #dbe3ef;
+            border-left:4px solid #1683ff;
+            border-radius:14px;
+            padding:14px 18px;
+            font-size:15px;
         }}
 
+        .pedido-info{{
+            margin-top:20px;
+            display:grid;
+            grid-template-columns:repeat(2,1fr);
+            gap:12px;
+        }}
+
+        .pedido-info div{{
+            background:#f8fafc;
+            border:1px solid #e5e7eb;
+            border-radius:12px;
+            padding:12px 14px;
+        }}
+
+        .pedido-info strong{{
+            display:block;
+            color:#64748b;
+            font-size:12px;
+            margin-bottom:4px;
+            text-transform:uppercase;
+            letter-spacing:.5px;
+        }}
+        
         .destaque {{
             background: #ecfdf5;
             border-left:5px solid #22c55e;
@@ -1449,7 +1471,7 @@ def pagina_pedido_cliente(venda_id: int):
         }}
 
         .btn {{
-            bbackground:#020617;
+            bbackground:#1683ff;
             color:white;
             border:none;
             padding:16px 30px;
@@ -1462,6 +1484,7 @@ def pagina_pedido_cliente(venda_id: int):
 
         .btn:hover{{
             transform:translateY(-2px);
+            background:#0f6ed8;
         }}
 
         .rodape {{
@@ -1514,13 +1537,29 @@ def pagina_pedido_cliente(venda_id: int):
                 </div>
             </div>
 
-            <div class="box">
-                <strong>Pedido:</strong> #{venda_id}<br>
-                <strong>Data:</strong> {data_formatada}<br>
-                <strong>Forma de Pagamento:</strong> {venda["forma_pagamento"]}<br>
-                <strong>Cliente:</strong> {cliente_nome}<br>
-                <strong>Telefone:</strong> {telefone}
+            <div class="pedido-info">
+
+                <div>
+                    <strong>Pedido</strong>
+                    #{venda_id}
             </div>
+
+            <div>
+                <strong>Pagamento</strong>
+                    {venda["forma_pagamento"].upper()}
+            </div>
+
+            <div>
+                <strong>Cliente</strong>
+                    {cliente_nome}
+            </div>
+
+            <div>
+                <strong>Data</strong>
+                    {data_formatada}
+            </div>
+
+        </div>
 
             {bloco_fiado}
 
