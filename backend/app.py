@@ -7,7 +7,7 @@ import requests
 from urllib.parse import urlencode
 
 from fastapi import FastAPI, Request, Body
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
@@ -1219,6 +1219,276 @@ def confirmar_pedido_bling(venda_id: int):
         "mensagem": "Pedido confirmado como gerado no Bling.",
         "pedido": dict(pedido_atualizado)
     }
+
+@app.get("/pedido/{venda_id}", response_class=HTMLResponse)
+def pagina_pedido_cliente(venda_id: int):
+    conexao = sqlite3.connect(BANCO)
+    conexao.row_factory = sqlite3.Row
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT *
+        FROM vendas
+        WHERE id = ?
+        LIMIT 1
+    """, (venda_id,))
+    venda = cursor.fetchone()
+
+    if not venda:
+        conexao.close()
+        return "<h1>Pedido não encontrado</h1>"
+
+    cursor.execute("""
+        SELECT descricao, quantidade, preco_unitario, subtotal
+        FROM itens_venda
+        WHERE venda_id = ?
+    """, (venda_id,))
+    itens = cursor.fetchall()
+
+    cursor.execute("""
+        SELECT cliente_nome, telefone, retirado_por, saldo_anterior, saldo_atual
+        FROM fiados
+        WHERE venda_id = ?
+        LIMIT 1
+    """, (venda_id,))
+    fiado = cursor.fetchone()
+
+    cursor.execute("""
+        SELECT bling_id
+        FROM bling_sync
+        WHERE venda_id = ?
+        LIMIT 1
+    """, (venda_id,))
+    bling = cursor.fetchone()
+
+    conexao.close()
+
+    cliente_nome = "Consumidor Final"
+    telefone = ""
+    retirado_por = ""
+    bloco_fiado = ""
+
+    if fiado:
+        cliente_nome = fiado["cliente_nome"] or "Cliente"
+        telefone = fiado["telefone"] or ""
+        retirado_por = fiado["retirado_por"] or ""
+
+        bloco_fiado = f"""
+        <div class="box destaque">
+            <strong>Informações do fiado</strong><br>
+            Retirado por: {retirado_por}<br>
+            Saldo anterior: R$ {moeda(fiado["saldo_anterior"])}<br>
+            Compra atual: R$ {moeda(venda["valor_total"])}<br>
+            Saldo atual: R$ {moeda(fiado["saldo_atual"])}
+        </div>
+        """
+
+    linhas_itens = ""
+
+    for item in itens:
+        linhas_itens += f"""
+        <tr>
+            <td>{item["descricao"]}</td>
+            <td>{item["quantidade"]}</td>
+            <td>R$ {moeda(item["preco_unitario"])}</td>
+            <td>R$ {moeda(item["subtotal"])}</td>
+        </tr>
+        """
+
+    bling_id = bling["bling_id"] if bling and bling["bling_id"] else "Ainda não sincronizado"
+
+    html = f"""
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Pedido #{venda_id} - Star Limp</title>
+
+        <style>
+            body {{
+                margin: 0;
+                padding: 18px;
+                font-family: Arial, Helvetica, sans-serif;
+                background: linear-gradient(180deg, #020617, #0f172a);
+                color: #0f172a;
+            }}
+
+            .card {{
+                max-width: 760px;
+                margin: auto;
+                background: #ffffff;
+                border-radius: 22px;
+                padding: 24px;
+                box-shadow: 0 20px 50px rgba(0,0,0,.35);
+            }}
+
+            .topo {{
+                text-align: center;
+                padding-bottom: 18px;
+                border-bottom: 1px solid #e5e7eb;
+            }}
+
+            .empresa {{
+                font-size: 24px;
+                font-weight: 900;
+                color: #020617;
+            }}
+
+            .sub {{
+                color: #64748b;
+                margin-top: 6px;
+            }}
+
+            .box {{
+                background: #f8fafc;
+                border: 1px solid #e5e7eb;
+                border-radius: 14px;
+                padding: 14px;
+                margin-top: 16px;
+                line-height: 1.6;
+            }}
+
+            .destaque {{
+                background: #ecfdf5;
+                border-color: #86efac;
+            }}
+
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 18px;
+            }}
+
+            th {{
+                background: #020617;
+                color: white;
+                padding: 10px;
+                font-size: 13px;
+                text-align: left;
+            }}
+
+            td {{
+                padding: 10px;
+                border-bottom: 1px solid #e5e7eb;
+                font-size: 14px;
+            }}
+
+            .total {{
+                text-align: right;
+                margin-top: 22px;
+                font-size: 26px;
+                font-weight: 900;
+            }}
+
+            .acoes {{
+                display: flex;
+                gap: 10px;
+                margin-top: 22px;
+                flex-wrap: wrap;
+            }}
+
+            .btn {{
+                flex: 1;
+                text-align: center;
+                text-decoration: none;
+                padding: 13px;
+                border-radius: 14px;
+                font-weight: bold;
+                border: none;
+                cursor: pointer;
+                font-size: 15px;
+            }}
+
+            .btn-whats {{
+                background: #22c55e;
+                color: white;
+            }}
+
+            .btn-print {{
+                background: #020617;
+                color: white;
+            }}
+
+            .rodape {{
+                text-align: center;
+                margin-top: 24px;
+                color: #64748b;
+                font-size: 14px;
+            }}
+
+            @media print {{
+                body {{
+                    background: white;
+                    padding: 0;
+                }}
+
+                .card {{
+                    box-shadow: none;
+                    border-radius: 0;
+                }}
+
+                .acoes {{
+                    display: none;
+                }}
+            }}
+        </style>
+    </head>
+
+    <body>
+        <div class="card">
+            <div class="topo">
+                <div class="empresa">STAR LIMP FRAGRÂNCIAS E PRODUTOS</div>
+                <div class="sub">Pedido / Comprovante de compra</div>
+                <div class="sub">WhatsApp: (62) 98436-2772</div>
+            </div>
+
+            <div class="box">
+                <strong>Pedido Star Limp:</strong> #{venda_id}<br>
+                <strong>Pedido Bling:</strong> {bling_id}<br>
+                <strong>Data:</strong> {venda["data_hora"]}<br>
+                <strong>Pagamento:</strong> {venda["forma_pagamento"]}<br>
+                <strong>Cliente:</strong> {cliente_nome}<br>
+                <strong>Telefone:</strong> {telefone}
+            </div>
+
+            {bloco_fiado}
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Qtd</th>
+                        <th>Unit.</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {linhas_itens}
+                </tbody>
+            </table>
+
+            <div class="total">
+                Total: R$ {moeda(venda["valor_total"])}
+            </div>
+
+            <div class="acoes">
+                <button class="btn btn-print" onclick="window.print()">Imprimir / Salvar PDF</button>
+                <a class="btn btn-whats" href="https://wa.me/5562984362772" target="_blank">
+                    Falar com a Star Limp
+                </a>
+            </div>
+
+            <div class="rodape">
+                Obrigado pela preferência!<br>
+                Star Limp Fragrâncias e Produtos
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+    return html
 
 @app.get("/")
 def inicio(request: Request):
