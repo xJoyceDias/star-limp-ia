@@ -1078,6 +1078,67 @@ def consultar_pedido_bling(bling_id: str):
         "resposta_bling": resposta_json
     }
 
+@app.get("/bling/pdf-pedido/{venda_id}")
+def obter_pdf_pedido_bling(venda_id: int):
+    conexao = sqlite3.connect(BANCO)
+    conexao.row_factory = sqlite3.Row
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT bling_pedido_id, bling_venda_id, status
+        FROM bling_pedidos
+        WHERE venda_id = ?
+        LIMIT 1
+    """, (venda_id,))
+
+    pedido = cursor.fetchone()
+    conexao.close()
+
+    if not pedido:
+        return {
+            "sucesso": False,
+            "mensagem": "Pedido não encontrado na tabela bling_pedidos."
+        }
+
+    bling_id = pedido["bling_pedido_id"] or pedido["bling_venda_id"]
+
+    if not bling_id:
+        return {
+            "sucesso": False,
+            "mensagem": "Pedido ainda não possui ID do Bling."
+        }
+
+    access_token = obter_token_bling()
+
+    if not access_token:
+        return {
+            "sucesso": False,
+            "mensagem": "Token do Bling não encontrado."
+        }
+
+    url = f"https://api.bling.com.br/Api/v3/pedidos/vendas/{bling_id}/pdf"
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Accept": "application/json"
+    }
+
+    resposta = requests.get(url, headers=headers)
+
+    try:
+        resposta_json = resposta.json()
+    except Exception:
+        resposta_json = {"resposta": resposta.text}
+
+    return {
+        "sucesso": resposta.status_code in [200, 201],
+        "status_code": resposta.status_code,
+        "venda_id": venda_id,
+        "bling_id": bling_id,
+        "url_consultada": url,
+        "resposta_bling": resposta_json
+    }
+
 @app.post("/bling/confirmar-pedido/{venda_id}")
 def confirmar_pedido_bling(venda_id: int):
     conexao = sqlite3.connect(BANCO)
