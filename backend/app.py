@@ -1222,6 +1222,7 @@ def confirmar_pedido_bling(venda_id: int):
 
 @app.get("/pedido/{venda_id}", response_class=HTMLResponse)
 def pagina_pedido_cliente(venda_id: int):
+
     conexao = sqlite3.connect(BANCO)
     conexao.row_factory = sqlite3.Row
     cursor = conexao.cursor()
@@ -1232,6 +1233,7 @@ def pagina_pedido_cliente(venda_id: int):
         WHERE id = ?
         LIMIT 1
     """, (venda_id,))
+
     venda = cursor.fetchone()
 
     if not venda:
@@ -1243,40 +1245,44 @@ def pagina_pedido_cliente(venda_id: int):
         FROM itens_venda
         WHERE venda_id = ?
     """, (venda_id,))
+
     itens = cursor.fetchall()
 
     cursor.execute("""
-        SELECT cliente_nome, telefone, retirado_por, saldo_anterior, saldo_atual
+        SELECT cliente_nome,
+               telefone,
+               retirado_por,
+               saldo_anterior,
+               saldo_atual
         FROM fiados
         WHERE venda_id = ?
         LIMIT 1
     """, (venda_id,))
-    fiado = cursor.fetchone()
 
-    cursor.execute("""
-        SELECT bling_id
-        FROM bling_sync
-        WHERE venda_id = ?
-        LIMIT 1
-    """, (venda_id,))
-    bling = cursor.fetchone()
+    fiado = cursor.fetchone()
 
     conexao.close()
 
+    try:
+        data_formatada = datetime.strptime(
+            venda["data_hora"],
+            "%Y-%m-%d %H:%M:%S"
+        ).strftime("%d/%m/%Y às %H:%M")
+    except:
+        data_formatada = venda["data_hora"]
+
     cliente_nome = "Consumidor Final"
     telefone = ""
-    retirado_por = ""
     bloco_fiado = ""
 
     if fiado:
         cliente_nome = fiado["cliente_nome"] or "Cliente"
         telefone = fiado["telefone"] or ""
-        retirado_por = fiado["retirado_por"] or ""
 
         bloco_fiado = f"""
         <div class="box destaque">
-            <strong>Informações do fiado</strong><br>
-            Retirado por: {retirado_por}<br>
+            <strong>Informações do Fiado</strong><br>
+            Retirado por: {fiado["retirado_por"]}<br>
             Saldo anterior: R$ {moeda(fiado["saldo_anterior"])}<br>
             Compra atual: R$ {moeda(venda["valor_total"])}<br>
             Saldo atual: R$ {moeda(fiado["saldo_atual"])}
@@ -1295,159 +1301,160 @@ def pagina_pedido_cliente(venda_id: int):
         </tr>
         """
 
-    bling_id = bling["bling_id"] if bling and bling["bling_id"] else "Ainda não sincronizado"
-
     html = f"""
     <!DOCTYPE html>
     <html lang="pt-BR">
+
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Pedido #{venda_id} - Star Limp</title>
+
+        <title>Pedido #{venda_id}</title>
 
         <style>
+
+        body {{
+            margin: 0;
+            padding: 20px;
+            background:
+                radial-gradient(circle at top, rgba(22,131,255,.15), transparent 35%),
+                linear-gradient(180deg,#020617,#0f172a);
+            font-family: Arial, Helvetica, sans-serif;
+        }}
+
+        .card {{
+            max-width: 850px;
+            margin: auto;
+            background: white;
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,.35);
+        }}
+
+        .topo {{
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }}
+
+        .logo {{
+            width: 130px;
+            margin-bottom: 10px;
+        }}
+
+        .empresa {{
+            font-size: 28px;
+            font-weight: 900;
+            color: #020617;
+        }}
+
+        .sub {{
+            color: #64748b;
+            margin-top: 6px;
+        }}
+
+        .box {{
+            margin-top: 18px;
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            padding: 15px;
+            line-height: 1.7;
+        }}
+
+        .destaque {{
+            background: #ecfdf5;
+            border-color: #86efac;
+        }}
+
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 25px;
+        }}
+
+        th {{
+            background: #020617;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }}
+
+        td {{
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }}
+
+        .total {{
+            text-align: right;
+            margin-top: 20px;
+            font-size: 28px;
+            font-weight: bold;
+        }}
+
+        .acoes {{
+            margin-top: 25px;
+            text-align: center;
+        }}
+
+        .btn {{
+            background: #020617;
+            color: white;
+            border: none;
+            padding: 14px 22px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+        }}
+
+        .rodape {{
+            text-align: center;
+            margin-top: 25px;
+            color: #64748b;
+        }}
+
+        @media print {{
+
             body {{
-                margin: 0;
-                padding: 18px;
-                font-family: Arial, Helvetica, sans-serif;
-                background: linear-gradient(180deg, #020617, #0f172a);
-                color: #0f172a;
+                background: white;
+                padding: 0;
             }}
 
             .card {{
-                max-width: 760px;
-                margin: auto;
-                background: #ffffff;
-                border-radius: 22px;
-                padding: 24px;
-                box-shadow: 0 20px 50px rgba(0,0,0,.35);
-            }}
-
-            .topo {{
-                text-align: center;
-                padding-bottom: 18px;
-                border-bottom: 1px solid #e5e7eb;
-            }}
-
-            .empresa {{
-                font-size: 24px;
-                font-weight: 900;
-                color: #020617;
-            }}
-
-            .sub {{
-                color: #64748b;
-                margin-top: 6px;
-            }}
-
-            .box {{
-                background: #f8fafc;
-                border: 1px solid #e5e7eb;
-                border-radius: 14px;
-                padding: 14px;
-                margin-top: 16px;
-                line-height: 1.6;
-            }}
-
-            .destaque {{
-                background: #ecfdf5;
-                border-color: #86efac;
-            }}
-
-            table {{
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 18px;
-            }}
-
-            th {{
-                background: #020617;
-                color: white;
-                padding: 10px;
-                font-size: 13px;
-                text-align: left;
-            }}
-
-            td {{
-                padding: 10px;
-                border-bottom: 1px solid #e5e7eb;
-                font-size: 14px;
-            }}
-
-            .total {{
-                text-align: right;
-                margin-top: 22px;
-                font-size: 26px;
-                font-weight: 900;
+                box-shadow: none;
+                border-radius: 0;
             }}
 
             .acoes {{
-                display: flex;
-                gap: 10px;
-                margin-top: 22px;
-                flex-wrap: wrap;
+                display: none;
             }}
+        }}
 
-            .btn {{
-                flex: 1;
-                text-align: center;
-                text-decoration: none;
-                padding: 13px;
-                border-radius: 14px;
-                font-weight: bold;
-                border: none;
-                cursor: pointer;
-                font-size: 15px;
-            }}
-
-            .btn-whats {{
-                background: #22c55e;
-                color: white;
-            }}
-
-            .btn-print {{
-                background: #020617;
-                color: white;
-            }}
-
-            .rodape {{
-                text-align: center;
-                margin-top: 24px;
-                color: #64748b;
-                font-size: 14px;
-            }}
-
-            @media print {{
-                body {{
-                    background: white;
-                    padding: 0;
-                }}
-
-                .card {{
-                    box-shadow: none;
-                    border-radius: 0;
-                }}
-
-                .acoes {{
-                    display: none;
-                }}
-            }}
         </style>
     </head>
 
     <body>
+
         <div class="card">
+
             <div class="topo">
-                <div class="empresa">STAR LIMP FRAGRÂNCIAS E PRODUTOS</div>
-                <div class="sub">Pedido / Comprovante de compra</div>
-                <div class="sub">WhatsApp: (62) 98436-2772</div>
+
+                <img src="/static/logostarlimp.png.png" class="logo">
+
+                <div class="empresa">
+                    STAR LIMP FRAGRÂNCIAS E PRODUTOS
+                </div>
+
+                <div class="sub">
+                    Pedido / Comprovante de Compra
+                </div>
+
             </div>
 
             <div class="box">
-                <strong>Pedido Star Limp:</strong> #{venda_id}<br>
-                <strong>Pedido Bling:</strong> {bling_id}<br>
-                <strong>Data:</strong> {venda["data_hora"]}<br>
-                <strong>Pagamento:</strong> {venda["forma_pagamento"]}<br>
+                <strong>Pedido:</strong> #{venda_id}<br>
+                <strong>Data:</strong> {data_formatada}<br>
+                <strong>Forma de Pagamento:</strong> {venda["forma_pagamento"]}<br>
                 <strong>Cliente:</strong> {cliente_nome}<br>
                 <strong>Telefone:</strong> {telefone}
             </div>
@@ -1455,17 +1462,20 @@ def pagina_pedido_cliente(venda_id: int):
             {bloco_fiado}
 
             <table>
+
                 <thead>
                     <tr>
                         <th>Produto</th>
                         <th>Qtd</th>
-                        <th>Unit.</th>
+                        <th>Valor Unitário</th>
                         <th>Subtotal</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     {linhas_itens}
                 </tbody>
+
             </table>
 
             <div class="total">
@@ -1473,17 +1483,17 @@ def pagina_pedido_cliente(venda_id: int):
             </div>
 
             <div class="acoes">
-                <button class="btn btn-print" onclick="window.print()">Imprimir / Salvar PDF</button>
-                <a class="btn btn-whats" href="https://wa.me/5562984362772" target="_blank">
-                    Falar com a Star Limp
-                </a>
+                <button class="btn" onclick="window.print()">
+                    Imprimir / Salvar PDF
+                </button>
             </div>
 
             <div class="rodape">
-                Obrigado pela preferência!<br>
-                Star Limp Fragrâncias e Produtos
+                Obrigado pela preferência ❤️
             </div>
+
         </div>
+
     </body>
     </html>
     """
