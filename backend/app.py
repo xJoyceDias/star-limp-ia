@@ -1352,16 +1352,17 @@ def pagina_pedido_cliente(venda_id: int):
         }}
 
         .logo {{
-            width: 180px;
-            max-width: 85%;
-            margin-bottom: 12px;
+            width: 260px;
+            max-width: 90%;
+            margin-bottom: 8px;
         }}
 
         .empresa {{
-            font-size: 24px;
-            font-weight: 900;
-            color: #020617;
-            letter-spacing:.5px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #64748b;
+            letter-spacing:2px;
+            text-transform:uppercase;
         }}
 
         .sub {{
@@ -1501,11 +1502,11 @@ def pagina_pedido_cliente(venda_id: int):
                 <img src="/static/logo.png?v=2" class="logo">
 
                 <div class="empresa">
-                    STAR LIMP FRAGRÂNCIAS E PRODUTOS
+                    Star Limp Fragrâncias e Produtos
                 </div>
 
                 <div class="sub">
-                    Pedido / Comprovante de Compra
+                    Pedido Nº #{venda_id}
                 </div>
 
                 <div class="status">
