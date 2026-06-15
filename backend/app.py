@@ -1553,7 +1553,8 @@ def pagina_pedido_cliente(venda_id: int):
             }}
         
             .total-valor{{
-                font-size:34px;
+                font-size:24px !important;
+                font-weight:700;;
             }}
         }}
 
