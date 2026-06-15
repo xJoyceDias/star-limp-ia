@@ -1445,26 +1445,34 @@ def pagina_pedido_cliente(venda_id: int):
         table {{
             width: 100%;
             border-collapse: collapse;
-            margin-top: 25px;
+            margin-top: 22px;
+            background:white;
         }}
 
         th {{
-            background: #020617;
-            color: white;
-            padding:14px;
-            font-size:14px;
+            background: #f1f5f9;
+            color: #0f172a;
+            padding:12px;
+            font-size:13px;
             text-transform:uppercase;
+            border:1px solid #e5e7eb;
         }}
 
         td {{
-            padding: 14px;
-            border-bottom: 1px solid #e5e7eb;
-            font-size:15px;
+            background:white;
+            color:#020617;
+            padding:12px;
+            border:1px solid #e5e7eb;
+            font-size:14px;
         }}
 
-        tbody tr:hover{{
-            background:#f8fafc;
-
+        body{{
+            margin:0;
+            padding:20px;
+            min-height:100vh;
+            background:#f3f6fb;
+            font-family:Arial, Helvetica, sans-serif;
+            color:#020617;
         }}
 
         .total {{
