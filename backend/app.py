@@ -1419,17 +1419,22 @@ def pagina_pedido_cliente(venda_id: int):
             font-size:15px;
         }}
 
-        .pedido-resumo{{
-            margin-top:20px;
-            background:#f8fafc;
-            border:1px solid #e5e7eb;
-            border-radius:18px;
-            padding:18px 22px;
-            line-height:2;
+        .pedido-detalhes{{
+            margin-top:25px;
+            display:flex;
+            flex-wrap:wrap;
+            gap:20px;
+            padding-bottom:20px;
+            border-bottom:1px solid #e5e7eb;
+    }}
+
+        .pedido-detalhes span{{
+            font-size:15px;
+            color:#334155;
         }}
 
-        .pedido-resumo strong{{
-            color:#334155;
+        .pedido-detalhes strong{{
+            color:#020617;
         }}
         
         .destaque {{
@@ -1550,29 +1555,13 @@ def pagina_pedido_cliente(venda_id: int):
                 Pedido Nº #{venda_id}
 </div>
 
-            </div>
-
-        <div class="pedido-resumo">
-
-        <div>
-            <strong>Cliente:</strong>
-            {cliente_nome}
     </div>
 
-    <div>
-            <strong>Telefone:</strong>
-            {telefone if telefone else "Não informado"}
-    </div>
-
-    <div>
-            <strong>Pagamento:</strong>
-            {venda["forma_pagamento"].upper()}
-    </div>
-
-    <div>
-            <strong>Data:</strong>
-            {data_formatada}
-    </div>
+    <div class="pedido-detalhes">
+        <span><strong>Cliente:</strong> {cliente_nome}</span>
+        <span><strong>Telefone:</strong> {telefone if telefone else "Não informado"}</span>
+        <span><strong>Pagamento:</strong> {venda["forma_pagamento"].upper()}</span>
+        <span><strong>Data:</strong> {data_formatada}</span>
 
 </div>
 
