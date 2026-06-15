@@ -1281,7 +1281,7 @@ def pagina_pedido_cliente(venda_id: int):
 
         bloco_fiado = f"""
         <div class="box destaque">
-            <strong>Informações do Fiado</strong><br>
+            <strong>Conta Cliente</strong><br>
             Retirado por: {fiado["retirado_por"]}<br>
             Saldo anterior: R$ {moeda(fiado["saldo_anterior"])}<br>
             Compra atual: R$ {moeda(venda["valor_total"])}<br>
