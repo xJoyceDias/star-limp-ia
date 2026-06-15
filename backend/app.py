@@ -1283,9 +1283,9 @@ def pagina_pedido_cliente(venda_id: int):
         <div class="box destaque">
             <strong>Conta Cliente</strong><br>
             Retirado por: {fiado["retirado_por"]}<br>
-            Saldo anterior: R$ {moeda(fiado["saldo_anterior"])}<br>
+            Saldo devedor anterior: R$ {moeda(fiado["saldo_anterior"])}<br>
             Compra atual: R$ {moeda(venda["valor_total"])}<br>
-            Saldo atual: R$ {moeda(fiado["saldo_atual"])}
+            Saldo devedor atual: R$ {moeda(fiado["saldo_atual"])}
         </div>
         """
 
