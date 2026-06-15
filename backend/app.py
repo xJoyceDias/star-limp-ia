@@ -1484,12 +1484,14 @@ def pagina_pedido_cliente(venda_id: int):
         }}
 
         .total-label{{
+            font-size:12px;
             color:#64748b;
-            font-size:14px;
+            text-transform:uppercase;
+            letter-spacing:1px;
         }}
 
         .total-valor{{
-            font-size:30px;
+            font-size:20px;
             font-weight:800;
             color:#020617;
         }}
