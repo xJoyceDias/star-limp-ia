@@ -116,6 +116,42 @@ h1{
     font-size:14px;
 }
 
+.acoes-venda{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:14px;
+}
+
+.btn-pedido,
+.btn-whats{
+    text-decoration:none;
+    text-align:center;
+    padding:12px;
+    border-radius:14px;
+    font-size:13px;
+    font-weight:900;
+    transition:.25s;
+}
+
+.btn-pedido{
+    background:#1683ff;
+    color:white;
+}
+
+.btn-pedido:hover{
+    background:#0f6ed8;
+}
+
+.btn-whats{
+    background:#22c55e;
+    color:white;
+}
+
+.btn-whats:hover{
+    background:#16a34a;
+}
+
 details{
     margin-top:14px;
     background:#08111d;
@@ -237,11 +273,27 @@ summary{
                     R$ {{ "%.2f"|format(venda[2] or 0)|replace(".", ",") }}
                 </div>
 
-                <div class="forma">
-                    Forma: {{ venda[3] or "Não informado" }}
-                </div>
+            <div class="forma">
+                Forma: {{ venda[3] or "Não informado" }}
+        </div>
 
-                <details>
+    <div class="acoes-venda">
+
+        <a class="btn-pedido"
+            href="/pedido/{{ venda[0] }}"
+            target="_blank">
+            📄 Ver Pedido
+        </a>
+
+        <a class="btn-whats"
+            target="_blank"
+            href="https://wa.me/?text=Olá!%20👋%0A%0ASegue%20o%20pedido%20da%20Star%20Limp:%0A%0Ahttps://starlimpia-production.up.railway.app/pedido/{{ venda[0] }}">
+            📲 Enviar Pedido
+    </a>
+
+    </div>
+
+        <details>
                     <summary>Ver itens vendidos</summary>
 
                     {% for item in registro.itens %}
