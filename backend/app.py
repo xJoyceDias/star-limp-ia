@@ -1479,8 +1479,10 @@ def pagina_pedido_cliente(venda_id: int):
         }}
 
         .total {{
-            text-align: right;
-            margin-top: 25px;
+            text-align:center;
+            margin-top:20px;
+            padding-top:15px;
+            border-top:1px solid #e5e7eb;
         }}
 
         .total-label{{
