@@ -1383,8 +1383,8 @@ def pagina_pedido_cliente(venda_id: int):
         }}
 
         .pedido-titulo{{
-            margin-top:10px;
-            font-size:20px;
+            margin-top:08px;
+            font-size:16px;
             font-weight:700;
             color:#334155;
         }}
