@@ -1383,8 +1383,8 @@ def pagina_pedido_cliente(venda_id: int):
         }}
 
         .pedido-titulo{{
-            margin-top:16px;
-            font-size:26px;
+            margin-top:12px;
+            font-size:22px;
             font-weight:700;
             color:#334155;
         }}
@@ -1562,29 +1562,29 @@ def pagina_pedido_cliente(venda_id: int):
 
             </div>
 
-            <div class="pedido-info">
-
-                <div>
-                    <strong>Pedido</strong>
-                    #{venda_id}
-            </div>
-
-            <div>
-                <strong>Pagamento</strong>
-                    {venda["forma_pagamento"].upper()}
-            </div>
+        <div class="pedido-info">
 
             <div>
                 <strong>Cliente</strong>
-                    {cliente_nome}
-            </div>
-
-            <div>
-                <strong>Data</strong>
-                    {data_formatada}
-            </div>
-
+                {cliente_nome}
         </div>
+
+        <div>
+            <strong>Telefone</strong>
+            {telefone if telefone else "Não informado"}
+        </div>
+
+        <div>
+            <strong>Pagamento</strong>
+            {venda["forma_pagamento"].upper()}
+        </div>
+
+        <div>
+            <strong>Data</strong>
+            {data_formatada}
+        </div>
+
+    </div>
 
             {bloco_fiado}
 
