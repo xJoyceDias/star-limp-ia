@@ -94,6 +94,34 @@ th{
     text-overflow:ellipsis;
 }
 
+.acoes{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+}
+
+.btn-acao{
+    text-decoration:none;
+    padding:8px 10px;
+    border-radius:10px;
+    font-size:12px;
+    font-weight:900;
+    color:white;
+    white-space:nowrap;
+}
+
+.btn-pedido{
+    background:#1683ff;
+}
+
+.btn-whats{
+    background:#22c55e;
+}
+
+.btn-bling{
+    background:#6366f1;
+}
+
 .vazio{
     text-align:center;
     color:#94a3b8;
@@ -141,6 +169,7 @@ th{
                 <th>Criado em</th>
                 <th>Sincronizado em</th>
                 <th>Erro</th>
+                <th>Ações</th>
             </tr>
         </thead>
         <tbody>
@@ -153,11 +182,36 @@ th{
                     <td>{{ item["data_criacao"] or "-" }}</td>
                     <td>{{ item["data_sincronizacao"] or "-" }}</td>
                     <td class="erro">{{ item["erro"] or "-" }}</td>
+                    <td>
+    <div class="acoes">
+
+        <a class="btn-acao btn-pedido"
+           href="/pedido/{{ item['venda_id'] }}"
+           target="_blank">
+            📄 Pedido
+        </a>
+
+        <a class="btn-acao btn-whats"
+           target="_blank"
+           href="https://wa.me/?text=Olá!%20👋%0A%0ASegue%20o%20pedido%20da%20Star%20Limp:%0A%0Ahttps://starlimpia-production.up.railway.app/pedido/{{ item['venda_id'] }}">
+            📲 Enviar
+        </a>
+
+        {% if item["bling_id"] %}
+            <a class="btn-acao btn-bling"
+               href="/bling/consultar-pedido/{{ item['bling_id'] }}"
+               target="_blank">
+                🔎 Bling
+            </a>
+        {% endif %}
+
+    </div>
+</td>
                 </tr>
                 {% endfor %}
             {% else %}
                 <tr>
-                    <td colspan="6" class="vazio">Nenhum registro de sincronização encontrado.</td>
+                    <td colspan="7" class="vazio">Nenhum registro de sincronização encontrado.</td>
                 </tr>
             {% endif %}
         </tbody>
