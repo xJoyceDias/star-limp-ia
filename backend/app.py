@@ -1892,6 +1892,8 @@ def finalizar_venda(dados: dict = Body(...)):
                 f"STAR LIMP FRAGRÂNCIAS E PRODUTOS\n\n"
                 f"Olá {cliente_nome}!\n\n"
                 f"Sua compra foi registrada com sucesso.\n\n"
+                f"Acesse seu pedido:\n"
+                f"https://starlimpia-production.up.railway.app/pedido/{venda_id}\n\n"
                 f"Data: {data_formatada}\n"
                 f"Retirado por: {retirado_por}\n\n"
                 f"PRODUTOS RETIRADOS:\n\n"
