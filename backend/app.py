@@ -1419,27 +1419,17 @@ def pagina_pedido_cliente(venda_id: int):
             font-size:15px;
         }}
 
-        .pedido-info{{
+        .pedido-resumo{{
             margin-top:20px;
-            display:grid;
-            grid-template-columns:repeat(2,1fr);
-            gap:12px;
-        }}
-
-        .pedido-info div{{
             background:#f8fafc;
             border:1px solid #e5e7eb;
-            border-radius:12px;
-            padding:12px 14px;
+            border-radius:18px;
+            padding:18px 22px;
+            line-height:2;
         }}
 
-        .pedido-info strong{{
-            display:block;
-            color:#64748b;
-            font-size:12px;
-            margin-bottom:4px;
-            text-transform:uppercase;
-            letter-spacing:.5px;
+        .pedido-resumo strong{{
+            color:#334155;
         }}
         
         .destaque {{
@@ -1562,27 +1552,29 @@ def pagina_pedido_cliente(venda_id: int):
 
             </div>
 
-        <div class="pedido-info">
-
-            <div>
-                <strong>Cliente</strong>
-                {cliente_nome}
-        </div>
+        <div class="pedido-resumo">
 
         <div>
-            <strong>Telefone</strong>
+            <strong>Cliente:</strong>
+            {cliente_nome}
+    </div>
+
+    <div>
+            <strong>Telefone:</strong>
             {telefone if telefone else "Não informado"}
-        </div>
+    </div>
 
-        <div>
-            <strong>Pagamento</strong>
+    <div>
+            <strong>Pagamento:</strong>
             {venda["forma_pagamento"].upper()}
-        </div>
+    </div>
 
-        <div>
-            <strong>Data</strong>
+    <div>
+            <strong>Data:</strong>
             {data_formatada}
-        </div>
+    </div>
+
+</div>
 
     </div>
 
