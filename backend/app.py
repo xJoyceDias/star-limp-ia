@@ -1533,13 +1533,25 @@ def pagina_pedido_cliente(venda_id: int):
             }}
 
             .card {{
-                box-shadow: none;
-                border-radius: 0;
-                max-width:none;
+                width:100%;
+                max-width:760px;
+                margin:0 auto;
+                box-shadow:none;
+                border:none;
+                border-radius:0;
+                padding:20px;
             }}
 
             .acoes {{
                 display: none;
+            }}
+
+            .logo{{
+                width:200px;
+            }}
+        
+            .total-valor{{
+                font-size:34px;
             }}
         }}
 
