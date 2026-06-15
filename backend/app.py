@@ -1421,20 +1421,23 @@ def pagina_pedido_cliente(venda_id: int):
 
         .pedido-detalhes{{
             margin-top:25px;
-            display:flex;
-            flex-wrap:wrap;
-            gap:20px;
-            padding-bottom:20px;
-            border-bottom:1px solid #e5e7eb;
-    }}
+            display:grid;
+            grid-template-columns:repeat(2,1fr);
+            gap:12px;
+        }}
 
-        .pedido-detalhes span{{
-            font-size:15px;
-            color:#334155;
+        .pedido-detalhes div{{
+            background:white;
+            border:1px solid #e5e7eb;
+            border-radius:10px;
+            padding:14px;
         }}
 
         .pedido-detalhes strong{{
-            color:#020617;
+            color:#64748b;
+            font-size:12px;
+            text-transform:uppercase;
+            letter-spacing:.5px;
         }}
         
         .destaque {{
