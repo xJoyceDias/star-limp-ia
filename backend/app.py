@@ -1507,8 +1507,8 @@ def pagina_pedido_cliente(venda_id: int):
         }}
 
         .btn {{
-            bbackground:#020617;
-            color:white;
+            background:#020617;
+            color:white !important;
             border:none;
             padding:13px 22px;
             border-radius:10px;
@@ -1517,6 +1517,12 @@ def pagina_pedido_cliente(venda_id: int):
             font-weight:bold;
             transition:.25s;
         }}
+
+        .btn:hover{{
+    background:#0f172a;
+    color:white !important;
+        }}
+
         .btn-whats{{
             background:#22c55e;
             color:white;
@@ -1656,7 +1662,7 @@ def pagina_pedido_cliente(venda_id: int):
         <a
             class="btn-whats"
             target="_blank"
-            href="https://wa.me/?text=Segue%20o%20pedido%20da%20Star%20Limp:%20https://starlimpia-production.up.railway.app/pedido/{venda_id}"
+            href="https://wa.me/?text=Olá!%20%F0%9F%91%8B%0A%0ASegue%20o%20seu%20pedido%20da%20Star%20Limp:%0A%0Ahttps://starlimpia-production.up.railway.app/pedido/{venda_id}%0A%0AQualquer%20dúvida,%20estamos%20à%20disposição."
         >
             Enviar Pedido
     </a>
