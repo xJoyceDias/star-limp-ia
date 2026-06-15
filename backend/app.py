@@ -1501,19 +1501,30 @@ def pagina_pedido_cliente(venda_id: int):
         .acoes {{
             display:flex;
             justify-content:center;
-            margin-top:30px;
+            gap:12px;
+            margin-top:25px;
+            flex-wrap:wrap;
         }}
 
         .btn {{
-            bbackground:#1683ff;
+            bbackground:#020617;
             color:white;
             border:none;
-            padding:16px 30px;
-            border-radius:999px;
+            padding:13px 22px;
+            border-radius:10px;
             cursor:pointer;
-            font-size:16px;
+            font-size:14px;
             font-weight:bold;
             transition:.25s;
+        }}
+        .btn-whats{{
+            background:#22c55e;
+            color:white;
+            text-decoration:none;
+            padding:13px 22px;
+            border-radius:10px;
+            font-weight:bold;
+            font-size:14px;
         }}
 
         .btn:hover{{
@@ -1640,14 +1651,25 @@ def pagina_pedido_cliente(venda_id: int):
             </div>
         </div>
 
-            <div class="acoes">
-                <button class="btn" onclick="window.print()">
-                    Imprimir / Salvar PDF
-                </button>
+                <div class="acoes">
+
+        <a
+            class="btn-whats"
+            target="_blank"
+            href="https://wa.me/?text=Segue%20o%20pedido%20da%20Star%20Limp:%20https://starlimpia-production.up.railway.app/pedido/{venda_id}"
+        >
+            Enviar Pedido
+    </a>
+
+        <button class="btn" onclick="window.print()">
+            Imprimir PDF
+        </button>
+
+        </div>
             </div>
 
             <div class="rodape">
-                Obrigado pela preferência ❤️
+                Obrigado pela preferência!
             </div>
 
         </div>
