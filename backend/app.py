@@ -1351,20 +1351,44 @@ def pagina_pedido_cliente(venda_id: int):
             margin-top:20px;
         }}
 
-        .logo {{
-            width: 260px;
-            max-width: 90%;
-            margin-bottom: 8px;
+        .logo{{
+            width:300px;
+            max-width:92%;
+            margin-bottom:10px;
         }}
 
         .empresa {{
-            font-size:15px;
-            font-weight:700;
-            color:#1683ff;
-            letter-spacing:3px;
+            font-size:18px;
+            font-weight:900;
+            color:#020617;
+            letter-spacing:2px;
             text-transform:uppercase;
         }}
 
+        .contato-topo{{
+            margin-top:10px;
+            display:flex;
+            justify-content:center;
+            gap:10px;
+            flex-wrap:wrap;
+            color:#64748b;
+            font-size:14px;
+        }}
+
+        .contato-topo span{{
+            background:#f8fafc;
+            border:1px solid #e5e7eb;
+            border-radius:999px;
+            padding:7px 12px;
+        }}
+
+        .pedido-titulo{{
+            margin-top:16px;
+            font-size:26px;
+            font-weight:700;
+            color:#334155;
+        }}
+        
         .sub {{
             color: #64748b;
             margin-top: 8px;
@@ -1523,18 +1547,19 @@ def pagina_pedido_cliente(venda_id: int):
             <div class="topo">
 
                 <img src="/static/logo.png?v=2" class="logo">
+            <div class="empresa">
+                STAR LIMP FRAGRÂNCIAS E PRODUTOS
+            </div>
 
-                <div class="empresa">
-                    Star Limp Fragrâncias e Produtos
-                </div>
+            <div class="contato-topo">
+                <span>WhatsApp: (62) 98436-2772</span>
+                <span>Instagram: @starlimp_</span>
+            </div>
 
-                <div class="sub">
-                    Pedido Nº #{venda_id}
-                </div>
+            <div class="pedido-titulo">
+                Pedido Nº #{venda_id}
+</div>
 
-                <div class="status">
-                ✓ Pedido Confirmado
-                </div>
             </div>
 
             <div class="pedido-info">
