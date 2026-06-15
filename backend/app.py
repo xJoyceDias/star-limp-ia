@@ -1486,8 +1486,8 @@ def pagina_pedido_cliente(venda_id: int):
         }}
 
         .total-valor{{
-            font-size:42px;
-            font-weight:900;
+            font-size:30px;
+            font-weight:800;
             color:#020617;
         }}
 
@@ -1566,12 +1566,28 @@ def pagina_pedido_cliente(venda_id: int):
     </div>
 
     <div class="pedido-detalhes">
-        <span><strong>Cliente:</strong> {cliente_nome}</span>
-        <span><strong>Telefone:</strong> {telefone if telefone else "Não informado"}</span>
-        <span><strong>Pagamento:</strong> {venda["forma_pagamento"].upper()}</span>
-        <span><strong>Data:</strong> {data_formatada}</span>
 
-</div>
+        <div>
+            <strong>Cliente</strong><br>
+            {cliente_nome}
+    </div>
+
+    <div>
+            <strong>Telefone</strong><br>
+            {telefone if telefone else "Não informado"}
+    </div>
+
+    <div>
+            <strong>Pagamento</strong><br>
+            {venda["forma_pagamento"].upper()}
+    </div>
+
+    <div>
+            <strong>Data</strong><br>
+            {data_formatada}
+    </div>
+
+    </div>
 
     </div>
 
