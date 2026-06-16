@@ -318,6 +318,29 @@ button, .button-link {
                     <input type="text" id="retiradoPor" placeholder="Ex: Maria">
                 </div>
 
+            </div style="margin-top:16px;">
+                <label style="display:flex;align-items:center;gap:10px;color:#e5edf7;font-weight:bold;">
+                    <input
+                        type="checkbox"
+                        id="pedidoBlingSolicitado"
+                        onchange="mostrarCamposPedidoBling()"
+                        style="width:auto;"
+        >
+        Cliente solicitou pedido de venda
+    </label>
+</div>
+
+        <div id="dadosPedidoBling" class="hidden-fields">
+                <label>Nome do cliente para o pedido</label>
+                <input type="text" id="clienteNomeBling" placeholder="Ex: João Silva">
+
+                <label>Telefone / WhatsApp do cliente</label>
+                <input type="text" id="clienteTelefoneBling" placeholder="Ex: 62999999999">
+
+                <label>CPF/CNPJ se tiver</label>
+                <input type="text" id="clienteDocumentoBling" placeholder="Opcional">
+</div>
+
                 <button onclick="finalizarVenda()">
                     Finalizar venda
                 </button>
@@ -371,6 +394,17 @@ function mostrarCamposCliente() {
         dadosContaCliente.style.display = "block";
     } else {
         dadosContaCliente.style.display = "none";
+    }
+}
+
+function mostrarCamposPedidoBling() {
+    const solicitado = document.getElementById("pedidoBlingSolicitado").checked;
+    const dadosPedidoBling = document.getElementById("dadosPedidoBling");
+
+    if (solicitado) {
+        dadosPedidoBling.style.display = "block";
+    } else {
+        dadosPedidoBling.style.display = "none";
     }
 }
 
@@ -547,6 +581,16 @@ async function finalizarVenda() {
     }
 
     const formaPagamento = document.getElementById("formaPagamento").value;
+    const pedidoBlingSolicitado = document.getElementById("pedidoBlingSolicitado").checked;
+    const clienteNomeBling = document.getElementById("clienteNomeBling").value.trim();
+    const clienteTelefoneBling = document.getElementById("clienteTelefoneBling").value.trim();
+    const clienteDocumentoBling = document.getElementById("clienteDocumentoBling").value.trim();
+
+    if (pedidoBlingSolicitado && (!clienteNomeBling || !clienteTelefoneBling)) {
+        alert("Para gerar pedido de venda, informe o nome e telefone do cliente.");
+        return;
+}
+
 
     try {
         const resposta = await fetch("/finalizar-venda", {
@@ -560,7 +604,11 @@ async function finalizarVenda() {
                 forma_pagamento: formaPagamento,
                 cliente_nome: document.getElementById("clienteNome").value,
                 cliente_telefone: document.getElementById("clienteTelefone").value,
-                retirado_por: document.getElementById("retiradoPor").value
+                retirado_por: document.getElementById("retiradoPor").value,
+                pedido_bling_solicitado: pedidoBlingSolicitado ? 1 : 0,
+                cliente_nome_bling: clienteNomeBling,
+                cliente_telefone_bling: clienteTelefoneBling,
+                cliente_documento_bling: clienteDocumentoBling
             })
         });
 
