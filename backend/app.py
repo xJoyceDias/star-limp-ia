@@ -964,6 +964,43 @@ def bling_enviar_venda(venda_id: int):
         "resposta_bling": resposta_json
     }
 
+@app.post("/bling/sincronizar-pendentes")
+def sincronizar_pendentes_bling():
+
+    conexao = sqlite3.connect(BANCO)
+    conexao.row_factory = sqlite3.Row
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT venda_id
+        FROM bling_sync
+        WHERE status = 'PENDENTE'
+        ORDER BY id
+    """)
+
+    pendentes = cursor.fetchall()
+
+    conexao.close()
+
+    resultados = []
+
+    for item in pendentes:
+
+        venda_id = item["venda_id"]
+
+        resultado = bling_enviar_venda(venda_id)
+
+        resultados.append({
+            "venda_id": venda_id,
+            "resultado": resultado
+        })
+
+    return {
+        "sucesso": True,
+        "quantidade": len(resultados),
+        "resultados": resultados
+    }
+
 @app.post("/bling/gerar-pedido/{venda_id}")
 def gerar_pedido_bling(venda_id: int):
 
