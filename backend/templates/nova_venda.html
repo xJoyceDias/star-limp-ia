@@ -318,7 +318,7 @@ button, .button-link {
                     <input type="text" id="retiradoPor" placeholder="Ex: Maria">
                 </div>
 
-            </div style="margin-top:16px;">
+            <div style="margin-top:16px;">
                 <label style="display:flex;align-items:center;gap:10px;color:#e5edf7;font-weight:bold;">
                     <input
                         type="checkbox"
@@ -331,15 +331,23 @@ button, .button-link {
 </div>
 
         <div id="dadosPedidoBling" class="hidden-fields">
-                <label>Nome do cliente para o pedido</label>
-                <input type="text" id="clienteNomeBling" placeholder="Ex: João Silva">
+                <label>Cliente</label>
 
-                <label>Telefone / WhatsApp do cliente</label>
-                <input type="text" id="clienteTelefoneBling" placeholder="Ex: 62999999999">
+<input
+    type="text"
+    id="clienteNomeBling"
+    placeholder="Digite o nome do cliente"
+    oninput="buscarClientesPedido()"
+>
 
-                <label>CPF/CNPJ se tiver</label>
-                <input type="text" id="clienteDocumentoBling" placeholder="Opcional">
-</div>
+        <div id="sugestoesClientesPedido"></div>
+
+            <label>Telefone / WhatsApp do cliente</label>
+            <input type="text" id="clienteTelefoneBling" placeholder="Ex: 62999999999">
+
+            <label>CPF/CNPJ se tiver</label>
+            <input type="text" id="clienteDocumentoBling" placeholder="Opcional">
+        </div>
 
                 <button onclick="finalizarVenda()">
                     Finalizar venda
@@ -406,6 +414,54 @@ function mostrarCamposPedidoBling() {
     } else {
         dadosPedidoBling.style.display = "none";
     }
+}
+
+async function buscarClientesPedido() {
+
+    const termo =
+        document.getElementById("clienteNomeBling").value.trim();
+
+    const sugestoes =
+        document.getElementById("sugestoesClientesPedido");
+
+    if (termo.length < 2) {
+        sugestoes.innerHTML = "";
+        return;
+    }
+
+    const resposta =
+        await fetch(`/buscar-clientes?termo=${encodeURIComponent(termo)}`);
+
+    const clientes =
+        await resposta.json();
+
+    sugestoes.innerHTML = "";
+
+    clientes.forEach(cliente => {
+
+        const div =
+            document.createElement("div");
+
+        div.className = "sugestao";
+
+        div.innerHTML = `
+            <strong>${cliente.nome}</strong>
+            <span>${cliente.telefone || ""}</span>
+        `;
+
+        div.onclick = () => {
+
+            document.getElementById("clienteNomeBling").value =
+                cliente.nome;
+
+            document.getElementById("clienteTelefoneBling").value =
+                cliente.telefone || "";
+
+            sugestoes.innerHTML = "";
+        };
+
+        sugestoes.appendChild(div);
+    });
 }
 
 async function buscarProdutos() {

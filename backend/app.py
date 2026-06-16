@@ -2089,6 +2089,30 @@ def finalizar_venda(dados: dict = Body(...)):
     "bling": resultado_bling
 }
 
+@app.get("/buscar-clientes")
+def buscar_clientes(termo: str = ""):
+
+    conexao = sqlite3.connect(BANCO)
+    conexao.row_factory = sqlite3.Row
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT id, nome, telefone
+        FROM clientes
+        WHERE nome LIKE ?
+        ORDER BY nome
+        LIMIT 10
+    """, (f"%{termo}%",))
+
+    clientes = [
+        dict(cliente)
+        for cliente in cursor.fetchall()
+    ]
+
+    conexao.close()
+
+    return clientes
+
 @app.get("/clientes")
 def pagina_clientes(request: Request):
     conexao = sqlite3.connect(BANCO)
