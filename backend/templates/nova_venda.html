@@ -623,18 +623,43 @@ async function finalizarVenda() {
             return;
         }
 
-        alert(resultado.mensagem);
-
         if (resultado.sucesso) {
-            if (resultado.telefone_whatsapp && resultado.mensagem_whatsapp) {
-                const telefone = resultado.telefone_whatsapp.replace(/\D/g, "");
-                const mensagem = encodeURIComponent(resultado.mensagem_whatsapp);
 
-                window.open(
-                    `https://wa.me/55${telefone}?text=${mensagem}`,
-                    "_blank"
-                );
-            }
+    const pedidoSolicitado =
+        document.getElementById("pedidoBlingSolicitado").checked;
+
+    if (pedidoSolicitado && resultado.venda_id) {
+
+        const abrirPedido = confirm(
+            resultado.mensagem +
+            "\n\nCliente solicitou pedido de venda." +
+            "\n\nDeseja abrir o pedido agora?"
+        );
+
+        if (abrirPedido) {
+            window.open(
+                `/pedido/${resultado.venda_id}`,
+                "_blank"
+            );
+        }
+
+    } else {
+        alert(resultado.mensagem);
+    }
+
+    if (resultado.telefone_whatsapp && resultado.mensagem_whatsapp) {
+
+        const telefone =
+            resultado.telefone_whatsapp.replace(/\D/g, "");
+
+        const mensagem =
+            encodeURIComponent(resultado.mensagem_whatsapp);
+
+        window.open(
+            `https://wa.me/55${telefone}?text=${mensagem}`,
+            "_blank"
+        );
+    }
 
             setTimeout(() => {
                 window.location.href = "/nova-venda";

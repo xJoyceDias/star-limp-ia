@@ -2081,13 +2081,13 @@ def finalizar_venda(dados: dict = Body(...)):
         )
 
     return {
-        "sucesso": True,
-        "mensagem": mensagem_final,
-        "mensagem_whatsapp": mensagem_whatsapp,
-        "telefone_whatsapp": telefone,
-        "bling": resultado_bling
-    }
-    
+    "sucesso": True,
+    "mensagem": mensagem_final,
+    "venda_id": venda_id,
+    "mensagem_whatsapp": mensagem_whatsapp,
+    "telefone_whatsapp": telefone,
+    "bling": resultado_bling
+}
 
 @app.get("/clientes")
 def pagina_clientes(request: Request):
