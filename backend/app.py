@@ -540,19 +540,88 @@ def obter_token_bling():
     """)
 
     cursor.execute("""
-        SELECT access_token
+        SELECT access_token, refresh_token, expires_in, criado_em
         FROM bling_tokens
         ORDER BY id DESC
         LIMIT 1
     """)
 
     token = cursor.fetchone()
-    conexao.close()
 
     if not token:
+        conexao.close()
         return None
 
-    return token["access_token"]
+    access_token = token["access_token"]
+    refresh_token = token["refresh_token"]
+    expires_in = token["expires_in"] or 21600
+    criado_em = token["criado_em"]
+
+    try:
+        criado_em_dt = datetime.strptime(criado_em, "%Y-%m-%d %H:%M:%S")
+        expira_em = criado_em_dt + timedelta(seconds=int(expires_in) - 300)
+
+        if datetime.now() < expira_em:
+            conexao.close()
+            return access_token
+    except Exception:
+        pass
+
+    if not refresh_token:
+        conexao.close()
+        return access_token
+
+    resposta = requests.post(
+        BLING_TOKEN_URL,
+        data={
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token
+        },
+        auth=(BLING_CLIENT_ID, BLING_CLIENT_SECRET),
+        headers={
+            "Accept": "application/json",
+            "enable-jwt": "1"
+        }
+    )
+
+    try:
+        dados_token = resposta.json()
+    except Exception:
+        dados_token = {}
+
+    if resposta.status_code not in [200, 201]:
+        conexao.close()
+        return access_token
+
+    novo_access_token = dados_token.get("access_token")
+    novo_refresh_token = dados_token.get("refresh_token")
+    novo_expires_in = dados_token.get("expires_in")
+
+    if not novo_access_token:
+        conexao.close()
+        return access_token
+
+    cursor.execute("DELETE FROM bling_tokens")
+
+    cursor.execute("""
+        INSERT INTO bling_tokens (
+            access_token,
+            refresh_token,
+            expires_in,
+            criado_em
+        )
+        VALUES (?, ?, ?, ?)
+    """, (
+        novo_access_token,
+        novo_refresh_token or refresh_token,
+        novo_expires_in or expires_in,
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ))
+
+    conexao.commit()
+    conexao.close()
+
+    return novo_access_token
 
 def criar_contato_bling(nome, telefone=None, documento=None):
     access_token = obter_token_bling()
