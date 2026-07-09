@@ -12,6 +12,14 @@ Em desenvolvimento.
 
 ---
 
+## Demonstração
+
+A aplicação está publicada e pode ser acessada pelo link abaixo:
+
+[Star Limp IA - Deploy](https://starlimpia-production.up.railway.app/)
+
+---
+
 ## Objetivo
 
 Automatizar processos comerciais que antes eram feitos manualmente, como cadastro de clientes, controle de produtos, vendas, fiados, estoque e geração de pedidos no ERP Bling.
