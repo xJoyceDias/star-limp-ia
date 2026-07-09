@@ -121,13 +121,13 @@ A estrutura do projeto separa a aplicação backend, banco de dados, arquivos es
 1. Clone o repositório:
 
 ```bash
-git clone https://github.com/xJoyceDias/estrela-limpa-ia.git
+git clone https://github.com/xJoyceDias/star-limp-ia.git
 ```
 
 2. Acesse a pasta do projeto:
 
 ```bash
-cd estrela-limpa-ia
+cd star-limp-ia
 ```
 
 3. Instale as dependências:
@@ -148,9 +148,3 @@ uvicorn backend.app:app --reload
 http://127.0.0.1:8000
 ```
 
----
-
-## Demonstração do Sistema
-
-> Em breve serão adicion
-```
