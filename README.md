@@ -61,6 +61,40 @@ O sistema também realiza comunicação com APIs REST externas, incluindo a API 
 
 ---
 
+## Como Executar o Projeto
+
+1. Clone o repositório:
+
+```bash
+git clone https://github.com/xJoyceDias/estrela-limpa-ia.git
+```
+
+2. Acesse a pasta do projeto:
+
+```bash
+cd estrela-limpa-ia
+```
+
+3. Instale as dependências:
+
+```bash
+pip install -r requisitos.txt
+```
+
+4. Execute o servidor local:
+
+```bash
+uvicorn main:app --reload
+```
+
+5. Acesse no navegador:
+
+```text
+http://127.0.0.1:8000
+```
+
+---
+
 ## Fluxo Principal
 
 1. O usuário cadastra clientes e produtos no sistema.
