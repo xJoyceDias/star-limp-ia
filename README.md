@@ -78,13 +78,13 @@ cd estrela-limpa-ia
 3. Instale as dependências:
 
 ```bash
-pip install -r requisitos.txt
+pip install -r requirements.txt
 ```
 
 4. Execute o servidor local:
 
 ```bash
-uvicorn main:app --reload
+uvicorn backend.app:app --reload
 ```
 
 5. Acesse no navegador:
