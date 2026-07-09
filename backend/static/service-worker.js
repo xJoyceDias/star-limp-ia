@@ -1,9 +1,11 @@
-const CACHE_NAME = "stl-business-v1";
+const CACHE_NAME = "stl-business-v3";
 
 const FILES_TO_CACHE = [
   "/",
   "/static/manifest.json",
-  "/static/logostarlimp.png.png"
+  "/static/logo.png",
+  "/static/icon-192.png",
+  "/static/icon-512.png"
 ];
 
 self.addEventListener("install", event => {
