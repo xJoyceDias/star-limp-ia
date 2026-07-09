@@ -1,89 +1,93 @@
 # Star Limp IA
 
-Sistema de gestão comercial desenvolvido para automatizar processos de vendas, clientes, pagamentos e integração com o ERP Bling.
+Sistema de gestão comercial desenvolvido para automatizar processos de vendas, clientes, pagamentos, estoque e integração com o ERP Bling.
 
-Este projeto foi criado para atender uma empresa familiar, reduzindo tarefas manuais e centralizando toda a operação comercial em uma única plataforma.
-
----
-
-# Tecnologias
-
-- Python
-- FastAPI
-- SQLite
-- HTML
-- CSS
-- JavaScript
-- Jinja2
-- Git
-- GitHub
-- API REST
-- OAuth 2.0
-- Railway
-- Bling API
+O projeto foi criado para atender uma empresa familiar, com o objetivo de reduzir tarefas manuais, centralizar informações comerciais e tornar a operação mais eficiente por meio de uma plataforma web integrada.
 
 ---
 
-# Funcionalidades
+## Status do Projeto
 
-- Cadastro de Clientes
-- Cadastro de Produtos
+Em desenvolvimento.
+
+---
+
+## Objetivo
+
+Automatizar processos comerciais que antes eram feitos manualmente, como cadastro de clientes, controle de produtos, vendas, fiados, estoque e geração de pedidos no ERP Bling.
+
+---
+
+## Funcionalidades
+
+- Cadastro de clientes
+- Cadastro de produtos
 - PDV
-- Controle de Estoque
-- Controle de Fiados
-- Histórico de Vendas
-- Integração com Bling
-- Sincronização automática
-- Autenticação OAuth
+- Controle de estoque
+- Controle de fiados
+- Histórico de vendas
+- Relatórios comerciais
+- Integração com a API do Bling
+- Autenticação OAuth 2.0
+- Sincronização automática com ERP
 - Geração de pedidos
-- Relatórios
 
 ---
 
-# Arquitetura
+## Tecnologias Utilizadas
 
-O sistema foi desenvolvido utilizando arquitetura baseada em FastAPI.
-
-A aplicação realiza comunicação com APIs REST externas, persistência em SQLite e autenticação OAuth para integração com o ERP Bling.
-
----
-
-# Objetivo
-
-Reduzir atividades manuais através da automação dos processos comerciais.
-
----
-
-# Tecnologias utilizadas
-
-| Tecnologia | Uso |
-|------------|----------------|
-| Python | Backend |
-| FastAPI | API |
-| SQLite | Banco de Dados |
-| Git | Versionamento |
+| Tecnologia | Finalidade |
+|------------|------------|
+| Python | Linguagem principal |
+| FastAPI | Desenvolvimento da API/backend |
+| SQLite | Banco de dados |
+| HTML | Estrutura das páginas |
+| CSS | Estilização |
+| JavaScript | Interações no frontend |
+| Jinja2 | Templates HTML |
+| API REST | Comunicação entre sistemas |
+| OAuth 2.0 | Autenticação com Bling |
+| Git e GitHub | Versionamento |
 | Railway | Deploy |
-| OAuth | Autenticação |
-| Bling API | Integração ERP |
+| Bling API | Integração com ERP |
 
 ---
 
-# Aprendizados
+## Arquitetura
 
-Durante o desenvolvimento deste projeto foram aplicados conhecimentos em:
+A aplicação foi desenvolvida com FastAPI no backend, utilizando SQLite para persistência de dados e templates Jinja2 para renderização das páginas.
 
-- Desenvolvimento Backend
-- Arquitetura de Software
-- APIs REST
-- Banco de Dados
-- Integração entre Sistemas
-- Versionamento com Git
-- Deploy em Cloud
-- Automação de Processos
-- Resolução de Problemas
+O sistema também realiza comunicação com APIs REST externas, incluindo a API do Bling, utilizando autenticação OAuth 2.0 para sincronização e geração de pedidos.
 
 ---
 
-# Desenvolvido por
+## Fluxo Principal
+
+1. O usuário cadastra clientes e produtos no sistema.
+2. As vendas são registradas pelo PDV.
+3. O estoque e os fiados são atualizados automaticamente.
+4. O sistema pode sincronizar informações com o ERP Bling.
+5. Relatórios e históricos ficam disponíveis para consulta.
+
+---
+
+## Aprendizados
+
+Durante o desenvolvimento deste projeto, foram aplicados conhecimentos em:
+
+- Desenvolvimento backend com Python
+- Criação de APIs com FastAPI
+- Integração com APIs externas
+- Autenticação OAuth 2.0
+- Modelagem e persistência de dados
+- Deploy em ambiente cloud
+- Versionamento com Git e GitHub
+- Automação de processos comerciais
+- Organização de arquitetura de software
+- Resolução de problemas reais de negócio
+
+---
+
+## Desenvolvido por
 
 Joyce Dias
