@@ -28,17 +28,50 @@ Automatizar processos comerciais que antes eram feitos manualmente, como cadastr
 
 ## Funcionalidades
 
+### Gestão Comercial
+
 - Cadastro de clientes
 - Cadastro de produtos
-- PDV
+- Ponto de Venda (PDV)
 - Controle de estoque
-- Controle de fiados
 - Histórico de vendas
-- Relatórios comerciais
-- Integração com a API do Bling
+- Controle de pagamentos
+- Gestão de vendas fiado
+
+### Integração com ERP Bling
+
 - Autenticação OAuth 2.0
-- Sincronização automática com ERP
-- Geração de pedidos
+- Sincronização automática de vendas
+- Cadastro e consulta de clientes no Bling
+- Geração automática de pedidos de venda
+- Armazenamento do ID do pedido retornado pela API
+- Geração e download do PDF do pedido de venda
+
+### Automações
+
+- Sincronização automática entre o sistema e o Bling
+- Controle de vendas pendentes de sincronização
+- Tratamento de erros de integração
+- Registro de logs das operações
+
+### Comunicação com o Cliente
+
+- Abertura automática do WhatsApp
+- Geração de mensagem personalizada com resumo da venda
+- Envio do link do PDF do pedido para o cliente, quando disponível
+- Agilidade no atendimento e na confirmação do pedido
+
+---
+
+## Diferenciais
+
+- Integração real com o ERP Bling utilizando API REST e OAuth 2.0
+- Sincronização automática das vendas com o ERP
+- Geração automática de pedidos de venda
+- Download do PDF do pedido diretamente pela aplicação
+- Compartilhamento do pedido via WhatsApp com apenas um clique
+- Projeto desenvolvido para atender uma necessidade real de uma empresa familiar
+- Automação de processos comerciais que antes eram feitos manualmente
 
 ---
 
@@ -65,7 +98,21 @@ Automatizar processos comerciais que antes eram feitos manualmente, como cadastr
 
 A aplicação foi desenvolvida com FastAPI no backend, utilizando SQLite para persistência de dados e templates Jinja2 para renderização das páginas.
 
-O sistema também realiza comunicação com APIs REST externas, incluindo a API do Bling, utilizando autenticação OAuth 2.0 para sincronização e geração de pedidos.
+O sistema realiza comunicação com APIs REST externas, incluindo a API do Bling, utilizando autenticação OAuth 2.0 para sincronização de dados, geração de pedidos de venda e obtenção do PDF do pedido.
+
+A estrutura do projeto separa a aplicação backend, banco de dados, arquivos estáticos e templates HTML, facilitando a manutenção e evolução do sistema.
+
+---
+
+## Fluxo Principal
+
+1. O usuário cadastra clientes e produtos no sistema.
+2. As vendas são registradas pelo PDV.
+3. O estoque e os fiados são atualizados automaticamente.
+4. O sistema gera o pedido de venda.
+5. As informações podem ser sincronizadas com o ERP Bling.
+6. O PDF do pedido pode ser baixado e compartilhado com o cliente.
+7. Relatórios e históricos ficam disponíveis para consulta.
 
 ---
 
@@ -103,33 +150,7 @@ http://127.0.0.1:8000
 
 ---
 
-## Fluxo Principal
+## Demonstração do Sistema
 
-1. O usuário cadastra clientes e produtos no sistema.
-2. As vendas são registradas pelo PDV.
-3. O estoque e os fiados são atualizados automaticamente.
-4. O sistema pode sincronizar informações com o ERP Bling.
-5. Relatórios e históricos ficam disponíveis para consulta.
-
----
-
-## Aprendizados
-
-Durante o desenvolvimento deste projeto, foram aplicados conhecimentos em:
-
-- Desenvolvimento backend com Python
-- Criação de APIs com FastAPI
-- Integração com APIs externas
-- Autenticação OAuth 2.0
-- Modelagem e persistência de dados
-- Deploy em ambiente cloud
-- Versionamento com Git e GitHub
-- Automação de processos comerciais
-- Organização de arquitetura de software
-- Resolução de problemas reais de negócio
-
----
-
-## Desenvolvido por
-
-Joyce Dias
+> Em breve serão adicion
+```
