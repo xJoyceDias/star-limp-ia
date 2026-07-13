@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Star Limp IA</title>
+<title>Star Limp Business</title>
 
 <link rel="manifest" href="/static/manifest.json">
 
@@ -12,7 +12,7 @@
 
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-<meta name="apple-mobile-web-app-title" content="Star Limp IA">
+<meta name="apple-mobile-web-app-title" content="Star Limp Business">
 
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -81,7 +81,7 @@ body::after{
 
 .hero{
   text-align:center;
-  padding:12px 0 20px;
+  padding:18px 0 28px;
   position:relative;
 }
 
@@ -209,34 +209,72 @@ body::after{
     drop-shadow(0 2px 10px rgba(0,0,0,.45));
 }
 
-.brand-row{
+.brand-lockup{
+  position:relative;
+  margin-top:2px;
+}
+
+.brand-kicker{
   display:flex;
   align-items:center;
   justify-content:center;
   gap:10px;
-  margin-top:4px;
+  color:#9fcfff;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:3.2px;
+  text-transform:uppercase;
+}
+
+.brand-kicker::before,
+.brand-kicker::after{
+  content:"";
+  width:28px;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(89,179,255,.85));
+}
+
+.brand-kicker::after{
+  transform:scaleX(-1);
 }
 
 .brand-main{
-  font-size:36px;
-  font-weight:1000;
-  letter-spacing:-1.4px;
+  margin:8px 0 0;
+  font-size:clamp(33px,7vw,46px);
+  font-weight:950;
+  line-height:1;
+  letter-spacing:-2px;
   color:#fff;
+  text-shadow:0 8px 28px rgba(0,0,0,.45);
 }
 
 .brand-accent{
-  font-size:28px;
-  font-weight:1000;
-  color:var(--brand);
-  text-shadow:0 0 18px rgba(22,131,255,.45);
+  background:linear-gradient(110deg,#74bdff 5%,#1683ff 48%,#b7e3ff 100%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  text-shadow:none;
 }
 
-.tagline{
-  margin-top:8px;
-  color:var(--muted-2);
-  font-size:12px;
-  letter-spacing:6px;
-  text-transform:uppercase;
+.saudacao{
+  max-width:455px;
+  margin:18px auto 0;
+  padding:15px 18px;
+  border:1px solid rgba(107,185,255,.18);
+  border-radius:18px;
+  background:linear-gradient(115deg,rgba(22,131,255,.14),rgba(12,25,52,.58));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 14px 30px rgba(0,0,0,.16);
+  color:#b9cbe0;
+  font-size:15px;
+  line-height:1.55;
+}
+
+.saudacao-principal{
+  display:block;
+  color:#fff;
+  font-size:17px;
+  font-weight:800;
+  margin-bottom:2px;
 }
 
 .section-title{
@@ -513,13 +551,9 @@ body::after{
     font-size:34px;
   }
 
-  .brand-accent{
-    font-size:25px;
-  }
-
-  .tagline{
-    font-size:11px;
-    letter-spacing:4px;
+  .saudacao{
+    font-size:14px;
+    margin-top:16px;
   }
 
   .amount{
@@ -555,12 +589,15 @@ body::after{
       <img src="/static/logo.png?v=3" class="logo-starlimp">
     </div>
 
-    <div class="brand-row">
-      <div class="brand-main">STL</div>
-      <div class="brand-accent">Business</div>
+    <div class="brand-lockup">
+      <div class="brand-kicker">Painel comercial</div>
+      <h1 class="brand-main">Star Limp <span class="brand-accent">Business</span></h1>
     </div>
 
-    <div class="tagline">Private Management</div>
+    <div class="saudacao">
+      <span id="saudacao-principal" class="saudacao-principal">Bom dia, Júlio.</span>
+      Seu painel comercial está pronto para mais um dia. Boas vendas!
+    </div>
   </section>
 
   <div class="section-title">Operações</div>
@@ -669,6 +706,10 @@ body::after{
   </a>
 </nav>
 <script>
+const horaAtual = new Date().getHours();
+const periodo = horaAtual < 12 ? "Bom dia" : horaAtual < 18 ? "Boa tarde" : "Boa noite";
+document.getElementById("saudacao-principal").textContent = `${periodo}, Júlio.`;
+
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
     navigator.serviceWorker.register("/static/service-worker.js");

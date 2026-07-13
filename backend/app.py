@@ -73,6 +73,28 @@ def garantir_tabela_bling_pedidos():
 
 garantir_tabela_bling_pedidos()
 
+
+def garantir_tabela_bling_sync():
+    """Mantém o histórico de envio das vendas disponível em instalações novas."""
+    conexao = sqlite3.connect(BANCO)
+    cursor = conexao.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS bling_sync (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            venda_id INTEGER NOT NULL,
+            bling_id TEXT,
+            status TEXT NOT NULL DEFAULT 'PENDENTE',
+            data_criacao TEXT,
+            data_sincronizacao TEXT,
+            erro TEXT
+        )
+    """)
+    conexao.commit()
+    conexao.close()
+
+
+garantir_tabela_bling_sync()
+
 def moeda(valor):
     try:
         valor = float(valor or 0)
@@ -2198,25 +2220,55 @@ def extrato_cliente(request: Request, cliente_id: int):
 
 
 @app.get("/relatorios")
-def pagina_relatorios(request: Request):
+def pagina_relatorios(request: Request, data_inicio: str = None, data_fim: str = None):
     hoje = (datetime.utcnow() - timedelta(hours=3)).strftime("%Y-%m-%d")
 
+    # O período padrão continua sendo hoje, mas o usuário pode consultar qualquer
+    # intervalo de vendas já registrado no PDV.
+    data_inicio = data_inicio or hoje
+    data_fim = data_fim or data_inicio
+
+    try:
+        inicio = datetime.strptime(data_inicio, "%Y-%m-%d").date()
+        fim = datetime.strptime(data_fim, "%Y-%m-%d").date()
+        if inicio > fim:
+            inicio, fim = fim, inicio
+            data_inicio, data_fim = inicio.isoformat(), fim.isoformat()
+    except ValueError:
+        data_inicio = data_fim = hoje
+
     conexao = sqlite3.connect(BANCO)
+    conexao.row_factory = sqlite3.Row
     cursor = conexao.cursor()
 
     cursor.execute("""
-        SELECT id, data_hora, valor_total, forma_pagamento
+        SELECT
+            vendas.id,
+            vendas.data_hora,
+            vendas.valor_total,
+            vendas.forma_pagamento,
+            COALESCE(sincronizacao.status, 'NÃO ENVIADO') AS bling_status,
+            sincronizacao.bling_id,
+            sincronizacao.data_sincronizacao,
+            sincronizacao.erro AS bling_erro
         FROM vendas
-        WHERE date(data_hora) = ?
+        LEFT JOIN bling_sync AS sincronizacao ON sincronizacao.id = (
+            SELECT id
+            FROM bling_sync
+            WHERE venda_id = vendas.id
+            ORDER BY id DESC
+            LIMIT 1
+        )
+        WHERE date(vendas.data_hora) BETWEEN ? AND ?
         ORDER BY data_hora DESC
-    """, (hoje,))
+    """, (data_inicio, data_fim))
 
     vendas = cursor.fetchall()
 
     vendas_com_itens = []
 
     for venda in vendas:
-        venda_id = venda[0]
+        venda_id = venda["id"]
 
         cursor.execute("""
             SELECT descricao, quantidade, preco_unitario, subtotal
@@ -2227,25 +2279,44 @@ def pagina_relatorios(request: Request):
         itens = cursor.fetchall()
 
         vendas_com_itens.append({
-            "venda": venda,
+            "venda": dict(venda),
             "itens": itens
         })
 
     cursor.execute("""
         SELECT SUM(valor_total)
         FROM vendas
-        WHERE date(data_hora) = ?
-    """, (hoje,))
+        WHERE date(data_hora) BETWEEN ? AND ?
+    """, (data_inicio, data_fim))
 
     total_vendido = cursor.fetchone()[0] or 0
 
     cursor.execute("""
         SELECT COUNT(*)
         FROM vendas
-        WHERE date(data_hora) = ?
-    """, (hoje,))
+        WHERE date(data_hora) BETWEEN ? AND ?
+    """, (data_inicio, data_fim))
 
     quantidade_vendas = cursor.fetchone()[0] or 0
+
+    cursor.execute("""
+        SELECT
+            COALESCE(sincronizacao.status, 'NÃO ENVIADO') AS status,
+            COUNT(*) AS quantidade
+        FROM vendas
+        LEFT JOIN bling_sync AS sincronizacao ON sincronizacao.id = (
+            SELECT id FROM bling_sync
+            WHERE venda_id = vendas.id
+            ORDER BY id DESC
+            LIMIT 1
+        )
+        WHERE date(vendas.data_hora) BETWEEN ? AND ?
+        GROUP BY COALESCE(sincronizacao.status, 'NÃO ENVIADO')
+    """, (data_inicio, data_fim))
+
+    resumo_bling = {"SINCRONIZADO": 0, "PENDENTE": 0, "ERRO": 0, "NÃO ENVIADO": 0}
+    for registro in cursor.fetchall():
+        resumo_bling[registro["status"]] = registro["quantidade"]
 
     conexao.close()
 
@@ -2256,7 +2327,10 @@ def pagina_relatorios(request: Request):
             "vendas": vendas_com_itens,
             "total_vendido": total_vendido,
             "quantidade_vendas": quantidade_vendas,
-            "hoje": hoje
+            "hoje": hoje,
+            "data_inicio": data_inicio,
+            "data_fim": data_fim,
+            "resumo_bling": resumo_bling
         }
     )
 
