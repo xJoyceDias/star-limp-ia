@@ -548,13 +548,10 @@ async function finalizarVenda() {
 
     const formaPagamento = document.getElementById("formaPagamento").value;
 
-
     try {
         const resposta = await fetch("/finalizar-venda", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 itens: carrinho,
                 total: total,
@@ -565,20 +562,28 @@ async function finalizarVenda() {
             })
         });
 
-        const texto = await resposta.text();
+        const resultado = await resposta.json();
 
-        let resultado;
-
-        try {
-            resultado = JSON.parse(texto);
-        } catch {
-            alert("Erro retornado pelo servidor:\n\n" + texto);
+        if (!resultado.sucesso) {
+            alert(resultado.mensagem);
             return;
         }
 
-        if (resultado.sucesso) {
+        alert(resultado.mensagem);
 
-    const pedidoSolicitado =
+        if (resultado.telefone_whatsapp && resultado.mensagem_whatsapp) {
+            const telefone = resultado.telefone_whatsapp.replace(/\D/g, "");
+            const mensagem = encodeURIComponent(resultado.mensagem_whatsapp);
+            window.open(`https://wa.me/55${telefone}?text=${mensagem}`, "_blank");
+        }
+
+        setTimeout(() => {
+            window.location.href = "/nova-venda";
+        }, 800);
+    } catch (erro) {
+        alert("Erro ao finalizar venda:\n\n" + erro);
+    }
+}
 </script>
 </body>
 </html>
