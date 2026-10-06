@@ -318,37 +318,6 @@ button, .button-link {
                     <input type="text" id="retiradoPor" placeholder="Ex: Maria">
                 </div>
 
-            <div style="margin-top:16px;">
-                <label style="display:flex;align-items:center;gap:10px;color:#e5edf7;font-weight:bold;">
-                    <input
-                        type="checkbox"
-                        id="pedidoBlingSolicitado"
-                        onchange="mostrarCamposPedidoBling()"
-                        style="width:auto;"
-        >
-        Cliente solicitou pedido de venda
-    </label>
-</div>
-
-        <div id="dadosPedidoBling" class="hidden-fields">
-                <label>Cliente</label>
-
-<input
-    type="text"
-    id="clienteNomeBling"
-    placeholder="Digite o nome do cliente"
-    oninput="buscarClientesPedido()"
->
-
-        <div id="sugestoesClientesPedido"></div>
-
-            <label>Telefone / WhatsApp do cliente</label>
-            <input type="text" id="clienteTelefoneBling" placeholder="Ex: 62999999999">
-
-            <label>CPF/CNPJ se tiver</label>
-            <input type="text" id="clienteDocumentoBling" placeholder="Opcional">
-        </div>
-
                 <button onclick="finalizarVenda()">
                     Finalizar venda
                 </button>
@@ -403,65 +372,6 @@ function mostrarCamposCliente() {
     } else {
         dadosContaCliente.style.display = "none";
     }
-}
-
-function mostrarCamposPedidoBling() {
-    const solicitado = document.getElementById("pedidoBlingSolicitado").checked;
-    const dadosPedidoBling = document.getElementById("dadosPedidoBling");
-
-    if (solicitado) {
-        dadosPedidoBling.style.display = "block";
-    } else {
-        dadosPedidoBling.style.display = "none";
-    }
-}
-
-async function buscarClientesPedido() {
-
-    const termo =
-        document.getElementById("clienteNomeBling").value.trim();
-
-    const sugestoes =
-        document.getElementById("sugestoesClientesPedido");
-
-    if (termo.length < 2) {
-        sugestoes.innerHTML = "";
-        return;
-    }
-
-    const resposta =
-        await fetch(`/buscar-clientes?termo=${encodeURIComponent(termo)}`);
-
-    const clientes =
-        await resposta.json();
-
-    sugestoes.innerHTML = "";
-
-    clientes.forEach(cliente => {
-
-        const div =
-            document.createElement("div");
-
-        div.className = "sugestao";
-
-        div.innerHTML = `
-            <strong>${cliente.nome}</strong>
-            <span>${cliente.telefone || ""}</span>
-        `;
-
-        div.onclick = () => {
-
-            document.getElementById("clienteNomeBling").value =
-                cliente.nome;
-
-            document.getElementById("clienteTelefoneBling").value =
-                cliente.telefone || "";
-
-            sugestoes.innerHTML = "";
-        };
-
-        sugestoes.appendChild(div);
-    });
 }
 
 async function buscarProdutos() {
@@ -637,15 +547,6 @@ async function finalizarVenda() {
     }
 
     const formaPagamento = document.getElementById("formaPagamento").value;
-    const pedidoBlingSolicitado = document.getElementById("pedidoBlingSolicitado").checked;
-    const clienteNomeBling = document.getElementById("clienteNomeBling").value.trim();
-    const clienteTelefoneBling = document.getElementById("clienteTelefoneBling").value.trim();
-    const clienteDocumentoBling = document.getElementById("clienteDocumentoBling").value.trim();
-
-    if (pedidoBlingSolicitado && (!clienteNomeBling || !clienteTelefoneBling)) {
-        alert("Para gerar pedido de venda, informe o nome e telefone do cliente.");
-        return;
-}
 
 
     try {
@@ -660,11 +561,7 @@ async function finalizarVenda() {
                 forma_pagamento: formaPagamento,
                 cliente_nome: document.getElementById("clienteNome").value,
                 cliente_telefone: document.getElementById("clienteTelefone").value,
-                retirado_por: document.getElementById("retiradoPor").value,
-                pedido_bling_solicitado: pedidoBlingSolicitado ? 1 : 0,
-                cliente_nome_bling: clienteNomeBling,
-                cliente_telefone_bling: clienteTelefoneBling,
-                cliente_documento_bling: clienteDocumentoBling
+                retirado_por: document.getElementById("retiradoPor").value
             })
         });
 
@@ -682,51 +579,6 @@ async function finalizarVenda() {
         if (resultado.sucesso) {
 
     const pedidoSolicitado =
-        document.getElementById("pedidoBlingSolicitado").checked;
-
-    if (pedidoSolicitado && resultado.venda_id) {
-
-        const abrirPedido = confirm(
-            resultado.mensagem +
-            "\n\nCliente solicitou pedido de venda." +
-            "\n\nDeseja abrir o pedido agora?"
-        );
-
-        if (abrirPedido) {
-            window.open(
-                `/pedido/${resultado.venda_id}`,
-                "_blank"
-            );
-        }
-
-    } else {
-        alert(resultado.mensagem);
-    }
-
-    if (resultado.telefone_whatsapp && resultado.mensagem_whatsapp) {
-
-        const telefone =
-            resultado.telefone_whatsapp.replace(/\D/g, "");
-
-        const mensagem =
-            encodeURIComponent(resultado.mensagem_whatsapp);
-
-        window.open(
-            `https://wa.me/55${telefone}?text=${mensagem}`,
-            "_blank"
-        );
-    }
-
-            setTimeout(() => {
-                window.location.href = "/nova-venda";
-            }, 800);
-        }
-
-    } catch (erro) {
-        alert("Erro ao finalizar venda:\n\n" + erro);
-    }
-}
 </script>
-
 </body>
 </html>
