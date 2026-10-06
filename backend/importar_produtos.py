@@ -28,7 +28,6 @@ for _, linha in df.iterrows():
 
     cursor.execute("""
         INSERT INTO produtos (
-            id_bling,
             codigo,
             descricao,
             unidade,
