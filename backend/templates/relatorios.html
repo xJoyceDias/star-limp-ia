@@ -3,60 +3,35 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Relatórios - STL Business</title>
+<title>Relatórios</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-body{min-height:100vh;background:radial-gradient(circle at top,rgba(22,131,255,.18),transparent 35%),linear-gradient(180deg,#020617,#050b14);color:#f8fafc;padding:22px}
-.container{max-width:850px;margin:auto;padding-bottom:100px}.voltar-topo{color:#7d94b2;text-decoration:none;font-size:14px}h1{margin-top:18px;font-size:34px;font-weight:900}.subtitulo{margin-top:6px;color:#7d94b2;font-size:14px}
-.filtro,.card-resumo,.status-card,.venda{background:#0b1320;border:1px solid rgba(255,255,255,.08);border-radius:22px}.filtro{margin-top:24px;padding:18px;display:flex;align-items:end;gap:12px;flex-wrap:wrap}.campo{display:grid;gap:7px;flex:1;min-width:150px}.campo label,.label{color:#9fb4cc;font-size:13px;font-weight:700}.campo input{width:100%;background:#08111d;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:11px;color:#f8fafc;font-size:14px}.btn-filtrar{border:0;background:#1683ff;color:#fff;border-radius:12px;padding:12px 18px;font-weight:900;cursor:pointer}.btn-filtrar:hover{background:#0f6ed8}
-.resumo,.status-resumo{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:18px}.card-resumo,.status-card{padding:18px}.valor{margin-top:9px;font-size:27px;font-weight:900}.section-title{margin:28px 0 14px;font-size:19px;font-weight:900}.status-resumo{grid-template-columns:repeat(4,1fr);margin-top:0}.status-card{padding:14px}.status-card strong{display:block;margin-top:6px;font-size:22px}.status-card.sincronizado{border-color:rgba(34,197,94,.4)}.status-card.pendente{border-color:rgba(250,204,21,.4)}.status-card.erro{border-color:rgba(239,68,68,.45)}.status-card.nao-enviado{border-color:rgba(148,163,184,.35)}
-.venda{padding:20px;margin-bottom:14px}.venda-topo{display:flex;justify-content:space-between;gap:12px}.venda-numero{font-weight:900;font-size:17px}.data{color:#7d94b2;font-size:13px;text-align:right}.total{margin-top:14px;font-size:29px;font-weight:900;color:#4ba3ff}.forma{margin-top:6px;color:#9fb4cc;font-size:14px}.linha-status{display:flex;align-items:center;gap:8px;margin-top:14px;color:#b9c8d8;font-size:13px}.badge{border-radius:999px;padding:5px 9px;font-size:11px;font-weight:900}.badge.SINCRONIZADO{background:rgba(34,197,94,.16);color:#86efac}.badge.PENDENTE{background:rgba(250,204,21,.15);color:#fde68a}.badge.ERRO{background:rgba(239,68,68,.15);color:#fca5a5}.badge.NÃO_ENVIADO{background:rgba(148,163,184,.16);color:#cbd5e1}.erro-bling{margin-top:8px;color:#fca5a5;font-size:12px}.acoes-venda{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.btn-pedido,.btn-whats{text-decoration:none;text-align:center;padding:12px;border-radius:14px;font-size:13px;font-weight:900;color:white}.btn-pedido{background:#1683ff}.btn-whats{background:#22c55e}details{margin-top:14px;background:#08111d;border:1px solid rgba(255,255,255,.06);padding:14px;border-radius:18px}summary{cursor:pointer;font-weight:800;color:#4ba3ff}.item{margin-top:10px;color:#d8e7f3;font-size:14px}.empty{text-align:center;color:#7d94b2;padding:40px 0}
-.bottom-nav{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);width:calc(100% - 36px);max-width:760px;background:rgba(10,17,28,.94);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.08);border-radius:24px;display:grid;grid-template-columns:repeat(4,1fr);padding:10px;box-shadow:0 20px 45px rgba(0,0,0,.45)}.nav-item{text-decoration:none;color:#7d94b2;text-align:center;font-size:11px}.nav-icon{display:block;font-size:18px;margin-bottom:3px}.nav-item.active{color:#1683ff}@media(max-width:600px){.status-resumo{grid-template-columns:repeat(2,1fr)}.resumo{grid-template-columns:1fr 1fr}.filtro{align-items:stretch}.btn-filtrar{width:100%}}
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}body{margin:0;min-height:100vh;background:#020617;color:#f8fafc;padding:24px}.container{max-width:1100px;margin:auto}.voltar{color:#9fb4cc;text-decoration:none}.subtitulo{color:#94a3b8}.filtros,.resumo{display:flex;gap:12px;flex-wrap:wrap;margin:20px 0}.card,form,.venda{background:#0b1320;border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:18px}.card{min-width:200px}.valor{font-size:27px;font-weight:900;color:#4ba3ff}label{display:block;margin-bottom:6px;color:#b9c8d8}input,button{padding:10px;border-radius:10px;border:1px solid #334155;background:#08111d;color:#fff}button{background:#1683ff;border:0;font-weight:bold;cursor:pointer}.venda{margin-bottom:14px}.topo{display:flex;justify-content:space-between;gap:12px}.data{color:#94a3b8;font-size:13px}.total{font-size:25px;font-weight:bold;color:#4ba3ff}.itens{margin-top:12px;color:#d8e7f3}.item{padding:6px 0;border-top:1px solid rgba(255,255,255,.07)}
 </style>
 </head>
 <body>
 <div class="container">
-  <a class="voltar-topo" href="/">← Voltar ao painel</a>
-  <h1>Relatórios</h1>
-  <div class="subtitulo">Consulte as vendas do PDV e o envio de cada uma para o Bling.</div>
-
-  <form class="filtro" method="get" action="/relatorios">
-    <div class="campo"><label for="data_inicio">Data inicial</label><input id="data_inicio" type="date" name="data_inicio" value="{{ data_inicio }}"></div>
-    <div class="campo"><label for="data_fim">Data final</label><input id="data_fim" type="date" name="data_fim" value="{{ data_fim }}"></div>
-    <button class="btn-filtrar" type="submit">Consultar período</button>
-  </form>
-
-  <section class="resumo">
-    <div class="card-resumo"><div class="label">Vendido no período</div><div class="valor">R$ {{ "%.2f"|format(total_vendido or 0)|replace(".", ",") }}</div></div>
-    <div class="card-resumo"><div class="label">Qtd. de vendas</div><div class="valor">{{ quantidade_vendas }}</div></div>
-  </section>
-
-  <div class="section-title">Sincronização com o Bling</div>
-  <section class="status-resumo">
-    <div class="status-card sincronizado"><span class="label">Sincronizadas</span><strong>{{ resumo_bling['SINCRONIZADO'] }}</strong></div>
-    <div class="status-card pendente"><span class="label">Pendentes</span><strong>{{ resumo_bling['PENDENTE'] }}</strong></div>
-    <div class="status-card erro"><span class="label">Com erro</span><strong>{{ resumo_bling['ERRO'] }}</strong></div>
-    <div class="status-card nao-enviado"><span class="label">Não enviadas</span><strong>{{ resumo_bling['NÃO ENVIADO'] }}</strong></div>
-  </section>
-
-  <div class="section-title">Vendas encontradas</div>
-  {% if vendas %}
-    {% for registro in vendas %}
-      {% set venda = registro.venda %}
-      <article class="venda">
-        <div class="venda-topo"><div class="venda-numero">Venda Nº {{ venda.id }}</div><div class="data">{{ venda.data_hora[8:10] }}/{{ venda.data_hora[5:7] }}/{{ venda.data_hora[0:4] }}<br>{{ venda.data_hora[11:16] }}</div></div>
-        <div class="total">R$ {{ "%.2f"|format(venda.valor_total or 0)|replace(".", ",") }}</div>
-        <div class="forma">Forma: {{ venda.forma_pagamento or "Não informado" }}</div>
-        <div class="linha-status"><span> Bling:</span><span class="badge {{ venda.bling_status|replace(' ', '_') }}">{{ venda.bling_status }}</span>{% if venda.data_sincronizacao %}<span>em {{ venda.data_sincronizacao }}</span>{% endif %}</div>
-        {% if venda.bling_erro %}<div class="erro-bling">Erro no Bling: {{ venda.bling_erro }}</div>{% endif %}
-        <div class="acoes-venda"><a class="btn-pedido" href="/pedido/{{ venda.id }}" target="_blank">📄 Ver pedido</a><a class="btn-whats" target="_blank" href="https://wa.me/?text=Olá!%20👋%0A%0ASegue%20o%20pedido%20da%20Star%20Limp:%0A%0Ahttps://starlimpia-production.up.railway.app/pedido/{{ venda.id }}">📲 Enviar pedido</a></div>
-        <details><summary>Ver itens vendidos</summary>{% for item in registro.itens %}<div class="item">• {{ item[1] }}x {{ item[0] }} — R$ {{ "%.2f"|format(item[3] or 0)|replace(".", ",") }}</div>{% endfor %}</details>
-      </article>
-    {% endfor %}
-  {% else %}
-    <div class="empty">Nenhuma venda encontrada neste período.</div>
-  {% endif %}
+<a class="voltar" href="/">← Voltar ao painel</a>
+<h1>Relatórios de vendas</h1>
+<p class="subtitulo">Consulte as vendas registradas no período selecionado.</p>
+<form method="get" class="filtros">
+<div><label for="data_inicio">Data inicial</label><input id="data_inicio" name="data_inicio" type="date" value="{{ data_inicio }}"></div>
+<div><label for="data_fim">Data final</label><input id="data_fim" name="data_fim" type="date" value="{{ data_fim }}"></div>
+<div style="align-self:end"><button type="submit">Consultar</button></div>
+</form>
+<div class="resumo">
+<div class="card"><div>Faturamento</div><div class="valor">R$ {{ "%.2f"|format(total_vendido)|replace(".", ",") }}</div></div>
+<div class="card"><div>Vendas registradas</div><div class="valor">{{ quantidade_vendas }}</div></div>
 </div>
-<nav class="bottom-nav"><a class="nav-item" href="/"><span class="nav-icon">⌂</span>Home</a><a class="nav-item" href="/nova-venda"><span class="nav-icon">＋</span>Venda</a><a class="nav-item" href="/clientes"><span class="nav-icon">◉</span>Clientes</a><a class="nav-item active" href="/relatorios"><span class="nav-icon">▤</span>Relatórios</a></nav>
+{% for registro in vendas %}
+<div class="venda">
+<div class="topo"><strong>Venda #{{ registro.venda.id }}</strong><span class="data">{{ registro.venda.data_hora }}</span></div>
+<div class="total">R$ {{ "%.2f"|format(registro.venda.valor_total)|replace(".", ",") }}</div>
+<div>Pagamento: {{ registro.venda.forma_pagamento }}</div>
+<div class="itens">{% for item in registro.itens %}<div class="item">{{ item.descricao }} — {{ item.quantidade }} x R$ {{ "%.2f"|format(item.preco_unitario)|replace(".", ",") }}</div>{% endfor %}</div>
+</div>
+{% else %}
+<p class="subtitulo">Nenhuma venda encontrada no período.</p>
+{% endfor %}
+</div>
 </body>
 </html>
