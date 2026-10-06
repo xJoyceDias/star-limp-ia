@@ -9,6 +9,8 @@ from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
+from backend.migrate_remove_bling import migrar_banco
+
 app = FastAPI()
 
 app.mount("/static", StaticFiles(directory="backend/static"), name="static")
@@ -36,6 +38,8 @@ if BANCO.startswith("/data"):
 
     if precisa_copiar_banco:
         shutil.copyfile("database/starlimp.db", BANCO)
+
+migrar_banco(BANCO)
 
 PASTA_BACKUPS = "backups"
 
