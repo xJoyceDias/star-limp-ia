@@ -7,7 +7,6 @@ cursor = conexao.cursor()
 
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS produtos (
-    id_bling TEXT,
     codigo TEXT,
     descricao TEXT,
     unidade TEXT,
