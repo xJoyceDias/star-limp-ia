@@ -18,7 +18,6 @@ pg_cursor = pg_conn.cursor()
 pg_cursor.execute("""
 CREATE TABLE IF NOT EXISTS produtos (
     id SERIAL PRIMARY KEY,
-    id_bling TEXT,
     codigo TEXT,
     descricao TEXT,
     unidade TEXT,
@@ -106,7 +105,7 @@ def migrar_tabela(nome_tabela, colunas):
 
 
 migrar_tabela("produtos", [
-    "id_bling", "codigo", "descricao", "unidade", "preco",
+    "codigo", "descricao", "unidade", "preco",
     "situacao", "estoque", "preco_custo", "fornecedor", "marca", "categoria"
 ])
 
