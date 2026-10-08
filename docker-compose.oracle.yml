@@ -1,0 +1,11 @@
+services:
+  starlimp:
+    build: .
+    container_name: starlimp-pdv
+    restart: unless-stopped
+    ports:
+      - "80:8000"
+    environment:
+      DATABASE_PATH: /data/starlimp.db
+    volumes:
+      - ./data:/data
