@@ -1,4 +1,4 @@
-const app=document.querySelector('#app'), views={dashboard:document.querySelector('#dashboard'),products:document.querySelector('#products'),sales:document.querySelector('#sales'),receivables:document.querySelector('#receivables'),clients:document.querySelector('#clients'),payables:document.querySelector('#payables'),sale:document.querySelector('#sale')};let cart=[],selected=null,selectedClient=null,editing=null,currentSale=null,timer,saleDiscount={type:'none',value:0};
+const app=document.querySelector('#app'), views={dashboard:document.querySelector('#dashboard'),products:document.querySelector('#products'),sales:document.querySelector('#sales'),receivables:document.querySelector('#receivables'),clients:document.querySelector('#clients'),payables:document.querySelector('#payables'),sale:document.querySelector('#sale')};let cart=[],selected=null,selectedClient=null,editing=null,currentSale=null,timer,saleDiscount=0;
 const money=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});const api=(url,opt)=>fetch('/api'+url,opt).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.mensagem||'Erro na operação');return d});const clone=n=>views[n].content.cloneNode(true);
 function render(name){app.replaceChildren(clone(name));document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.view===name));document.querySelectorAll('[data-go]').forEach(x=>x.onclick=()=>render(x.dataset.go));if(name==='dashboard')loadDashboard();if(name==='products')loadProducts();if(name==='sales')loadSales();if(name==='receivables')loadReceivables();if(name==='clients')loadClients();if(name==='payables')loadPayables();if(name==='sale')setupSale()}
 async function loadDashboard(){const d=await api('/dashboard');document.querySelector('#today').textContent=money(d.vendas_hoje);document.querySelector('#week').textContent=money(d.vendas_semana);document.querySelector('#receivable').textContent=money(d.total_receber);document.querySelector('#debtors').textContent=(d.clientes_devendo||0)+' cliente(s) com saldo'}
@@ -88,7 +88,7 @@ function escape(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':
 function openProduct(p){editing=p||null;const d=document.querySelector('#product-dialog');document.querySelector('#dialog-title').textContent=p?'Editar produto':'Novo produto';['code','unit','description','price','stock','category','status'].forEach(k=>document.querySelector('#f-'+k).value=p?({code:p.codigo,unit:p.unidade,description:p.descricao,price:p.preco,stock:p.estoque,category:p.categoria,status:p.situacao}[k]??''):(k==='unit'?'UN':k==='stock'?'0':k==='status'?'Ativo':''));d.showModal();d.querySelector('form').onsubmit=async e=>{if(e.submitter?.id!=='save-product')return;e.preventDefault();const data={codigo:f('code'),unidade:f('unit'),descricao:f('description'),preco:f('price'),estoque:f('stock'),categoria:f('category'),situacao:f('status')};await api('/products'+(editing?'/'+editing.id:''),{method:editing?'PUT':'POST',headers:{'content-type':'application/json'},body:JSON.stringify(data)});d.close();productCache=null;listProducts(document.querySelector('#product-search').value)}}
 const f=k=>document.querySelector('#f-'+k).value;
 async function setupSale(){
-  const search=document.querySelector('#sale-search'),suggestions=document.querySelector('#suggestions'),payment=document.querySelector('#payment'),quickClient=document.querySelector('#quick-client'),finishButton=document.querySelector('#finish-sale'),clientSearch=document.querySelector('#sale-client-search'),clientSuggestions=document.querySelector('#client-suggestions'),selectedClientLabel=document.querySelector('#selected-client'),discountType=document.querySelector('#discount-type'),discountInput=document.querySelector('#discount-input');
+  const search=document.querySelector('#sale-search'),suggestions=document.querySelector('#suggestions'),payment=document.querySelector('#payment'),quickClient=document.querySelector('#quick-client'),finishButton=document.querySelector('#finish-sale'),clientSearch=document.querySelector('#sale-client-search'),clientSuggestions=document.querySelector('#client-suggestions'),selectedClientLabel=document.querySelector('#selected-client'),discountInput=document.querySelector('#discount-input');
   let clientsCache=[];
   try{clientsCache=await api('/clients')}catch(error){console.error(error)}
   const selectClient=client=>{
@@ -110,20 +110,13 @@ async function setupSale(){
   const resetSale=()=>{
     cart=[];selected=null;selectedClient=null;
     search.value='';suggestions.innerHTML='';document.querySelector('#quantity').value=1;
-    payment.value='pix';saleDiscount={type:'none',value:0};discountType.value='none';discountInput.value='';discountInput.disabled=true;clientSearch.value='';document.querySelector('#withdrawn-by').value='';clientSuggestions.innerHTML='';selectedClientLabel.hidden=true;selectedClientLabel.textContent='';
+    payment.value='pix';saleDiscount=0;discountInput.value='';clientSearch.value='';document.querySelector('#withdrawn-by').value='';clientSuggestions.innerHTML='';selectedClientLabel.hidden=true;selectedClientLabel.textContent='';
     quickClient.textContent='+ Cadastrar cliente';
     finishButton.disabled=false;finishButton.textContent='Finalizar venda';
     drawCart();search.focus();
   };
   payment.onchange=()=>{if(payment.value==='fiado'&&!selectedClient)clientSearch.focus()};
-  discountType.onchange=()=>{
-    saleDiscount.type=discountType.value;
-    discountInput.disabled=saleDiscount.type==='none';
-    discountInput.placeholder=saleDiscount.type==='percent'?'Ex.: 10':'Ex.: 5,00';
-    if(saleDiscount.type==='none'){saleDiscount.value=0;discountInput.value=''}
-    drawCart();
-  };
-  discountInput.oninput=()=>{saleDiscount.value=String(discountInput.value).replace(',','.');drawCart()};
+  discountInput.oninput=()=>{saleDiscount=String(discountInput.value).replace(',','.');drawCart()};
   clientSearch.oninput=()=>{
     if(selectedClient&&normalizarBusca(clientSearch.value)!==normalizarBusca(selectedClient.nome)){
       selectedClient=null;selectedClientLabel.hidden=true;selectedClientLabel.textContent='';quickClient.textContent='+ Cadastrar cliente';
@@ -184,7 +177,7 @@ async function setupSale(){
 function cartGross(){return cart.reduce((sum,item)=>sum+item.preco*item.quantidade,0)}
 function discountAmount(){
   const gross=cartGross(),value=Math.max(0,Number(saleDiscount.value)||0);
-  return Math.min(gross,saleDiscount.type==='percent'?gross*Math.min(value,100)/100:value);
+  return Math.min(gross,value);
 }
 function drawCart(){
   const box=document.querySelector('#cart'),gross=cartGross(),discount=discountAmount(),total=Math.max(0,gross-discount);
