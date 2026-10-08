@@ -569,7 +569,10 @@ async function finalizarVenda() {
             return;
         }
 
-        alert(resultado.mensagem);
+        const imprimirAgora = confirm(resultado.mensagem + "\n\nDeseja abrir o pedido para imprimir na Atomo Bluetooth?");
+        if (imprimirAgora) {
+            window.open(`/pedido/${resultado.venda_id}`, "_blank");
+        }
 
         if (resultado.telefone_whatsapp && resultado.mensagem_whatsapp) {
             const telefone = resultado.telefone_whatsapp.replace(/\D/g, "");
