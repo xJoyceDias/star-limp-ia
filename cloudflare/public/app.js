@@ -129,22 +129,24 @@ async function setupSale(){
     if(index>=0)clientsCache[index]=client;else clientsCache.push(client);
     selectClient(client);
   });
+  const addProduct=product=>{
+    const quantity=Number(document.querySelector('#quantity').value);
+    if(!Number.isFinite(quantity)||quantity<=0)return alert('Informe uma quantidade válida.');
+    const existing=cart.find(item=>String(item.codigo)===String(product.codigo)&&item.produto===product.descricao&&Number(item.preco)===Number(product.preco));
+    if(existing)existing.quantidade+=quantity;else cart.push({codigo:product.codigo,produto:product.descricao,quantidade:quantity,preco:Number(product.preco)});
+    selected=null;search.value='';suggestions.innerHTML='';document.querySelector('#quantity').value=1;drawCart();search.focus();
+  };
   search.oninput=async()=>{
     if(search.value.trim().length<1){suggestions.innerHTML='';return}
     const products=(await todosProdutos()).filter(product=>correspondeBusca(product,search.value,['descricao','codigo','categoria']));
     suggestions.innerHTML=products.slice(0,8).map(product=>'<button type="button" class="suggestion" data-id="'+product.id+'"><span><b>'+escape(product.descricao)+'</b><small>'+escape(product.codigo||'Sem código')+'</small></span><strong>'+money(product.preco)+'</strong></button>').join('')||'<p class="no-result">Nenhum produto encontrado.</p>';
-    suggestions.querySelectorAll('.suggestion').forEach(element=>element.onclick=()=>{
-      selected=products.find(product=>String(product.id)===element.dataset.id);
-      search.value=selected.descricao;suggestions.innerHTML='';document.querySelector('#quantity').focus();
-    });
+    suggestions.querySelectorAll('.suggestion').forEach(element=>element.onclick=()=>addProduct(products.find(product=>String(product.id)===element.dataset.id)));
   };
-  search.onkeydown=event=>{if(event.key==='Enter'&&selected){event.preventDefault();document.querySelector('#add-item').click()}};
-  document.querySelector('#add-item').onclick=()=>{
-    if(!selected)return alert('Selecione um produto na lista.');
-    const quantity=Number(document.querySelector('#quantity').value);
-    if(!Number.isFinite(quantity)||quantity<=0)return alert('Informe uma quantidade válida.');
-    cart.push({codigo:selected.codigo,produto:selected.descricao,quantidade:quantity,preco:Number(selected.preco)});
-    selected=null;search.value='';suggestions.innerHTML='';document.querySelector('#quantity').value=1;drawCart();search.focus();
+  search.onkeydown=event=>{
+    if(event.key==='Enter'){
+      const first=suggestions.querySelector('.suggestion');
+      if(first){event.preventDefault();first.click()}
+    }
   };
   finishButton.onclick=async()=>{
     if(!cart.length)return alert('Adicione pelo menos um produto.');
