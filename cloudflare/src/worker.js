@@ -69,13 +69,10 @@ async function criarVenda(request, env) {
   const total = Number(itens.reduce((soma, item) => soma + item.subtotal, 0).toFixed(2));
   const dataHora = agora();
   let cliente = null;
-  if (forma === "fiado") {
-    const clienteId = Number(dados.cliente_id);
-    if (!clienteId) return erro("Selecione ou cadastre o cliente para vender fiado.");
-    cliente = await env.DB.prepare("SELECT id, nome, telefone, saldo_fiado FROM clientes WHERE id=?").bind(clienteId).first();
-    if (!cliente) return erro("Cliente não encontrado.", 404);
-  }
-  const venda = await env.DB.prepare("INSERT INTO vendas (data_hora, valor_total, forma_pagamento) VALUES (?, ?, ?)").bind(dataHora, total, forma).run();
+  const clienteId = Number(dados.cliente_id);
+  if (clienteId) {cliente = await env.DB.prepare("SELECT id, nome, telefone, cpf_cnpj, saldo_fiado FROM clientes WHERE id=?").bind(clienteId).first();if (!cliente) return erro("Cliente não encontrado.", 404);}
+  if (forma === "fiado" && !cliente) return erro("Selecione ou cadastre o cliente para vender fiado.");
+  const venda = await env.DB.prepare("INSERT INTO vendas (data_hora, valor_total, forma_pagamento, cliente_id) VALUES (?, ?, ?, ?)").bind(dataHora, total, forma, cliente?.id || null).run();
   const vendaId = venda.meta.last_row_id;
   const comandos = itens.map((item) => env.DB.prepare(
     "INSERT INTO itens_venda (venda_id, codigo_produto, descricao, quantidade, preco_unitario, subtotal) VALUES (?, ?, ?, ?, ?, ?)"
@@ -141,7 +138,7 @@ async function venda(env, id) {
   const cabecalho = await env.DB.prepare("SELECT * FROM vendas WHERE id = ?").bind(id).first();
   if (!cabecalho) return erro("Venda não encontrada.", 404);
   const itens = await env.DB.prepare("SELECT descricao, quantidade, preco_unitario, subtotal FROM itens_venda WHERE venda_id = ?").bind(id).all();
-  const cliente = await env.DB.prepare("SELECT cliente_id, cliente_nome, telefone, saldo_atual FROM fiados WHERE venda_id=?").bind(id).first();
+  const cliente = cabecalho.cliente_id ? await env.DB.prepare("SELECT id, nome, telefone, cpf_cnpj, saldo_fiado FROM clientes WHERE id=?").bind(cabecalho.cliente_id).first() : null;
   return json({ venda: cabecalho, itens: itens.results, cliente });
 }
 
@@ -151,11 +148,15 @@ async function clientes(request, env, url) {
     return json(resultado.results);
   }
   const dados = await request.json();
-  const nome = String(dados.nome || "").trim();
+  const nome = String(dados.nome || "").trim(), telefone=String(dados.telefone || "").replace(/\D/g,""), documento=String(dados.cpf_cnpj || "").replace(/\D/g,"");
   if (!nome) return erro("Informe o nome do cliente.");
+  const existentes = await env.DB.prepare("SELECT id, nome, telefone, cpf_cnpj, saldo_fiado FROM clientes").all();
+  const nomeNormalizado=nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g," ").trim();
+  const encontrado=existentes.results.find(cliente=>{const nomeExistente=String(cliente.nome||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g," ").trim();return nomeExistente===nomeNormalizado||(telefone&&String(cliente.telefone||"").replace(/\D/g,"")===telefone)||(documento&&String(cliente.cpf_cnpj||"").replace(/\D/g,"")===documento)});
+  if(encontrado)return json({sucesso:true,existente:true,id:encontrado.id,cliente:encontrado,mensagem:"Cliente já cadastrado e selecionado."});
   const resultado = await env.DB.prepare("INSERT INTO clientes (nome, telefone, cpf_cnpj, saldo_fiado, data_cadastro) VALUES (?, ?, ?, 0, ?)")
-    .bind(nome, String(dados.telefone || "").trim(), String(dados.cpf_cnpj || "").trim(), agora()).run();
-  return json({ sucesso:true, id:resultado.meta.last_row_id, mensagem:"Cliente cadastrado com sucesso." });
+    .bind(nome, telefone, documento, agora()).run();
+  return json({ sucesso:true, id:resultado.meta.last_row_id, cliente:{id:resultado.meta.last_row_id,nome,telefone,cpf_cnpj:documento,saldo_fiado:0}, mensagem:"Cliente cadastrado com sucesso." });
 }
 
 async function contasPagar(request, env, url) {
