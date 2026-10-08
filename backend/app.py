@@ -16,10 +16,12 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="backend/static"), name="static")
 
 templates = Jinja2Templates(directory="backend/templates")
-if os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("RAILWAY_SERVICE_NAME"):
-    BANCO = "/data/starlimp.db"
-else:
-    BANCO = "database/starlimp.db"
+BANCO = os.getenv("DATABASE_PATH")
+if not BANCO:
+    if os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("RAILWAY_SERVICE_NAME"):
+        BANCO = "/data/starlimp.db"
+    else:
+        BANCO = "database/starlimp.db"
 
 if BANCO.startswith("/data"):
     os.makedirs("/data", exist_ok=True)
