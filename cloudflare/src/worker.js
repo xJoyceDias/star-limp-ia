@@ -134,7 +134,7 @@ export default {
       if (url.pathname === "/api/sales" && request.method === "POST") return criarVenda(request, env);
       if (url.pathname === "/api/payables" && (request.method === "GET" || request.method === "POST")) return contasPagar(request, env, url);
       if (url.pathname === "/api/payables/summary" && request.method === "GET") return json(await resumoContasPagar(env));
-      const contaId = url.pathname.match(/^\\/api\\/payables\\/(\\d+)\\/settlements$/);
+      const contaId = url.pathname.match(/^\/api\/payables\/(\d+)\/settlements$/);
       if (contaId && request.method === "POST") return baixarConta(request, env, Number(contaId[1]));
       const vendaId = url.pathname.match(/^\/api\/sales\/(\d+)$/);
       if (vendaId && request.method === "GET") return venda(env, Number(vendaId[1]));
