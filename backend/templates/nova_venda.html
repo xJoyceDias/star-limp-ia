@@ -569,10 +569,9 @@ async function finalizarVenda() {
             return;
         }
 
-        const imprimirAgora = confirm(resultado.mensagem + "\n\nDeseja abrir o pedido para imprimir na Atomo Bluetooth?");
-        if (imprimirAgora) {
-            window.open(`/pedido/${resultado.venda_id}`, "_blank");
-        }
+        const imprimirRecibo = confirm(resultado.mensagem + "\n\nOK: abrir recibo térmico para a Atomo Bluetooth.\nCancelar: abrir pedido completo.");
+        const rotaImpressao = imprimirRecibo ? `/recibo/${resultado.venda_id}` : `/pedido/${resultado.venda_id}`;
+        window.open(rotaImpressao, "_blank");
 
         if (resultado.telefone_whatsapp && resultado.mensagem_whatsapp) {
             const telefone = resultado.telefone_whatsapp.replace(/\D/g, "");
