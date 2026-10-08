@@ -68,31 +68,50 @@ async function criarVenda(request, env) {
   const forma = String(dados.forma_pagamento || "pix").toLowerCase();
   const total = Number(itens.reduce((soma, item) => soma + item.subtotal, 0).toFixed(2));
   const dataHora = agora();
+  let cliente = null;
+  if (forma === "fiado") {
+    const clienteId = Number(dados.cliente_id);
+    if (!clienteId) return erro("Selecione ou cadastre o cliente para vender fiado.");
+    cliente = await env.DB.prepare("SELECT id, nome, telefone, saldo_fiado FROM clientes WHERE id=?").bind(clienteId).first();
+    if (!cliente) return erro("Cliente não encontrado.", 404);
+  }
   const venda = await env.DB.prepare("INSERT INTO vendas (data_hora, valor_total, forma_pagamento) VALUES (?, ?, ?)").bind(dataHora, total, forma).run();
   const vendaId = venda.meta.last_row_id;
-  await env.DB.batch(itens.map((item) => env.DB.prepare(
+  const comandos = itens.map((item) => env.DB.prepare(
     "INSERT INTO itens_venda (venda_id, codigo_produto, descricao, quantidade, preco_unitario, subtotal) VALUES (?, ?, ?, ?, ?, ?)"
-  ).bind(vendaId, item.codigo, item.produto, item.quantidade, item.preco, item.subtotal)));
-  return json({ sucesso: true, venda_id: vendaId, mensagem: "Venda registrada com sucesso.", total });
+  ).bind(vendaId, item.codigo, item.produto, item.quantidade, item.preco, item.subtotal));
+  if (cliente) {
+    const saldoAnterior = numero(cliente.saldo_fiado);
+    const saldoAtual = Number((saldoAnterior + total).toFixed(2));
+    comandos.push(
+      env.DB.prepare("INSERT INTO fiados (venda_id, cliente_id, cliente_nome, telefone, retirado_por, valor_compra, saldo_anterior, saldo_atual, data_hora, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'ABERTO')")
+        .bind(vendaId, cliente.id, cliente.nome, cliente.telefone || "", String(dados.retirado_por || cliente.nome), total, saldoAnterior, saldoAtual, dataHora),
+      env.DB.prepare("UPDATE clientes SET saldo_fiado=? WHERE id=?").bind(saldoAtual, cliente.id)
+    );
+    cliente={...cliente,saldo_fiado:saldoAtual};
+  }
+  await env.DB.batch(comandos);
+  return json({ sucesso: true, venda_id: vendaId, mensagem: cliente ? "Venda fiada registrada com sucesso." : "Venda registrada com sucesso.", total, cliente });
 }
 
 async function venda(env, id) {
   const cabecalho = await env.DB.prepare("SELECT * FROM vendas WHERE id = ?").bind(id).first();
   if (!cabecalho) return erro("Venda não encontrada.", 404);
   const itens = await env.DB.prepare("SELECT descricao, quantidade, preco_unitario, subtotal FROM itens_venda WHERE venda_id = ?").bind(id).all();
-  return json({ venda: cabecalho, itens: itens.results });
+  const cliente = await env.DB.prepare("SELECT cliente_id, cliente_nome, telefone, saldo_atual FROM fiados WHERE venda_id=?").bind(id).first();
+  return json({ venda: cabecalho, itens: itens.results, cliente });
 }
 
 async function clientes(request, env, url) {
   if (request.method === "GET") {
-    const resultado = await env.DB.prepare("SELECT id, nome, telefone, saldo_fiado, data_cadastro FROM clientes ORDER BY nome COLLATE NOCASE").all();
+    const resultado = await env.DB.prepare("SELECT id, nome, telefone, cpf_cnpj, saldo_fiado, data_cadastro FROM clientes ORDER BY nome COLLATE NOCASE").all();
     return json(resultado.results);
   }
   const dados = await request.json();
   const nome = String(dados.nome || "").trim();
   if (!nome) return erro("Informe o nome do cliente.");
-  const resultado = await env.DB.prepare("INSERT INTO clientes (nome, telefone, saldo_fiado, data_cadastro) VALUES (?, ?, 0, ?)")
-    .bind(nome, String(dados.telefone || "").trim(), agora()).run();
+  const resultado = await env.DB.prepare("INSERT INTO clientes (nome, telefone, cpf_cnpj, saldo_fiado, data_cadastro) VALUES (?, ?, ?, 0, ?)")
+    .bind(nome, String(dados.telefone || "").trim(), String(dados.cpf_cnpj || "").trim(), agora()).run();
   return json({ sucesso:true, id:resultado.meta.last_row_id, mensagem:"Cliente cadastrado com sucesso." });
 }
 
