@@ -83,6 +83,45 @@ async function venda(env, id) {
   return json({ venda: cabecalho, itens: itens.results });
 }
 
+async function contasPagar(request, env, url) {
+  if (request.method === "GET") {
+    const status = url.searchParams.get("status") || "";
+    const comando = status ? env.DB.prepare("SELECT c.*, COALESCE((SELECT SUM(valor_pago) FROM baixas_conta_pagar b WHERE b.conta_id=c.id),0) AS total_baixado FROM contas_pagar c WHERE c.status=? ORDER BY CASE c.status WHEN 'PENDENTE' THEN 0 ELSE 1 END, c.vencimento, c.id DESC").bind(status) : env.DB.prepare("SELECT c.*, COALESCE((SELECT SUM(valor_pago) FROM baixas_conta_pagar b WHERE b.conta_id=c.id),0) AS total_baixado FROM contas_pagar c ORDER BY CASE c.status WHEN 'PENDENTE' THEN 0 ELSE 1 END, c.vencimento, c.id DESC");
+    const resultado = await comando.all();
+    return json(resultado.results);
+  }
+  const dados = await request.json();
+  if (!numero(dados.valor) || numero(dados.valor) <= 0) return erro("Informe o valor do boleto.");
+  const criadoEm = agora();
+  const resultado = await env.DB.prepare("INSERT INTO contas_pagar (fornecedor, descricao, linha_digitavel, valor, vencimento, status, arquivo_nome, criado_em) VALUES (?, ?, ?, ?, ?, 'PENDENTE', ?, ?)")
+    .bind(String(dados.fornecedor || "").trim(), String(dados.descricao || "Boleto importado").trim(), String(dados.linha_digitavel || "").replace(/\D/g, ""), numero(dados.valor), String(dados.vencimento || "").trim() || null, String(dados.arquivo_nome || "").trim(), criadoEm).run();
+  return json({ sucesso:true, id:resultado.meta.last_row_id, mensagem:"Conta a pagar cadastrada." });
+}
+
+async function baixarConta(request, env, id) {
+  const conta = await env.DB.prepare("SELECT * FROM contas_pagar WHERE id=?").bind(id).first();
+  if (!conta) return erro("Conta não encontrada.", 404);
+  if (conta.status === "PAGO") return erro("Esta conta já foi baixada.");
+  const dados = await request.json();
+  const valor = numero(dados.valor_pago);
+  if (valor <= 0) return erro("Informe o valor pago.");
+  if (!String(dados.banco || "").trim()) return erro("Informe o banco ou a forma de pagamento.");
+  await env.DB.batch([
+    env.DB.prepare("INSERT INTO baixas_conta_pagar (conta_id, banco, valor_pago, data_pagamento, observacao) VALUES (?, ?, ?, ?, ?)")
+      .bind(id, String(dados.banco).trim(), valor, String(dados.data_pagamento || agora().slice(0,10)), String(dados.observacao || "").trim()),
+    env.DB.prepare("UPDATE contas_pagar SET status='PAGO' WHERE id=?").bind(id)
+  ]);
+  return json({ sucesso:true, mensagem:"Baixa registrada no balanço." });
+}
+
+async function resumoContasPagar(env) {
+  const [pendente, pago] = await env.DB.batch([
+    env.DB.prepare("SELECT COALESCE(SUM(valor),0) valor, COUNT(*) quantidade FROM contas_pagar WHERE status='PENDENTE'").all(),
+    env.DB.prepare("SELECT COALESCE(SUM(valor_pago),0) valor, COUNT(*) quantidade FROM baixas_conta_pagar WHERE substr(data_pagamento,1,7)=substr(?,1,7)").bind(agora()).all()
+  ]);
+  return { pendente:pendente.results[0], pago_mes:pago.results[0] };
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -93,6 +132,10 @@ export default {
       const produto = url.pathname.match(/^\/api\/products\/(\d+)$/);
       if (produto && request.method === "PUT") return atualizarProduto(request, env, Number(produto[1]));
       if (url.pathname === "/api/sales" && request.method === "POST") return criarVenda(request, env);
+      if (url.pathname === "/api/payables" && (request.method === "GET" || request.method === "POST")) return contasPagar(request, env, url);
+      if (url.pathname === "/api/payables/summary" && request.method === "GET") return json(await resumoContasPagar(env));
+      const contaId = url.pathname.match(/^\\/api\\/payables\\/(\\d+)\\/settlements$/);
+      if (contaId && request.method === "POST") return baixarConta(request, env, Number(contaId[1]));
       const vendaId = url.pathname.match(/^\/api\/sales\/(\d+)$/);
       if (vendaId && request.method === "GET") return venda(env, Number(vendaId[1]));
       return erro("Rota não encontrada.", 404);
