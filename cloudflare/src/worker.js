@@ -83,6 +83,19 @@ async function venda(env, id) {
   return json({ venda: cabecalho, itens: itens.results });
 }
 
+async function clientes(request, env, url) {
+  if (request.method === "GET") {
+    const resultado = await env.DB.prepare("SELECT id, nome, telefone, saldo_fiado, data_cadastro FROM clientes ORDER BY nome COLLATE NOCASE").all();
+    return json(resultado.results);
+  }
+  const dados = await request.json();
+  const nome = String(dados.nome || "").trim();
+  if (!nome) return erro("Informe o nome do cliente.");
+  const resultado = await env.DB.prepare("INSERT INTO clientes (nome, telefone, saldo_fiado, data_cadastro) VALUES (?, ?, 0, ?)")
+    .bind(nome, String(dados.telefone || "").trim(), agora()).run();
+  return json({ sucesso:true, id:resultado.meta.last_row_id, mensagem:"Cliente cadastrado com sucesso." });
+}
+
 async function contasPagar(request, env, url) {
   if (request.method === "GET") {
     const status = url.searchParams.get("status") || "";
@@ -129,6 +142,7 @@ export default {
     try {
       if (url.pathname === "/api/dashboard" && request.method === "GET") return json(await dashboard(env.DB));
       if (url.pathname === "/api/products" && (request.method === "GET" || request.method === "POST")) return produtos(request, env, url);
+      if (url.pathname === "/api/clients" && (request.method === "GET" || request.method === "POST")) return clientes(request, env, url);
       const produto = url.pathname.match(/^\/api\/products\/(\d+)$/);
       if (produto && request.method === "PUT") return atualizarProduto(request, env, Number(produto[1]));
       if (url.pathname === "/api/sales" && request.method === "POST") return criarVenda(request, env);
