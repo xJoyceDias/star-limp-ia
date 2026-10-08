@@ -1293,3 +1293,79 @@ def cancelar_venda(dados: dict = Body(...)):
         "sucesso": True,
         "mensagem": f"Venda Nº {venda_id} cancelada com sucesso."
     }
+
+
+# Gestão de produtos para o PDV
+@app.get("/produtos")
+def pagina_produtos(request: Request):
+    return templates.TemplateResponse(request, "produtos.html")
+
+
+@app.get("/api/produtos")
+def listar_produtos(termo: str = ""):
+    conexao = sqlite3.connect(BANCO)
+    conexao.row_factory = sqlite3.Row
+    cursor = conexao.cursor()
+    cursor.execute("""
+        SELECT id, codigo, descricao, unidade, preco, situacao, estoque, categoria
+        FROM produtos
+        WHERE lower(coalesce(codigo, '')) LIKE ? OR lower(coalesce(descricao, '')) LIKE ?
+        ORDER BY descricao COLLATE NOCASE
+        LIMIT 200
+    """, (f"%{termo.lower()}%", f"%{termo.lower()}%"))
+    produtos = [dict(produto) for produto in cursor.fetchall()]
+    conexao.close()
+    return produtos
+
+
+@app.post("/api/produtos")
+def criar_produto(dados: dict = Body(...)):
+    descricao = str(dados.get("descricao", "")).strip()
+    codigo = str(dados.get("codigo", "")).strip()
+    if not descricao:
+        return {"sucesso": False, "mensagem": "Informe a descrição do produto."}
+    try:
+        preco = float(dados.get("preco", 0) or 0)
+        estoque = float(dados.get("estoque", 0) or 0)
+    except (TypeError, ValueError):
+        return {"sucesso": False, "mensagem": "Preço e estoque devem ser numéricos."}
+    conexao = sqlite3.connect(BANCO)
+    cursor = conexao.cursor()
+    cursor.execute("""
+        INSERT INTO produtos (codigo, descricao, unidade, preco, situacao, estoque, categoria)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (codigo, descricao, str(dados.get("unidade", "UN")).strip() or "UN", preco,
+          str(dados.get("situacao", "Ativo")).strip() or "Ativo", estoque,
+          str(dados.get("categoria", "")).strip()))
+    produto_id = cursor.lastrowid
+    conexao.commit()
+    conexao.close()
+    return {"sucesso": True, "id": produto_id, "mensagem": "Produto cadastrado com sucesso."}
+
+
+@app.put("/api/produtos/{produto_id}")
+def atualizar_produto(produto_id: int, dados: dict = Body(...)):
+    descricao = str(dados.get("descricao", "")).strip()
+    if not descricao:
+        return {"sucesso": False, "mensagem": "Informe a descrição do produto."}
+    try:
+        preco = float(dados.get("preco", 0) or 0)
+        estoque = float(dados.get("estoque", 0) or 0)
+    except (TypeError, ValueError):
+        return {"sucesso": False, "mensagem": "Preço e estoque devem ser numéricos."}
+    conexao = sqlite3.connect(BANCO)
+    cursor = conexao.cursor()
+    cursor.execute("""
+        UPDATE produtos
+        SET codigo = ?, descricao = ?, unidade = ?, preco = ?, situacao = ?, estoque = ?, categoria = ?
+        WHERE id = ?
+    """, (str(dados.get("codigo", "")).strip(), descricao,
+          str(dados.get("unidade", "UN")).strip() or "UN", preco,
+          str(dados.get("situacao", "Ativo")).strip() or "Ativo", estoque,
+          str(dados.get("categoria", "")).strip(), produto_id))
+    atualizado = cursor.rowcount > 0
+    conexao.commit()
+    conexao.close()
+    if not atualizado:
+        return {"sucesso": False, "mensagem": "Produto não encontrado."}
+    return {"sucesso": True, "mensagem": "Produto atualizado com sucesso."}
