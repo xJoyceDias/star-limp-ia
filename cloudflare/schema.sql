@@ -69,3 +69,29 @@ CREATE TABLE IF NOT EXISTS pagamentos_fiado (
 CREATE INDEX IF NOT EXISTS idx_produtos_descricao ON produtos(descricao);
 CREATE INDEX IF NOT EXISTS idx_vendas_data ON vendas(data_hora);
 CREATE INDEX IF NOT EXISTS idx_itens_venda_venda ON itens_venda(venda_id);
+
+
+CREATE TABLE IF NOT EXISTS contas_pagar (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  fornecedor TEXT,
+  descricao TEXT,
+  linha_digitavel TEXT,
+  valor REAL NOT NULL DEFAULT 0,
+  vencimento TEXT,
+  status TEXT NOT NULL DEFAULT 'PENDENTE',
+  arquivo_nome TEXT,
+  criado_em TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS baixas_conta_pagar (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  conta_id INTEGER NOT NULL,
+  banco TEXT NOT NULL,
+  valor_pago REAL NOT NULL,
+  data_pagamento TEXT NOT NULL,
+  observacao TEXT,
+  FOREIGN KEY (conta_id) REFERENCES contas_pagar(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_contas_pagar_status ON contas_pagar(status);
+CREATE INDEX IF NOT EXISTS idx_baixas_conta ON baixas_conta_pagar(conta_id);
