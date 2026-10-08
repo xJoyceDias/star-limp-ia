@@ -13,9 +13,9 @@ async function loadPayables(){
     document.querySelector('#payable-paid-month').textContent=money(resumo.pago_mes?.valor);
     document.querySelector('#payable-paid-count').textContent=(resumo.pago_mes?.quantidade||0)+' baixa(s) registrada(s) neste mês';
     const rows=document.querySelector('#payable-rows');
-    rows.innerHTML=contas.map(c=>'<tr><td>'+escape(formatDate(c.vencimento))+'</td><td><b>'+escape(c.fornecedor||'Fornecedor não identificado')+'</b><br><small>'+escape(c.descricao||'')+'</small></td><td>'+money(c.valor)+'</td><td><span class="status '+(c.status==='PAGO'?'paid':'pending')+'">'+escape(c.status)+'</span></td><td>'+((c.status==='PENDENTE')?'<button class="secondary settle" data-id="'+c.id+'">Baixar</button>':'<small>Pago: '+money(c.total_baixado)+'</small>')+'</td></tr>').join('');
+    rows.innerHTML=contas.map(c=>'<tr><td>'+escape(formatDate(c.vencimento))+'</td><td><b>'+escape(c.fornecedor||'Fornecedor não identificado')+'</b><br><small>'+escape(c.descricao||'')+'</small></td><td>'+money(c.valor)+'</td><td><span class="status '+(c.status==='PAGO'?'paid':'pending')+'">'+escape(c.status)+'</span></td><td>'+((c.status==='PENDENTE')?'<button class="secondary settle" data-id="'+c.id+'">Baixar</button> <button class="danger delete-payable" data-id="'+c.id+'">Excluir</button>':'<small>Pago: '+money(c.total_baixado)+'</small>')+'</td></tr>').join('');
     document.querySelector('#empty-payables').textContent=contas.length?'':'Nenhuma conta cadastrada.';
-    rows.querySelectorAll('.settle').forEach(button=>button.onclick=()=>openSettlement(contas.find(c=>String(c.id)===button.dataset.id)));
+    rows.querySelectorAll('.settle').forEach(button=>button.onclick=()=>openSettlement(contas.find(c=>String(c.id)===button.dataset.id)));rows.querySelectorAll('.delete-payable').forEach(button=>button.onclick=async()=>{const conta=contas.find(c=>String(c.id)===button.dataset.id);if(!confirm('Excluir a conta de '+money(conta.valor)+'? Esta ação não pode ser desfeita.'))return;await api('/payables/'+conta.id,{method:'DELETE'});loadPayables()});
   }catch(error){
     document.querySelector('#empty-payables').textContent='Não foi possível carregar o resumo agora. Você ainda pode importar um boleto.';
   }
