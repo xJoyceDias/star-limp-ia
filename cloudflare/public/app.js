@@ -4,16 +4,21 @@ function render(name){app.replaceChildren(clone(name));document.querySelectorAll
 async function loadDashboard(){const d=await api('/dashboard');document.querySelector('#today').textContent=money(d.vendas_hoje);document.querySelector('#week').textContent=money(d.vendas_semana);document.querySelector('#receivable').textContent=money(d.total_receber);document.querySelector('#debtors').textContent=(d.clientes_devendo||0)+' cliente(s) com saldo'}
 
 async function loadPayables(){
-  const [contas,resumo]=await Promise.all([api('/payables'),api('/payables/summary')]);
-  document.querySelector('#payable-pending').textContent=money(resumo.pendente.valor);
-  document.querySelector('#payable-pending-count').textContent=(resumo.pendente.quantidade||0)+' conta(s) aguardando pagamento';
-  document.querySelector('#payable-paid-month').textContent=money(resumo.pago_mes.valor);
-  document.querySelector('#payable-paid-count').textContent=(resumo.pago_mes.quantidade||0)+' baixa(s) registrada(s) neste mês';
-  const rows=document.querySelector('#payable-rows');
-  rows.innerHTML=contas.map(c=>'<tr><td>'+escape(formatDate(c.vencimento))+'</td><td><b>'+escape(c.fornecedor||'Fornecedor não identificado')+'</b><br><small>'+escape(c.descricao||'')+'</small></td><td>'+money(c.valor)+'</td><td><span class="status '+(c.status==='PAGO'?'paid':'pending')+'">'+escape(c.status)+'</span></td><td>'+((c.status==='PENDENTE')?'<button class="secondary settle" data-id="'+c.id+'">Baixar</button>':'<small>Pago: '+money(c.total_baixado)+'</small>')+'</td></tr>').join('');
-  document.querySelector('#empty-payables').textContent=contas.length?'':'Nenhuma conta cadastrada.';
-  document.querySelector('#new-payable').onclick=openPayable;
-  rows.querySelectorAll('.settle').forEach(button=>button.onclick=()=>openSettlement(contas.find(c=>String(c.id)===button.dataset.id)));
+  const importButton=document.querySelector('#new-payable');
+  importButton.onclick=openPayable;
+  try{
+    const [contas,resumo]=await Promise.all([api('/payables'),api('/payables/summary')]);
+    document.querySelector('#payable-pending').textContent=money(resumo.pendente?.valor);
+    document.querySelector('#payable-pending-count').textContent=(resumo.pendente?.quantidade||0)+' conta(s) aguardando pagamento';
+    document.querySelector('#payable-paid-month').textContent=money(resumo.pago_mes?.valor);
+    document.querySelector('#payable-paid-count').textContent=(resumo.pago_mes?.quantidade||0)+' baixa(s) registrada(s) neste mês';
+    const rows=document.querySelector('#payable-rows');
+    rows.innerHTML=contas.map(c=>'<tr><td>'+escape(formatDate(c.vencimento))+'</td><td><b>'+escape(c.fornecedor||'Fornecedor não identificado')+'</b><br><small>'+escape(c.descricao||'')+'</small></td><td>'+money(c.valor)+'</td><td><span class="status '+(c.status==='PAGO'?'paid':'pending')+'">'+escape(c.status)+'</span></td><td>'+((c.status==='PENDENTE')?'<button class="secondary settle" data-id="'+c.id+'">Baixar</button>':'<small>Pago: '+money(c.total_baixado)+'</small>')+'</td></tr>').join('');
+    document.querySelector('#empty-payables').textContent=contas.length?'':'Nenhuma conta cadastrada.';
+    rows.querySelectorAll('.settle').forEach(button=>button.onclick=()=>openSettlement(contas.find(c=>String(c.id)===button.dataset.id)));
+  }catch(error){
+    document.querySelector('#empty-payables').textContent='Não foi possível carregar o resumo agora. Você ainda pode importar um boleto.';
+  }
 }
 function formatDate(value){if(!value)return '—';const m=String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[3]+'/'+m[2]+'/'+m[1]:value}
 function openPayable(){
