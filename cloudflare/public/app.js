@@ -58,8 +58,46 @@ const correspondeBusca=(item,termo,campos)=>{const parts=normalizarBusca(termo).
 let productCache=null;
 const todosProdutos=()=>productCache||(productCache=api('/products'));
 async function loadReceivables(){const clients=await api('/receivables'),select=document.querySelector('#receive-client'),rows=document.querySelector('#receivable-rows');select.innerHTML='<option value="">Selecione o cliente</option>'+clients.map(client=>'<option value="'+client.id+'">'+escape(client.nome)+' — '+money(client.saldo_fiado)+'</option>').join('');rows.innerHTML=clients.map(client=>'<tr><td><b>'+escape(client.nome)+'</b></td><td>'+escape(client.telefone||'—')+'</td><td>'+money(client.saldo_fiado)+'</td><td><button class="secondary receive-client" data-id="'+client.id+'">Receber</button></td></tr>').join('');document.querySelector('#empty-receivables').textContent=clients.length?'':'Nenhum cliente com saldo em aberto.';rows.querySelectorAll('.receive-client').forEach(button=>button.onclick=()=>{const client=clients.find(item=>String(item.id)===button.dataset.id);select.value=client.id;document.querySelector('#receive-value').value=Number(client.saldo_fiado).toFixed(2);window.scrollTo({top:0,behavior:'smooth'})});document.querySelector('#save-receivable').onclick=async()=>{const client=clients.find(item=>String(item.id)===select.value),value=Number(document.querySelector('#receive-value').value);if(!client||value<=0)return alert('Selecione o cliente e informe o valor recebido.');await api('/receivables',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({cliente_id:client.id,valor_pago:value,forma_pagamento:document.querySelector('#receive-method').value,observacao:document.querySelector('#receive-note').value})});alert('Baixa registrada com sucesso.');loadReceivables()}}
-async function loadSales(){const search=document.querySelector('#sales-search'),all=await api('/sales');const draw=()=>{const rowsData=all.filter(sale=>correspondeBusca(sale,search.value,['id','cliente_nome','forma_pagamento','status']));const rows=document.querySelector('#sales-rows');rows.innerHTML=rowsData.map(sale=>'<tr><td>#'+sale.id+'</td><td>'+escape(formatDocumentDate(sale.data_hora))+'</td><td>'+escape(sale.cliente_nome||'—')+'</td><td>'+escape(sale.forma_pagamento.toUpperCase())+'</td><td>'+money(sale.valor_total)+'</td><td><span class="status '+(sale.status==='CANCELADA'?'pending':'paid')+'">'+escape(sale.status)+'</span></td><td>'+(sale.status==='CANCELADA'?'—':'<button class="secondary sale-edit" data-id="'+sale.id+'">Editar</button> <button class="secondary sale-cancel" data-id="'+sale.id+'">Cancelar</button>')+'</td></tr>').join('');document.querySelector('#empty-sales').textContent=rowsData.length?'':'Nenhuma venda encontrada.';rows.querySelectorAll('.sale-edit').forEach(button=>button.onclick=()=>openSaleEdit(all.find(sale=>String(sale.id)===button.dataset.id)));rows.querySelectorAll('.sale-cancel').forEach(button=>button.onclick=async()=>{const sale=all.find(item=>String(item.id)===button.dataset.id);if(!confirm('Cancelar a venda #'+sale.id+'? O histórico será preservado.'))return;await api('/sales/'+sale.id+'/cancel',{method:'POST'});loadSales()})};search.oninput=draw;draw()}
-function openSaleEdit(sale){const dialog=document.querySelector('#sale-edit-dialog');document.querySelector('#sale-edit-title').textContent='Venda #'+sale.id+' — '+money(sale.valor_total);document.querySelector('#sale-edit-payment').value=sale.forma_pagamento;dialog.showModal();dialog.querySelector('form').onsubmit=async event=>{if(event.submitter?.id!=='save-sale-edit')return;event.preventDefault();await api('/sales/'+sale.id,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({forma_pagamento:document.querySelector('#sale-edit-payment').value})});dialog.close();loadSales()}}
+async function loadSales(){
+  const search=document.querySelector('#sales-search'),all=await api('/sales');
+  const cancelSale=async sale=>{
+    if(!confirm('Cancelar a venda #'+sale.id+'? O histórico será preservado.'))return;
+    await api('/sales/'+sale.id+'/cancel',{method:'POST'});loadSales();
+  };
+  const draw=()=>{
+    const rowsData=all.filter(sale=>correspondeBusca(sale,search.value,['id','cliente_nome','forma_pagamento','status'])),rows=document.querySelector('#sales-rows');
+    rows.innerHTML=rowsData.map(sale=>'<tr class="sale-row" data-id="'+sale.id+'"><td><b>#'+sale.id+'</b><small>Ver detalhes</small></td><td>'+escape(formatDocumentDate(sale.data_hora))+'</td><td>'+escape(sale.cliente_nome||'Consumidor final')+'</td><td>'+escape(sale.forma_pagamento.toUpperCase())+'</td><td><b>'+money(sale.valor_total)+'</b></td><td><span class="status '+(sale.status==='CANCELADA'?'pending':'paid')+'">'+escape(sale.status)+'</span></td><td>'+(sale.status==='CANCELADA'?'—':'<button class="secondary sale-edit" data-id="'+sale.id+'">Editar</button> <button class="secondary sale-cancel" data-id="'+sale.id+'">Cancelar</button>')+'</td></tr>').join('');
+    document.querySelector('#empty-sales').textContent=rowsData.length?'':'Nenhuma venda encontrada.';
+    rows.querySelectorAll('.sale-row').forEach(row=>row.onclick=event=>{if(!event.target.closest('button'))openSaleDetails(row.dataset.id)});
+    rows.querySelectorAll('.sale-edit').forEach(button=>button.onclick=event=>{event.stopPropagation();openSaleEdit(all.find(sale=>String(sale.id)===button.dataset.id))});
+    rows.querySelectorAll('.sale-cancel').forEach(button=>button.onclick=event=>{event.stopPropagation();cancelSale(all.find(sale=>String(sale.id)===button.dataset.id))});
+  };
+  search.oninput=draw;draw();
+}
+async function openSaleDetails(id){
+  const data=await api('/sales/'+id),sale=data.venda,client=data.cliente,credit=data.fiado,dialog=document.querySelector('#sale-details-dialog');
+  const clientInfo=client?'<section class="detail-customer"><span>CLIENTE</span><b>'+escape(client.nome)+'</b><small>'+escape(client.telefone||'Telefone não informado')+(client.cpf_cnpj?' · '+escape(client.cpf_cnpj):'')+'</small>'+(credit?'<small>Retirado por: '+escape(credit.retirado_por||client.nome)+'</small>':'')+'</section>':'<section class="detail-customer"><span>CLIENTE</span><b>Consumidor final</b></section>';
+  document.querySelector('#sale-details-title').textContent='Venda #'+sale.id;
+  document.querySelector('#sale-details-content').innerHTML='<div class="detail-meta"><span>'+formatDocumentDate(sale.data_hora)+'</span><span class="status '+(sale.status==='CANCELADA'?'pending':'paid')+'">'+escape(sale.status)+'</span></div>'+clientInfo+'<table class="detail-items"><thead><tr><th>Item</th><th>Qtd.</th><th>Unitário</th><th>Total</th></tr></thead><tbody>'+data.itens.map(item=>'<tr><td>'+escape(item.descricao)+'</td><td>'+item.quantidade+'</td><td>'+money(item.preco_unitario)+'</td><td>'+money(item.subtotal)+'</td></tr>').join('')+'</tbody></table><div class="detail-total"><span>FORMA DE PAGAMENTO<br><b>'+escape(sale.forma_pagamento).toUpperCase()+'</b></span><strong>'+money(sale.valor_total)+'</strong></div>';
+  const edit=document.querySelector('#detail-edit-sale'),cancel=document.querySelector('#detail-cancel-sale');
+  edit.hidden=sale.status==='CANCELADA';cancel.hidden=sale.status==='CANCELADA';
+  edit.onclick=()=>{dialog.close();openSaleEdit(sale)};
+  cancel.onclick=async()=>{if(!confirm('Cancelar a venda #'+sale.id+'? O histórico será preservado.'))return;await api('/sales/'+sale.id+'/cancel',{method:'POST'});dialog.close();loadSales()};
+  document.querySelector('#detail-print-order').onclick=()=>print(sale.id,false);
+  document.querySelector('#detail-print-receipt').onclick=()=>print(sale.id,true);
+  dialog.showModal();
+}
+function openSaleEdit(sale){
+  const dialog=document.querySelector('#sale-edit-dialog');
+  document.querySelector('#sale-edit-title').textContent='Venda #'+sale.id+' — '+money(sale.valor_total);
+  document.querySelector('#sale-edit-payment').value=sale.forma_pagamento;dialog.showModal();
+  dialog.querySelector('form').onsubmit=async event=>{
+    if(event.submitter?.id!=='save-sale-edit')return;
+    event.preventDefault();
+    await api('/sales/'+sale.id,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({forma_pagamento:document.querySelector('#sale-edit-payment').value})});
+    dialog.close();loadSales();
+  };
+}
 async function loadClients(){const search=document.querySelector('#client-search');const all=await api('/clients');const draw=()=>{const clients=all.filter(client=>correspondeBusca(client,search.value,['nome','telefone','cpf_cnpj']));const rows=document.querySelector('#client-rows');rows.innerHTML=clients.map(client=>'<tr><td><b>'+escape(client.nome)+'</b></td><td>'+escape(client.telefone||'—')+'</td><td>'+money(client.saldo_fiado)+'</td></tr>').join('');document.querySelector('#empty-clients').textContent=clients.length?'':'Nenhum cliente encontrado.'};search.oninput=draw;draw();document.querySelector('#new-client').onclick=()=>openClientDialog(()=>loadClients())}
 function openClientDialog(onSaved){
   const dialog=document.querySelector('#client-dialog'),form=dialog.querySelector('form'),status=document.querySelector('#client-status'),save=document.querySelector('#save-client');
