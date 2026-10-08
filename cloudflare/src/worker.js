@@ -173,6 +173,14 @@ async function contasPagar(request, env, url) {
   return json({ sucesso:true, id:resultado.meta.last_row_id, mensagem:"Conta a pagar cadastrada." });
 }
 
+async function excluirConta(env, id) {
+  const conta = await env.DB.prepare("SELECT status FROM contas_pagar WHERE id=?").bind(id).first();
+  if (!conta) return erro("Conta não encontrada.",404);
+  if (conta.status !== "PENDENTE") return erro("Não é possível excluir uma conta já baixada.");
+  await env.DB.prepare("DELETE FROM contas_pagar WHERE id=?").bind(id).run();
+  return json({sucesso:true,mensagem:"Conta removida."});
+}
+
 async function baixarConta(request, env, id) {
   const conta = await env.DB.prepare("SELECT * FROM contas_pagar WHERE id=?").bind(id).first();
   if (!conta) return erro("Conta não encontrada.", 404);
@@ -214,6 +222,8 @@ export default {
       if (url.pathname === "/api/payables/summary" && request.method === "GET") return json(await resumoContasPagar(env));
       const contaId = url.pathname.match(/^\/api\/payables\/(\d+)\/settlements$/);
       if (contaId && request.method === "POST") return baixarConta(request, env, Number(contaId[1]));
+      const excluirContaId = url.pathname.match(/^\/api\/payables\/(\d+)$/);
+      if (excluirContaId && request.method === "DELETE") return excluirConta(env, Number(excluirContaId[1]));
       const vendaId = url.pathname.match(/^\/api\/sales\/(\d+)$/);
       if (vendaId && request.method === "GET") return venda(env, Number(vendaId[1]));
       if (vendaId && request.method === "PUT") return atualizarVenda(request, env, Number(vendaId[1]));
