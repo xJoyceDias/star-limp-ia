@@ -94,6 +94,25 @@ async function criarVenda(request, env) {
   return json({ sucesso: true, venda_id: vendaId, mensagem: cliente ? "Venda fiada registrada com sucesso." : "Venda registrada com sucesso.", total, cliente });
 }
 
+async function receberFiado(request, env) {
+  if (request.method === "GET") {
+    const resultado = await env.DB.prepare("SELECT id, nome, telefone, cpf_cnpj, saldo_fiado FROM clientes WHERE saldo_fiado > 0 ORDER BY nome COLLATE NOCASE").all();
+    return json(resultado.results);
+  }
+  const dados = await request.json();
+  const clienteId = Number(dados.cliente_id), valor = numero(dados.valor_pago);
+  if (!clienteId || valor <= 0) return erro("Informe o cliente e o valor recebido.");
+  const cliente = await env.DB.prepare("SELECT id, saldo_fiado FROM clientes WHERE id=?").bind(clienteId).first();
+  if (!cliente) return erro("Cliente não encontrado.",404);
+  const recebido = Math.min(valor, numero(cliente.saldo_fiado));
+  await env.DB.batch([
+    env.DB.prepare("INSERT INTO pagamentos_fiado (cliente_id, valor_pago, data_hora, forma_pagamento, observacao) VALUES (?, ?, ?, ?, ?)")
+      .bind(clienteId, recebido, agora(), String(dados.forma_pagamento || "pix"), String(dados.observacao || "").trim()),
+    env.DB.prepare("UPDATE clientes SET saldo_fiado=MAX(0,saldo_fiado-?) WHERE id=?").bind(recebido,clienteId)
+  ]);
+  return json({sucesso:true,valor:recebido,mensagem:"Recebimento registrado."});
+}
+
 async function listarVendas(env) {
   const resultado = await env.DB.prepare("SELECT v.id, v.data_hora, v.valor_total, v.forma_pagamento, v.status, f.cliente_nome FROM vendas v LEFT JOIN fiados f ON f.venda_id=v.id ORDER BY v.id DESC LIMIT 200").all();
   return json(resultado.results);
@@ -186,6 +205,7 @@ export default {
       if (url.pathname === "/api/dashboard" && request.method === "GET") return json(await dashboard(env.DB));
       if (url.pathname === "/api/products" && (request.method === "GET" || request.method === "POST")) return produtos(request, env, url);
       if (url.pathname === "/api/clients" && (request.method === "GET" || request.method === "POST")) return clientes(request, env, url);
+      if (url.pathname === "/api/receivables" && (request.method === "GET" || request.method === "POST")) return receberFiado(request, env);
       const produto = url.pathname.match(/^\/api\/products\/(\d+)$/);
       if (produto && request.method === "PUT") return atualizarProduto(request, env, Number(produto[1]));
       if (url.pathname === "/api/sales" && request.method === "POST") return criarVenda(request, env);
