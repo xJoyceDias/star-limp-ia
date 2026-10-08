@@ -133,7 +133,7 @@ async function setupSale(){
     const quantity=Number(document.querySelector('#quantity').value);
     if(!Number.isFinite(quantity)||quantity<=0)return alert('Informe uma quantidade válida.');
     const existing=cart.find(item=>String(item.codigo)===String(product.codigo)&&item.produto===product.descricao&&Number(item.preco)===Number(product.preco));
-    if(existing)existing.quantidade+=quantity;else cart.push({codigo:product.codigo,produto:product.descricao,quantidade:quantity,preco:Number(product.preco)});
+    if(existing)existing.quantidade+=quantity;else cart.push({produto_id:product.id,codigo:product.codigo,produto:product.descricao,quantidade:quantity,preco:Number(product.preco)});
     selected=null;search.value='';suggestions.innerHTML='';document.querySelector('#quantity').value=1;drawCart();search.focus();
   };
   search.oninput=async()=>{
@@ -184,14 +184,36 @@ function discountAmount(){
 function drawCart(){
   const box=document.querySelector('#cart'),gross=cartGross(),discount=discountAmount(),total=Math.max(0,gross-discount);
   box.classList.toggle('empty',!cart.length);
-  box.innerHTML=cart.length?'<div class="cart-head"><span>Item</span><span>Qtd.</span><span>Subtotal</span><span></span></div>'+cart.map((item,index)=>'<div class="cart-item"><span><b>'+escape(item.produto)+'</b><small>'+money(item.preco)+' cada</small></span><span>'+item.quantidade+'</span><b>'+money(item.preco*item.quantidade)+'</b><button type="button" aria-label="Remover item" data-i="'+index+'">×</button></div>').join(''):'<div class="empty-cart"><b>Seu carrinho está vazio</b><span>Pesquise um produto acima para começar a venda.</span></div>';
+  box.innerHTML=cart.length?'<div class="cart-head"><span>Item</span><span>Qtd.</span><span>Subtotal</span><span></span></div>'+cart.map((item,index)=>'<div class="cart-item"><span><b>'+escape(item.produto)+'</b><button type="button" class="price-edit" data-price-index="'+index+'" title="Alterar e atualizar o preço do produto">'+money(item.preco)+' cada · editar preço</button></span><span>'+item.quantidade+'</span><b>'+money(item.preco*item.quantidade)+'</b><button type="button" aria-label="Remover item" data-i="'+index+'">×</button></div>').join(''):'<div class="empty-cart"><b>Seu carrinho está vazio</b><span>Pesquise um produto acima para começar a venda.</span></div>';
   box.querySelectorAll('button[data-i]').forEach(button=>button.onclick=()=>{cart.splice(Number(button.dataset.i),1);drawCart()});
+  box.querySelectorAll('.price-edit').forEach(button=>button.onclick=()=>openQuickPrice(Number(button.dataset.priceIndex)));
   document.querySelector('#sale-subtotal').textContent=money(gross);
   document.querySelector('#sale-discount-value').textContent='− '+money(discount);
   document.querySelector('#sale-discount-row').hidden=discount<=0;
   document.querySelector('#sale-total').textContent=money(total);
   document.querySelector('#cart-count').textContent=cart.reduce((sum,item)=>sum+item.quantidade,0)+' item(ns)';
 }
+async function openQuickPrice(index){
+  const item=cart[index];
+  if(!item?.produto_id)return alert('Este item foi incluído antes da atualização. Remova-o e adicione novamente para editar o preço.');
+  const dialog=document.querySelector('#quick-price-dialog'),input=document.querySelector('#quick-price'),name=document.querySelector('#quick-price-name'),status=document.querySelector('#quick-price-status'),save=document.querySelector('#save-quick-price');
+  name.textContent=item.produto;input.value=Number(item.preco).toFixed(2).replace('.',',');status.textContent='';save.disabled=false;dialog.showModal();input.select();
+  dialog.querySelector('form').onsubmit=async event=>{
+    if(event.submitter?.id!=='save-quick-price')return;
+    event.preventDefault();
+    const price=Number(String(input.value).replace('.','').replace(',','.'));
+    if(!Number.isFinite(price)||price<0){status.textContent='Informe um preço válido.';return}
+    save.disabled=true;save.textContent='Atualizando…';
+    try{
+      const products=await todosProdutos(),product=products.find(entry=>String(entry.id)===String(item.produto_id));
+      if(!product)throw new Error('Produto não encontrado. Atualize a tela e tente novamente.');
+      await api('/products/'+product.id,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({...product,preco:price})});
+      cart.filter(entry=>String(entry.produto_id)===String(product.id)).forEach(entry=>entry.preco=price);
+      productCache=null;dialog.close();drawCart();
+    }catch(error){status.textContent=error.message||'Não foi possível atualizar o preço.';save.disabled=false;save.textContent='Atualizar preço'}
+  };
+}
+
 async function sendWhatsApp(id,cliente,withdrawnBy){
   let phone=String(cliente.telefone||'').replace(/\D/g,'');
   if(phone.length===10||phone.length===11)phone='55'+phone;
