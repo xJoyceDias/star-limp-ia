@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS vendas (
   data_hora TEXT NOT NULL,
   valor_total REAL NOT NULL,
   forma_pagamento TEXT NOT NULL,
+  cliente_id INTEGER,
   status TEXT NOT NULL DEFAULT 'CONCLUIDA'
 );
 
