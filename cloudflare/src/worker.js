@@ -94,6 +94,30 @@ async function criarVenda(request, env) {
   return json({ sucesso: true, venda_id: vendaId, mensagem: cliente ? "Venda fiada registrada com sucesso." : "Venda registrada com sucesso.", total, cliente });
 }
 
+async function listarVendas(env) {
+  const resultado = await env.DB.prepare("SELECT v.id, v.data_hora, v.valor_total, v.forma_pagamento, v.status, f.cliente_nome FROM vendas v LEFT JOIN fiados f ON f.venda_id=v.id ORDER BY v.id DESC LIMIT 200").all();
+  return json(resultado.results);
+}
+async function atualizarVenda(request, env, id) {
+  const atual = await env.DB.prepare("SELECT * FROM vendas WHERE id=?").bind(id).first();
+  if (!atual) return erro("Venda não encontrada.",404);
+  if (atual.status === "CANCELADA") return erro("Não é possível editar uma venda cancelada.");
+  const dados = await request.json();
+  const forma = String(dados.forma_pagamento || atual.forma_pagamento).toLowerCase();
+  await env.DB.prepare("UPDATE vendas SET forma_pagamento=? WHERE id=?").bind(forma,id).run();
+  return json({sucesso:true,mensagem:"Forma de pagamento atualizada."});
+}
+async function cancelarVenda(env, id) {
+  const venda = await env.DB.prepare("SELECT * FROM vendas WHERE id=?").bind(id).first();
+  if (!venda) return erro("Venda não encontrada.",404);
+  if (venda.status === "CANCELADA") return erro("Esta venda já está cancelada.");
+  const fiado = await env.DB.prepare("SELECT * FROM fiados WHERE venda_id=? AND status='ABERTO'").bind(id).first();
+  const comandos=[env.DB.prepare("UPDATE vendas SET status='CANCELADA' WHERE id=?").bind(id)];
+  if(fiado){comandos.push(env.DB.prepare("UPDATE clientes SET saldo_fiado=MAX(0,saldo_fiado-?) WHERE id=?").bind(fiado.valor_compra,fiado.cliente_id),env.DB.prepare("UPDATE fiados SET status='CANCELADO' WHERE id=?").bind(fiado.id))}
+  await env.DB.batch(comandos);
+  return json({sucesso:true,mensagem:"Venda cancelada e histórico preservado."});
+}
+
 async function venda(env, id) {
   const cabecalho = await env.DB.prepare("SELECT * FROM vendas WHERE id = ?").bind(id).first();
   if (!cabecalho) return erro("Venda não encontrada.", 404);
@@ -165,12 +189,16 @@ export default {
       const produto = url.pathname.match(/^\/api\/products\/(\d+)$/);
       if (produto && request.method === "PUT") return atualizarProduto(request, env, Number(produto[1]));
       if (url.pathname === "/api/sales" && request.method === "POST") return criarVenda(request, env);
+      if (url.pathname === "/api/sales" && request.method === "GET") return listarVendas(env);
       if (url.pathname === "/api/payables" && (request.method === "GET" || request.method === "POST")) return contasPagar(request, env, url);
       if (url.pathname === "/api/payables/summary" && request.method === "GET") return json(await resumoContasPagar(env));
       const contaId = url.pathname.match(/^\/api\/payables\/(\d+)\/settlements$/);
       if (contaId && request.method === "POST") return baixarConta(request, env, Number(contaId[1]));
       const vendaId = url.pathname.match(/^\/api\/sales\/(\d+)$/);
       if (vendaId && request.method === "GET") return venda(env, Number(vendaId[1]));
+      if (vendaId && request.method === "PUT") return atualizarVenda(request, env, Number(vendaId[1]));
+      const cancelarId = url.pathname.match(/^\/api\/sales\/(\d+)\/cancel$/);
+      if (cancelarId && request.method === "POST") return cancelarVenda(env, Number(cancelarId[1]));
       return erro("Rota não encontrada.", 404);
     } catch (error) {
       console.error(error);
