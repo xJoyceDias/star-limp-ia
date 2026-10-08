@@ -139,7 +139,8 @@ async function venda(env, id) {
   if (!cabecalho) return erro("Venda não encontrada.", 404);
   const itens = await env.DB.prepare("SELECT descricao, quantidade, preco_unitario, subtotal FROM itens_venda WHERE venda_id = ?").bind(id).all();
   const cliente = cabecalho.cliente_id ? await env.DB.prepare("SELECT id, nome, telefone, cpf_cnpj, saldo_fiado FROM clientes WHERE id=?").bind(cabecalho.cliente_id).first() : null;
-  return json({ venda: cabecalho, itens: itens.results, cliente });
+  const fiado = cabecalho.cliente_id ? await env.DB.prepare("SELECT retirado_por, saldo_anterior, saldo_atual FROM fiados WHERE venda_id=?").bind(id).first() : null;
+  return json({ venda: cabecalho, itens: itens.results, cliente, fiado });
 }
 
 async function clientes(request, env, url) {
