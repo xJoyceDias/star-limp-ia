@@ -27,7 +27,8 @@ CREATE TABLE IF NOT EXISTS vendas (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   data_hora TEXT NOT NULL,
   valor_total REAL NOT NULL,
-  forma_pagamento TEXT NOT NULL
+  forma_pagamento TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'CONCLUIDA'
 );
 
 CREATE TABLE IF NOT EXISTS itens_venda (
