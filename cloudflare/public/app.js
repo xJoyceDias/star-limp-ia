@@ -115,7 +115,12 @@ async function setupSale(){
     drawCart();search.focus();
   };
   payment.onchange=()=>{if(payment.value==='fiado'&&!selectedClient)clientSearch.focus()};
-  clientSearch.oninput=renderClientMatches;
+  clientSearch.oninput=()=>{
+    if(selectedClient&&normalizarBusca(clientSearch.value)!==normalizarBusca(selectedClient.nome)){
+      selectedClient=null;selectedClientLabel.hidden=true;selectedClientLabel.textContent='';quickClient.textContent='+ Cadastrar cliente';
+    }
+    renderClientMatches();
+  };
   clientSearch.onkeydown=event=>{if(event.key==='Enter'){const first=clientSuggestions.querySelector('button');if(first){event.preventDefault();first.click()}}};
   quickClient.onclick=()=>openClientDialog(client=>{
     const index=clientsCache.findIndex(item=>String(item.id)===String(client.id));
