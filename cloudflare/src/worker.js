@@ -191,8 +191,8 @@ async function baixarConta(request, env, id) {
 
 async function resumoContasPagar(env) {
   const [pendente, pago] = await env.DB.batch([
-    env.DB.prepare("SELECT COALESCE(SUM(valor),0) valor, COUNT(*) quantidade FROM contas_pagar WHERE status='PENDENTE'").all(),
-    env.DB.prepare("SELECT COALESCE(SUM(valor_pago),0) valor, COUNT(*) quantidade FROM baixas_conta_pagar WHERE substr(data_pagamento,1,7)=substr(?,1,7)").bind(agora()).all()
+    env.DB.prepare("SELECT COALESCE(SUM(valor),0) valor, COUNT(*) quantidade FROM contas_pagar WHERE status='PENDENTE'"),
+    env.DB.prepare("SELECT COALESCE(SUM(valor_pago),0) valor, COUNT(*) quantidade FROM baixas_conta_pagar WHERE substr(data_pagamento,1,7)=substr(?,1,7)").bind(agora())
   ]);
   return { pendente:pendente.results[0], pago_mes:pago.results[0] };
 }
