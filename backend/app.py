@@ -1369,3 +1369,29 @@ def atualizar_produto(produto_id: int, dados: dict = Body(...)):
     if not atualizado:
         return {"sucesso": False, "mensagem": "Produto não encontrado."}
     return {"sucesso": True, "mensagem": "Produto atualizado com sucesso."}
+
+
+@app.get("/recibo/{venda_id}", response_class=HTMLResponse)
+def recibo_venda(venda_id: int):
+    conexao = sqlite3.connect(BANCO)
+    conexao.row_factory = sqlite3.Row
+    cursor = conexao.cursor()
+    cursor.execute("SELECT id, data_hora, valor_total, forma_pagamento FROM vendas WHERE id = ?", (venda_id,))
+    venda = cursor.fetchone()
+    cursor.execute("SELECT descricao, quantidade, preco_unitario, subtotal FROM itens_venda WHERE venda_id = ?", (venda_id,))
+    itens = cursor.fetchall()
+    conexao.close()
+    if not venda:
+        return HTMLResponse("<h1>Recibo não encontrado</h1>", status_code=404)
+    linhas = "".join(
+        f"<tr><td>{item['descricao']}</td><td>{item['quantidade']}x</td><td>R$ {moeda(item['subtotal'])}</td></tr>"
+        for item in itens
+    )
+    return HTMLResponse(f"""<!doctype html><html lang='pt-BR'><head><meta charset='utf-8'>
+    <title>Recibo #{venda_id}</title><style>
+    *{{box-sizing:border-box}}body{{width:58mm;margin:0 auto;padding:5mm;font:12px Arial;color:#111}}
+    h1{{margin:0;font-size:17px;text-align:center}}p{{margin:4px 0;text-align:center}}hr{{border:0;border-top:1px dashed #444;margin:10px 0}}
+    table{{width:100%;border-collapse:collapse}}td{{padding:4px 0;vertical-align:top}}td:nth-child(2){{text-align:center}}td:last-child{{text-align:right}}
+    .total{{font-size:16px;font-weight:bold;text-align:right}}button{{width:100%;padding:9px;border:0;background:#111;color:#fff;border-radius:4px;font-weight:bold}}
+    @media print{{button{{display:none}}body{{padding:2mm}}}}
+    </style></head><body><h1>STAR LIMP</h1><p>RECIBO DE VENDA #{venda_id}</p><p>{venda['data_hora']}</p><hr><table>{linhas}</table><hr><p class='total'>TOTAL: R$ {moeda(venda['valor_total'])}</p><p>Pagamento: {venda['forma_pagamento'].upper()}</p><hr><p>Obrigado pela preferência!</p><button onclick='window.print()'>Imprimir recibo</button></body></html>""")
