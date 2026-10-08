@@ -176,7 +176,7 @@ async function setupSale(){
 }
 function cartGross(){return cart.reduce((sum,item)=>sum+item.preco*item.quantidade,0)}
 function discountAmount(){
-  const gross=cartGross(),value=Math.max(0,Number(saleDiscount.value)||0);
+  const gross=cartGross(),value=Math.max(0,Number(String(saleDiscount).replace(',','.'))||0);
   return Math.min(gross,value);
 }
 function drawCart(){
