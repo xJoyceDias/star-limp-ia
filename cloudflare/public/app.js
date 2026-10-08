@@ -1,4 +1,4 @@
-const app=document.querySelector('#app'), views={dashboard:document.querySelector('#dashboard'),products:document.querySelector('#products'),sales:document.querySelector('#sales'),receivables:document.querySelector('#receivables'),clients:document.querySelector('#clients'),payables:document.querySelector('#payables'),sale:document.querySelector('#sale')};let cart=[],selected=null,selectedClient=null,editing=null,currentSale=null,timer;
+const app=document.querySelector('#app'), views={dashboard:document.querySelector('#dashboard'),products:document.querySelector('#products'),sales:document.querySelector('#sales'),receivables:document.querySelector('#receivables'),clients:document.querySelector('#clients'),payables:document.querySelector('#payables'),sale:document.querySelector('#sale')};let cart=[],selected=null,selectedClient=null,editing=null,currentSale=null,timer,saleDiscount={type:'none',value:0};
 const money=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});const api=(url,opt)=>fetch('/api'+url,opt).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.mensagem||'Erro na operação');return d});const clone=n=>views[n].content.cloneNode(true);
 function render(name){app.replaceChildren(clone(name));document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.view===name));document.querySelectorAll('[data-go]').forEach(x=>x.onclick=()=>render(x.dataset.go));if(name==='dashboard')loadDashboard();if(name==='products')loadProducts();if(name==='sales')loadSales();if(name==='receivables')loadReceivables();if(name==='clients')loadClients();if(name==='payables')loadPayables();if(name==='sale')setupSale()}
 async function loadDashboard(){const d=await api('/dashboard');document.querySelector('#today').textContent=money(d.vendas_hoje);document.querySelector('#week').textContent=money(d.vendas_semana);document.querySelector('#receivable').textContent=money(d.total_receber);document.querySelector('#debtors').textContent=(d.clientes_devendo||0)+' cliente(s) com saldo'}
@@ -88,7 +88,7 @@ function escape(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':
 function openProduct(p){editing=p||null;const d=document.querySelector('#product-dialog');document.querySelector('#dialog-title').textContent=p?'Editar produto':'Novo produto';['code','unit','description','price','stock','category','status'].forEach(k=>document.querySelector('#f-'+k).value=p?({code:p.codigo,unit:p.unidade,description:p.descricao,price:p.preco,stock:p.estoque,category:p.categoria,status:p.situacao}[k]??''):(k==='unit'?'UN':k==='stock'?'0':k==='status'?'Ativo':''));d.showModal();d.querySelector('form').onsubmit=async e=>{if(e.submitter?.id!=='save-product')return;e.preventDefault();const data={codigo:f('code'),unidade:f('unit'),descricao:f('description'),preco:f('price'),estoque:f('stock'),categoria:f('category'),situacao:f('status')};await api('/products'+(editing?'/'+editing.id:''),{method:editing?'PUT':'POST',headers:{'content-type':'application/json'},body:JSON.stringify(data)});d.close();productCache=null;listProducts(document.querySelector('#product-search').value)}}
 const f=k=>document.querySelector('#f-'+k).value;
 async function setupSale(){
-  const search=document.querySelector('#sale-search'),suggestions=document.querySelector('#suggestions'),payment=document.querySelector('#payment'),quickClient=document.querySelector('#quick-client'),finishButton=document.querySelector('#finish-sale'),clientSearch=document.querySelector('#sale-client-search'),clientSuggestions=document.querySelector('#client-suggestions'),selectedClientLabel=document.querySelector('#selected-client');
+  const search=document.querySelector('#sale-search'),suggestions=document.querySelector('#suggestions'),payment=document.querySelector('#payment'),quickClient=document.querySelector('#quick-client'),finishButton=document.querySelector('#finish-sale'),clientSearch=document.querySelector('#sale-client-search'),clientSuggestions=document.querySelector('#client-suggestions'),selectedClientLabel=document.querySelector('#selected-client'),discountType=document.querySelector('#discount-type'),discountInput=document.querySelector('#discount-input');
   let clientsCache=[];
   try{clientsCache=await api('/clients')}catch(error){console.error(error)}
   const selectClient=client=>{
@@ -110,12 +110,20 @@ async function setupSale(){
   const resetSale=()=>{
     cart=[];selected=null;selectedClient=null;
     search.value='';suggestions.innerHTML='';document.querySelector('#quantity').value=1;
-    payment.value='pix';clientSearch.value='';document.querySelector('#withdrawn-by').value='';clientSuggestions.innerHTML='';selectedClientLabel.hidden=true;selectedClientLabel.textContent='';
+    payment.value='pix';saleDiscount={type:'none',value:0};discountType.value='none';discountInput.value='';discountInput.disabled=true;clientSearch.value='';document.querySelector('#withdrawn-by').value='';clientSuggestions.innerHTML='';selectedClientLabel.hidden=true;selectedClientLabel.textContent='';
     quickClient.textContent='+ Cadastrar cliente';
     finishButton.disabled=false;finishButton.textContent='Finalizar venda';
     drawCart();search.focus();
   };
   payment.onchange=()=>{if(payment.value==='fiado'&&!selectedClient)clientSearch.focus()};
+  discountType.onchange=()=>{
+    saleDiscount.type=discountType.value;
+    discountInput.disabled=saleDiscount.type==='none';
+    discountInput.placeholder=saleDiscount.type==='percent'?'Ex.: 10':'Ex.: 5,00';
+    if(saleDiscount.type==='none'){saleDiscount.value=0;discountInput.value=''}
+    drawCart();
+  };
+  discountInput.oninput=()=>{saleDiscount.value=String(discountInput.value).replace(',','.');drawCart()};
   clientSearch.oninput=()=>{
     if(selectedClient&&normalizarBusca(clientSearch.value)!==normalizarBusca(selectedClient.nome)){
       selectedClient=null;selectedClientLabel.hidden=true;selectedClientLabel.textContent='';quickClient.textContent='+ Cadastrar cliente';
@@ -153,7 +161,14 @@ async function setupSale(){
     if(forma==='fiado'&&!withdrawnBy)return alert('Informe o nome de quem retirou os produtos.');
     finishButton.disabled=true;finishButton.textContent='Registrando venda…';
     try{
-      const result=await api('/sales',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({itens:cart,forma_pagamento:forma,cliente_id:selectedClient?.id,retirado_por:withdrawnBy})});
+      const gross=cartGross(),totalDiscount=Number(discountAmount().toFixed(2));
+      let allocated=0;
+      const items=cart.map((item,index)=>{
+        const discount=index===cart.length-1?Number((totalDiscount-allocated).toFixed(2)):Number((totalDiscount*(item.preco*item.quantidade)/gross).toFixed(2));
+        allocated=Number((allocated+discount).toFixed(2));
+        return {...item,desconto:discount};
+      });
+      const result=await api('/sales',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({itens:items,forma_pagamento:forma,cliente_id:selectedClient?.id,retirado_por:withdrawnBy})});
       currentSale=result.venda_id;resetSale();
       const dialog=document.querySelector('#receipt-dialog');
       document.querySelector('#receipt-message').textContent=result.mensagem;
@@ -166,11 +181,19 @@ async function setupSale(){
   };
   drawCart();search.focus();
 }
+function cartGross(){return cart.reduce((sum,item)=>sum+item.preco*item.quantidade,0)}
+function discountAmount(){
+  const gross=cartGross(),value=Math.max(0,Number(saleDiscount.value)||0);
+  return Math.min(gross,saleDiscount.type==='percent'?gross*Math.min(value,100)/100:value);
+}
 function drawCart(){
-  const box=document.querySelector('#cart'),total=cart.reduce((sum,item)=>sum+item.preco*item.quantidade,0);
+  const box=document.querySelector('#cart'),gross=cartGross(),discount=discountAmount(),total=Math.max(0,gross-discount);
   box.classList.toggle('empty',!cart.length);
   box.innerHTML=cart.length?'<div class="cart-head"><span>Item</span><span>Qtd.</span><span>Subtotal</span><span></span></div>'+cart.map((item,index)=>'<div class="cart-item"><span><b>'+escape(item.produto)+'</b><small>'+money(item.preco)+' cada</small></span><span>'+item.quantidade+'</span><b>'+money(item.preco*item.quantidade)+'</b><button type="button" aria-label="Remover item" data-i="'+index+'">×</button></div>').join(''):'<div class="empty-cart"><b>Seu carrinho está vazio</b><span>Pesquise um produto acima para começar a venda.</span></div>';
   box.querySelectorAll('button[data-i]').forEach(button=>button.onclick=()=>{cart.splice(Number(button.dataset.i),1);drawCart()});
+  document.querySelector('#sale-subtotal').textContent=money(gross);
+  document.querySelector('#sale-discount-value').textContent='− '+money(discount);
+  document.querySelector('#sale-discount-row').hidden=discount<=0;
   document.querySelector('#sale-total').textContent=money(total);
   document.querySelector('#cart-count').textContent=cart.reduce((sum,item)=>sum+item.quantidade,0)+' item(ns)';
 }
