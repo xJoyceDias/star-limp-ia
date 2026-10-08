@@ -1,0 +1,1 @@
+ALTER TABLE vendas ADD COLUMN cliente_id INTEGER;
