@@ -1,7 +1,49 @@
-const app=document.querySelector('#app'), views={dashboard:document.querySelector('#dashboard'),products:document.querySelector('#products'),sale:document.querySelector('#sale')};let cart=[],selected=null,editing=null,currentSale=null,timer;
+const app=document.querySelector('#app'), views={dashboard:document.querySelector('#dashboard'),products:document.querySelector('#products'),payables:document.querySelector('#payables'),sale:document.querySelector('#sale')};let cart=[],selected=null,editing=null,currentSale=null,timer;
 const money=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});const api=(url,opt)=>fetch('/api'+url,opt).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.mensagem||'Erro na operação');return d});const clone=n=>views[n].content.cloneNode(true);
-function render(name){app.replaceChildren(clone(name));document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.view===name));document.querySelectorAll('[data-go]').forEach(x=>x.onclick=()=>render(x.dataset.go));if(name==='dashboard')loadDashboard();if(name==='products')loadProducts();if(name==='sale')setupSale()}
+function render(name){app.replaceChildren(clone(name));document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.view===name));document.querySelectorAll('[data-go]').forEach(x=>x.onclick=()=>render(x.dataset.go));if(name==='dashboard')loadDashboard();if(name==='products')loadProducts();if(name==='payables')loadPayables();if(name==='sale')setupSale()}
 async function loadDashboard(){const d=await api('/dashboard');document.querySelector('#today').textContent=money(d.vendas_hoje);document.querySelector('#week').textContent=money(d.vendas_semana);document.querySelector('#receivable').textContent=money(d.total_receber);document.querySelector('#debtors').textContent=(d.clientes_devendo||0)+' cliente(s) com saldo'}
+
+async function loadPayables(){
+  const [contas,resumo]=await Promise.all([api('/payables'),api('/payables/summary')]);
+  document.querySelector('#payable-pending').textContent=money(resumo.pendente.valor);
+  document.querySelector('#payable-pending-count').textContent=(resumo.pendente.quantidade||0)+' conta(s) aguardando pagamento';
+  document.querySelector('#payable-paid-month').textContent=money(resumo.pago_mes.valor);
+  document.querySelector('#payable-paid-count').textContent=(resumo.pago_mes.quantidade||0)+' baixa(s) registrada(s) neste mês';
+  const rows=document.querySelector('#payable-rows');
+  rows.innerHTML=contas.map(c=>'<tr><td>'+escape(formatDate(c.vencimento))+'</td><td><b>'+escape(c.fornecedor||'Fornecedor não identificado')+'</b><br><small>'+escape(c.descricao||'')+'</small></td><td>'+money(c.valor)+'</td><td><span class="status '+(c.status==='PAGO'?'paid':'pending')+'">'+escape(c.status)+'</span></td><td>'+((c.status==='PENDENTE')?'<button class="secondary settle" data-id="'+c.id+'">Baixar</button>':'<small>Pago: '+money(c.total_baixado)+'</small>')+'</td></tr>').join('');
+  document.querySelector('#empty-payables').textContent=contas.length?'':'Nenhuma conta cadastrada.';
+  document.querySelector('#new-payable').onclick=openPayable;
+  rows.querySelectorAll('.settle').forEach(button=>button.onclick=()=>openSettlement(contas.find(c=>String(c.id)===button.dataset.id)));
+}
+function formatDate(value){if(!value)return '—';const m=String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[3]+'/'+m[2]+'/'+m[1]:value}
+function openPayable(){
+  const dialog=document.querySelector('#payable-dialog'), file=document.querySelector('#boleto-file'), status=document.querySelector('#pdf-status');
+  dialog.querySelector('form').reset();document.querySelector('#p-description').value='Boleto importado';document.querySelector('#boleto-file-name').textContent='Selecionar boleto em PDF';status.textContent='';
+  file.onchange=async()=>{const selected=file.files[0];if(!selected)return;document.querySelector('#boleto-file-name').textContent=selected.name;status.textContent='Lendo boleto…';try{const texto=await pdfToText(selected);fillBoleto(texto);status.textContent='Dados extraídos. Confira antes de cadastrar.'}catch(e){status.textContent='Não foi possível ler automaticamente este PDF. Preencha os campos manualmente.'}};
+  dialog.showModal();
+  dialog.querySelector('form').onsubmit=async event=>{if(event.submitter?.id!=='save-payable')return;event.preventDefault();await api('/payables',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({fornecedor:f('supplier'),descricao:f('description'),linha_digitavel:f('line'),valor:f('value'),vencimento:f('due'),arquivo_nome:file.files[0]?.name||''})});dialog.close();loadPayables()};
+}
+async function pdfToText(file){
+  const pdfjs=await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs');
+  const doc=await pdfjs.getDocument({data:await file.arrayBuffer()}).promise;let text='';
+  for(let page=1;page<=doc.numPages;page++){const content=await (await doc.getPage(page)).getTextContent();text+=content.items.map(item=>item.str).join(' ')+'\n'}
+  return text;
+}
+function fillBoleto(text){
+  const digits=(text.match(/\d[\d .-]{43,}/g)||[]).map(x=>x.replace(/\D/g,'')).find(x=>x.length>=44);
+  if(digits)document.querySelector('#p-line').value=digits;
+  const values=[...(text.matchAll(/R\$\s*([\d.]+,\d{2}|\d+,\d{2}|\d+\.\d{2})/gi))].map(m=>Number(m[1].replace(/\./g,'').replace(',','.'))).filter(n=>n>0);
+  if(values.length)document.querySelector('#p-value').value=values[values.length-1].toFixed(2);
+  const date=text.match(/(?:vencimento|venc\.?)[^\d]*(\d{2})[\/.\-](\d{2})[\/.\-](\d{4})/i);
+  if(date)document.querySelector('#p-due').value=date[3]+'-'+date[2]+'-'+date[1];
+  const supplier=text.match(/(?:benefici[aá]rio|cedente|fornecedor)\s*[:\-]?\s*([^\n]{3,80})/i);
+  if(supplier)document.querySelector('#p-supplier').value=supplier[1].replace(/\s+(?:ag[êe]ncia|vencimento|cpf|cnpj).*$/i,'').trim();
+}
+function openSettlement(conta){
+  const dialog=document.querySelector('#settlement-dialog');document.querySelector('#settlement-title').textContent=(conta.fornecedor||'Conta')+' — '+money(conta.valor);document.querySelector('#s-value').value=Number(conta.valor).toFixed(2);document.querySelector('#s-date').value=new Date().toISOString().slice(0,10);document.querySelector('#s-bank').value='';document.querySelector('#s-note').value='';
+  dialog.showModal();dialog.querySelector('form').onsubmit=async event=>{if(event.submitter?.id!=='save-settlement')return;event.preventDefault();await api('/payables/'+conta.id+'/settlements',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({banco:document.querySelector('#s-bank').value,valor_pago:document.querySelector('#s-value').value,data_pagamento:document.querySelector('#s-date').value,observacao:document.querySelector('#s-note').value})});dialog.close();loadPayables()};
+}
+
 async function loadProducts(){const q=document.querySelector('#product-search');q.oninput=()=>listProducts(q.value);document.querySelector('#new-product').onclick=()=>openProduct();listProducts('')}
 async function listProducts(term){const products=await api('/products?termo='+encodeURIComponent(term));const rows=document.querySelector('#product-rows');rows.innerHTML=products.map(p=>'<tr><td>'+escape(p.descricao)+'</td><td>'+escape(p.codigo||'—')+'</td><td>'+Number(p.estoque||0)+' '+escape(p.unidade||'UN')+'</td><td>'+money(p.preco)+'</td><td><button class="secondary edit" data-id="'+p.id+'">Editar</button></td></tr>').join('');document.querySelector('#empty-products').textContent=products.length?'':'Nenhum produto encontrado.';rows.querySelectorAll('.edit').forEach(b=>b.onclick=()=>openProduct(products.find(p=>p.id==b.dataset.id)))}
 function escape(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
