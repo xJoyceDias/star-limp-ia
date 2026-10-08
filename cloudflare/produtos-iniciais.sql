@@ -1,5 +1,4 @@
 -- Catálogo inicial: 163 produtos extraídos da planilha.
-BEGIN TRANSACTION;
 INSERT INTO produtos (codigo, descricao, unidade, preco, situacao, estoque, preco_custo, fornecedor, marca, categoria) VALUES ('139', 'Ácido Muriático 1L', 'UN', 13.5, 'Ativo', 0, 0, '', '', 'Matéria prima');
 INSERT INTO produtos (codigo, descricao, unidade, preco, situacao, estoque, preco_custo, fornecedor, marca, categoria) VALUES ('54', 'Ácido sulfônico 5kg', 'UN', 215.6, 'Ativo', 0, 0, '', '', 'Matéria prima');
 INSERT INTO produtos (codigo, descricao, unidade, preco, situacao, estoque, preco_custo, fornecedor, marca, categoria) VALUES ('141', 'Adwana 030 (Espessante líquido) 1Kg', 'UN', 25, 'Ativo', 0, 0, '', '', 'Matéria prima');
@@ -163,4 +162,3 @@ INSERT INTO produtos (codigo, descricao, unidade, preco, situacao, estoque, prec
 INSERT INTO produtos (codigo, descricao, unidade, preco, situacao, estoque, preco_custo, fornecedor, marca, categoria) VALUES ('183', 'Vanila 250g', 'KG', 30, 'Ativo', -1, 0, '', '', 'Essência');
 INSERT INTO produtos (codigo, descricao, unidade, preco, situacao, estoque, preco_custo, fornecedor, marca, categoria) VALUES ('31', 'Zeekiss 40 Flex Hs 1KG', 'UN', 150, 'Ativo', 0, 0, '', '', 'Essência');
 INSERT INTO produtos (codigo, descricao, unidade, preco, situacao, estoque, preco_custo, fornecedor, marca, categoria) VALUES ('111', 'Zeekiss 40 Flex Hs 250g', 'UN', 40, 'Ativo', 0, 0, '', '', 'Essência');
-COMMIT;
