@@ -94,6 +94,7 @@ async function setupSale(){
   const selectClient=client=>{
     selectedClient=client;
     clientSearch.value=client.nome;
+    document.querySelector('#withdrawn-by').value=client.nome;
     clientSuggestions.innerHTML='';
     selectedClientLabel.textContent='Cliente selecionado: '+client.nome+(client.telefone?' · '+client.telefone:'');
     selectedClientLabel.hidden=false;
@@ -109,7 +110,7 @@ async function setupSale(){
   const resetSale=()=>{
     cart=[];selected=null;selectedClient=null;
     search.value='';suggestions.innerHTML='';document.querySelector('#quantity').value=1;
-    payment.value='pix';clientSearch.value='';clientSuggestions.innerHTML='';selectedClientLabel.hidden=true;selectedClientLabel.textContent='';
+    payment.value='pix';clientSearch.value='';document.querySelector('#withdrawn-by').value='';clientSuggestions.innerHTML='';selectedClientLabel.hidden=true;selectedClientLabel.textContent='';
     quickClient.textContent='+ Cadastrar cliente';
     finishButton.disabled=false;finishButton.textContent='Finalizar venda';
     drawCart();search.focus();
@@ -147,17 +148,19 @@ async function setupSale(){
   finishButton.onclick=async()=>{
     if(!cart.length)return alert('Adicione pelo menos um produto.');
     const forma=payment.value;
-    if(forma==='fiado'&&!selectedClient)return alert('Para venda fiada, localize ou cadastre o cliente.');
+    if(forma==='fiado'&&!selectedClient)return alert('Para venda a prazo, localize ou cadastre o cliente.');
+    const withdrawnBy=document.querySelector('#withdrawn-by').value.trim();
+    if(forma==='fiado'&&!withdrawnBy)return alert('Informe o nome de quem retirou os produtos.');
     finishButton.disabled=true;finishButton.textContent='Registrando venda…';
     try{
-      const result=await api('/sales',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({itens:cart,forma_pagamento:forma,cliente_id:selectedClient?.id})});
+      const result=await api('/sales',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({itens:cart,forma_pagamento:forma,cliente_id:selectedClient?.id,retirado_por:withdrawnBy})});
       currentSale=result.venda_id;resetSale();
       const dialog=document.querySelector('#receipt-dialog');
       document.querySelector('#receipt-message').textContent=result.mensagem;
       document.querySelector('#print-receipt').onclick=()=>print(currentSale,true);
       document.querySelector('#print-order').onclick=()=>print(currentSale,false);
       const whats=document.querySelector('#send-whatsapp');
-      whats.hidden=!result.cliente?.telefone;whats.onclick=()=>sendWhatsApp(currentSale,result.cliente);
+      whats.hidden=!result.cliente?.telefone;whats.onclick=()=>sendWhatsApp(currentSale,result.cliente,withdrawnBy);
       dialog.showModal();
     }catch(error){alert(error.message||'Não foi possível finalizar a venda.');finishButton.disabled=false;finishButton.textContent='Finalizar venda'}
   };
@@ -171,7 +174,16 @@ function drawCart(){
   document.querySelector('#sale-total').textContent=money(total);
   document.querySelector('#cart-count').textContent=cart.reduce((sum,item)=>sum+item.quantidade,0)+' item(ns)';
 }
-async function sendWhatsApp(id,cliente){let phone=String(cliente.telefone||'').replace(/\D/g,'');if(phone.length===10||phone.length===11)phone='55'+phone;if(phone.length<12)return alert('Cadastre um telefone válido para enviar a notinha.');const d=await api('/sales/'+id);const lines=d.itens.map(item=>item.quantidade+'x '+item.descricao+' — '+money(item.subtotal)).join('\n');const message='*STAR LIMP — NOTINHA DE VENDA*\nPedido #'+id+'\n'+formatDocumentDate(d.venda.data_hora)+'\n\n'+lines+'\n\n*TOTAL: '+money(d.venda.valor_total)+'*\nPagamento: FIADO\n\nObrigado pela preferência!';window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(message),'_blank')}
+async function sendWhatsApp(id,cliente,withdrawnBy){
+  let phone=String(cliente.telefone||'').replace(/\D/g,'');
+  if(phone.length===10||phone.length===11)phone='55'+phone;
+  if(phone.length<12)return alert('Cadastre um telefone válido para enviar a notinha.');
+  const data=await api('/sales/'+id);
+  const lines=data.itens.map(item=>item.quantidade+'x '+item.descricao+' — '+money(item.subtotal)).join('\n');
+  const balance=money(cliente.saldo_fiado||data.cliente?.saldo_fiado||0);
+  const message='*STAR LIMP — COMPROVANTE DE VENDA*\nPedido #'+id+'\n'+formatDocumentDate(data.venda.data_hora)+'\n\n*Cliente responsável:* '+cliente.nome+'\n*Retirado por:* '+(withdrawnBy||cliente.nome)+'\n\n'+lines+'\n\n*VALOR DESTA COMPRA: '+money(data.venda.valor_total)+'*\n*SALDO DEVEDOR ATUAL: '+balance+'*\n\nEste pedido foi lançado na conta do cliente.\nObrigado pela preferência!';
+  window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(message),'_blank');
+}
 async function print(id,thermal){const d=await api('/sales/'+id);const v=d.venda,lines=d.itens.map(i=>'<tr><td>'+escape(i.descricao)+'</td><td>'+i.quantidade+'x</td><td>'+money(i.subtotal)+'</td></tr>').join('');const body=thermal?'<h2>STAR LIMP</h2><p>RECIBO #'+v.id+'</p>':'<h1>Pedido de venda #'+v.id+'</h1>';const w=window.open('','_blank');w.document.write('<html><style>body{font:14px Arial;margin:25px;max-width:'+(thermal?'58mm':'700px')+'}h1,h2,p{text-align:center}table{width:100%;border-collapse:collapse}td{padding:6px;border-bottom:1px solid #ddd}td:last-child{text-align:right}.total{text-align:right;font-size:18px;font-weight:bold}@media print{button{display:none}}</style><body>'+body+'<p>'+v.data_hora+'</p><table>'+lines+'</table><p class="total">TOTAL: '+money(v.valor_total)+'</p><p>Pagamento: '+v.forma_pagamento.toUpperCase()+'</p><button onclick="print()">Imprimir</button></body></html>');w.document.close();w.focus()}
 document.querySelectorAll('.nav').forEach(x=>x.onclick=()=>render(x.dataset.view));
 
