@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS clientes (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nome TEXT NOT NULL,
   telefone TEXT,
+  cpf_cnpj TEXT,
   saldo_fiado REAL NOT NULL DEFAULT 0,
   data_cadastro TEXT
 );
