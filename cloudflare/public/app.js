@@ -201,7 +201,8 @@ async function openQuickPrice(index){
   dialog.querySelector('form').onsubmit=async event=>{
     if(event.submitter?.id!=='save-quick-price')return;
     event.preventDefault();
-    const price=Number(String(input.value).replace('.','').replace(',','.'));
+    const rawPrice=String(input.value).replace(/[^\d,\.]/g,'');
+    const price=rawPrice.includes(',')?Number(rawPrice.replace(/\./g,'').replace(',','.')):Number(rawPrice);
     if(!Number.isFinite(price)||price<0){status.textContent='Informe um preço válido.';return}
     save.disabled=true;save.textContent='Atualizando…';
     try{
