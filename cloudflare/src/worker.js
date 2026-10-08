@@ -77,7 +77,7 @@ async function criarVenda(request, env) {
   const comandos = itens.map((item) => env.DB.prepare(
     "INSERT INTO itens_venda (venda_id, codigo_produto, descricao, quantidade, preco_unitario, subtotal) VALUES (?, ?, ?, ?, ?, ?)"
   ).bind(vendaId, item.codigo, item.produto, item.quantidade, item.preco, item.subtotal));
-  if (cliente) {
+  if (cliente && forma === "fiado") {
     const saldoAnterior = numero(cliente.saldo_fiado);
     const saldoAtual = Number((saldoAnterior + total).toFixed(2));
     comandos.push(
@@ -88,7 +88,7 @@ async function criarVenda(request, env) {
     cliente={...cliente,saldo_fiado:saldoAtual};
   }
   await env.DB.batch(comandos);
-  return json({ sucesso: true, venda_id: vendaId, mensagem: cliente ? "Venda fiada registrada com sucesso." : "Venda registrada com sucesso.", total, cliente });
+  return json({ sucesso: true, venda_id: vendaId, mensagem: forma === "fiado" ? "Venda fiada registrada com sucesso." : "Venda registrada com sucesso.", total, cliente });
 }
 
 async function receberFiado(request, env) {
