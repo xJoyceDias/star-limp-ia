@@ -61,7 +61,26 @@ async function loadReceivables(){const clients=await api('/receivables'),select=
 async function loadSales(){const search=document.querySelector('#sales-search'),all=await api('/sales');const draw=()=>{const rowsData=all.filter(sale=>correspondeBusca(sale,search.value,['id','cliente_nome','forma_pagamento','status']));const rows=document.querySelector('#sales-rows');rows.innerHTML=rowsData.map(sale=>'<tr><td>#'+sale.id+'</td><td>'+escape(formatDocumentDate(sale.data_hora))+'</td><td>'+escape(sale.cliente_nome||'—')+'</td><td>'+escape(sale.forma_pagamento.toUpperCase())+'</td><td>'+money(sale.valor_total)+'</td><td><span class="status '+(sale.status==='CANCELADA'?'pending':'paid')+'">'+escape(sale.status)+'</span></td><td>'+(sale.status==='CANCELADA'?'—':'<button class="secondary sale-edit" data-id="'+sale.id+'">Editar</button> <button class="secondary sale-cancel" data-id="'+sale.id+'">Cancelar</button>')+'</td></tr>').join('');document.querySelector('#empty-sales').textContent=rowsData.length?'':'Nenhuma venda encontrada.';rows.querySelectorAll('.sale-edit').forEach(button=>button.onclick=()=>openSaleEdit(all.find(sale=>String(sale.id)===button.dataset.id)));rows.querySelectorAll('.sale-cancel').forEach(button=>button.onclick=async()=>{const sale=all.find(item=>String(item.id)===button.dataset.id);if(!confirm('Cancelar a venda #'+sale.id+'? O histórico será preservado.'))return;await api('/sales/'+sale.id+'/cancel',{method:'POST'});loadSales()})};search.oninput=draw;draw()}
 function openSaleEdit(sale){const dialog=document.querySelector('#sale-edit-dialog');document.querySelector('#sale-edit-title').textContent='Venda #'+sale.id+' — '+money(sale.valor_total);document.querySelector('#sale-edit-payment').value=sale.forma_pagamento;dialog.showModal();dialog.querySelector('form').onsubmit=async event=>{if(event.submitter?.id!=='save-sale-edit')return;event.preventDefault();await api('/sales/'+sale.id,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({forma_pagamento:document.querySelector('#sale-edit-payment').value})});dialog.close();loadSales()}}
 async function loadClients(){const search=document.querySelector('#client-search');const all=await api('/clients');const draw=()=>{const clients=all.filter(client=>correspondeBusca(client,search.value,['nome','telefone','cpf_cnpj']));const rows=document.querySelector('#client-rows');rows.innerHTML=clients.map(client=>'<tr><td><b>'+escape(client.nome)+'</b></td><td>'+escape(client.telefone||'—')+'</td><td>'+money(client.saldo_fiado)+'</td></tr>').join('');document.querySelector('#empty-clients').textContent=clients.length?'':'Nenhum cliente encontrado.'};search.oninput=draw;draw();document.querySelector('#new-client').onclick=()=>openClientDialog(()=>loadClients())}
-function openClientDialog(onSaved){const dialog=document.querySelector('#client-dialog');dialog.querySelector('form').reset();dialog.showModal();dialog.querySelector('form').onsubmit=async event=>{if(event.submitter?.id!=='save-client')return;event.preventDefault();const payload={nome:document.querySelector('#c-name').value,telefone:document.querySelector('#c-phone').value,cpf_cnpj:document.querySelector('#c-document').value};const result=await api('/clients',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});dialog.close();onSaved?.(result.cliente||{...payload,id:result.id,saldo_fiado:0})}}
+function openClientDialog(onSaved){
+  const dialog=document.querySelector('#client-dialog'),form=dialog.querySelector('form'),status=document.querySelector('#client-status'),save=document.querySelector('#save-client');
+  form.reset();status.textContent='';save.disabled=false;save.textContent='Salvar cliente';dialog.showModal();
+  form.onsubmit=async event=>{
+    if(event.submitter?.id!=='save-client')return;
+    event.preventDefault();
+    const payload={nome:document.querySelector('#c-name').value.trim(),telefone:document.querySelector('#c-phone').value.trim(),cpf_cnpj:document.querySelector('#c-document').value.trim()};
+    if(!payload.nome){status.textContent='Informe o nome do cliente.';return}
+    save.disabled=true;save.textContent='Salvando…';status.textContent='';
+    try{
+      const result=await api('/clients',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+      status.textContent=result.existente?'Cliente já existia e foi selecionado.':'Cliente salvo e selecionado.';
+      const client=result.cliente||{...payload,id:result.id,saldo_fiado:0};
+      setTimeout(()=>{dialog.close();onSaved?.(client)},250);
+    }catch(error){
+      status.textContent=error.message||'Não foi possível salvar o cliente.';
+      save.disabled=false;save.textContent='Salvar cliente';
+    }
+  };
+}
 
 async function loadProducts(){const q=document.querySelector('#product-search');q.oninput=()=>listProducts(q.value);document.querySelector('#new-product').onclick=()=>openProduct();listProducts('')}
 async function listProducts(term){const products=(await todosProdutos()).filter(product=>correspondeBusca(product,term,['descricao','codigo','categoria']));const rows=document.querySelector('#product-rows');rows.innerHTML=products.map(p=>'<tr><td>'+escape(p.descricao)+'</td><td>'+escape(p.codigo||'—')+'</td><td>'+Number(p.estoque||0)+' '+escape(p.unidade||'UN')+'</td><td>'+money(p.preco)+'</td><td><button class="secondary edit" data-id="'+p.id+'">Editar</button></td></tr>').join('');document.querySelector('#empty-products').textContent=products.length?'':'Nenhum produto encontrado.';rows.querySelectorAll('.edit').forEach(b=>b.onclick=()=>openProduct(products.find(p=>p.id==b.dataset.id)))}
@@ -69,20 +88,39 @@ function escape(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':
 function openProduct(p){editing=p||null;const d=document.querySelector('#product-dialog');document.querySelector('#dialog-title').textContent=p?'Editar produto':'Novo produto';['code','unit','description','price','stock','category','status'].forEach(k=>document.querySelector('#f-'+k).value=p?({code:p.codigo,unit:p.unidade,description:p.descricao,price:p.preco,stock:p.estoque,category:p.categoria,status:p.situacao}[k]??''):(k==='unit'?'UN':k==='stock'?'0':k==='status'?'Ativo':''));d.showModal();d.querySelector('form').onsubmit=async e=>{if(e.submitter?.id!=='save-product')return;e.preventDefault();const data={codigo:f('code'),unidade:f('unit'),descricao:f('description'),preco:f('price'),estoque:f('stock'),categoria:f('category'),situacao:f('status')};await api('/products'+(editing?'/'+editing.id:''),{method:editing?'PUT':'POST',headers:{'content-type':'application/json'},body:JSON.stringify(data)});d.close();productCache=null;listProducts(document.querySelector('#product-search').value)}}
 const f=k=>document.querySelector('#f-'+k).value;
 async function setupSale(){
-  const search=document.querySelector('#sale-search'),suggestions=document.querySelector('#suggestions'),payment=document.querySelector('#payment'),quickClient=document.querySelector('#quick-client'),finishButton=document.querySelector('#finish-sale');
-  let clientsCache=await api('/clients');
+  const search=document.querySelector('#sale-search'),suggestions=document.querySelector('#suggestions'),payment=document.querySelector('#payment'),quickClient=document.querySelector('#quick-client'),finishButton=document.querySelector('#finish-sale'),clientSearch=document.querySelector('#sale-client-search'),clientSuggestions=document.querySelector('#client-suggestions'),selectedClientLabel=document.querySelector('#selected-client');
+  let clientsCache=[];
+  try{clientsCache=await api('/clients')}catch(error){console.error(error)}
+  const selectClient=client=>{
+    selectedClient=client;
+    clientSearch.value=client.nome;
+    clientSuggestions.innerHTML='';
+    selectedClientLabel.textContent='Cliente selecionado: '+client.nome+(client.telefone?' · '+client.telefone:'');
+    selectedClientLabel.hidden=false;
+    quickClient.textContent='Cadastrar outro cliente';
+  };
+  const renderClientMatches=()=>{
+    const term=clientSearch.value.trim();
+    if(!term){clientSuggestions.innerHTML='';return}
+    const matches=clientsCache.filter(client=>correspondeBusca(client,term,['nome','telefone','cpf_cnpj'])).slice(0,6);
+    clientSuggestions.innerHTML=matches.length?matches.map(client=>'<button type="button" data-id="'+client.id+'"><b>'+escape(client.nome)+'</b><span>'+escape(client.telefone||client.cpf_cnpj||'Sem telefone/CPF')+'</span></button>').join(''):'<p>Nenhum cliente encontrado. Use “Cadastrar cliente”.</p>';
+    clientSuggestions.querySelectorAll('button').forEach(button=>button.onclick=()=>selectClient(clientsCache.find(client=>String(client.id)===button.dataset.id)));
+  };
   const resetSale=()=>{
     cart=[];selected=null;selectedClient=null;
     search.value='';suggestions.innerHTML='';document.querySelector('#quantity').value=1;
-    payment.value='pix';quickClient.textContent='+ Cadastrar ou localizar cliente';
+    payment.value='pix';clientSearch.value='';clientSuggestions.innerHTML='';selectedClientLabel.hidden=true;selectedClientLabel.textContent='';
+    quickClient.textContent='+ Cadastrar cliente';
     finishButton.disabled=false;finishButton.textContent='Finalizar venda';
     drawCart();search.focus();
   };
-  payment.onchange=()=>{if(payment.value==='fiado'&&!selectedClient)quickClient.focus()};
+  payment.onchange=()=>{if(payment.value==='fiado'&&!selectedClient)clientSearch.focus()};
+  clientSearch.oninput=renderClientMatches;
+  clientSearch.onkeydown=event=>{if(event.key==='Enter'){const first=clientSuggestions.querySelector('button');if(first){event.preventDefault();first.click()}}};
   quickClient.onclick=()=>openClientDialog(client=>{
-    if(!clientsCache.some(item=>item.id===client.id))clientsCache.push(client);
-    selectedClient=client;
-    quickClient.textContent='✓ '+client.nome+' selecionado — alterar';
+    const index=clientsCache.findIndex(item=>String(item.id)===String(client.id));
+    if(index>=0)clientsCache[index]=client;else clientsCache.push(client);
+    selectClient(client);
   });
   search.oninput=async()=>{
     if(search.value.trim().length<1){suggestions.innerHTML='';return}
@@ -108,20 +146,15 @@ async function setupSale(){
     finishButton.disabled=true;finishButton.textContent='Registrando venda…';
     try{
       const result=await api('/sales',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({itens:cart,forma_pagamento:forma,cliente_id:selectedClient?.id})});
-      currentSale=result.venda_id;
-      resetSale();
+      currentSale=result.venda_id;resetSale();
       const dialog=document.querySelector('#receipt-dialog');
       document.querySelector('#receipt-message').textContent=result.mensagem;
       document.querySelector('#print-receipt').onclick=()=>print(currentSale,true);
       document.querySelector('#print-order').onclick=()=>print(currentSale,false);
       const whats=document.querySelector('#send-whatsapp');
-      whats.hidden=!result.cliente?.telefone;
-      whats.onclick=()=>sendWhatsApp(currentSale,result.cliente);
+      whats.hidden=!result.cliente?.telefone;whats.onclick=()=>sendWhatsApp(currentSale,result.cliente);
       dialog.showModal();
-    }catch(error){
-      alert(error.message||'Não foi possível finalizar a venda.');
-      finishButton.disabled=false;finishButton.textContent='Finalizar venda';
-    }
+    }catch(error){alert(error.message||'Não foi possível finalizar a venda.');finishButton.disabled=false;finishButton.textContent='Finalizar venda'}
   };
   drawCart();search.focus();
 }
