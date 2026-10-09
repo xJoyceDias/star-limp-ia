@@ -126,7 +126,7 @@ function openSaleEdit(sale){
   };
 }
 async function loadClients(){const search=document.querySelector('#client-search'),all=await api('/clients');const draw=()=>{const clients=all.filter(client=>correspondeBusca(client,search.value,['nome','telefone','cpf_cnpj'])),rows=document.querySelector('#client-rows');rows.innerHTML=clients.map(client=>'<tr><td><b>'+escape(client.nome)+'</b><br><small>'+escape(client.cpf_cnpj||'')+'</small></td><td>'+escape(client.telefone||'—')+'</td><td>'+money(client.saldo_fiado)+'</td><td><button class="secondary client-edit" data-id="'+client.id+'">Editar</button><button class="danger client-delete" data-id="'+client.id+'">Excluir</button></td></tr>').join('');document.querySelector('#empty-clients').textContent=clients.length?'':'Nenhum cliente encontrado.';rows.querySelectorAll('.client-edit').forEach(button=>button.onclick=()=>openClientDialog(()=>loadClients(),all.find(client=>String(client.id)===button.dataset.id)));rows.querySelectorAll('.client-delete').forEach(button=>button.onclick=async()=>{const client=all.find(item=>String(item.id)===button.dataset.id);if(!confirm('Remover o cliente '+client.nome+'? Esta ação não pode ser desfeita.'))return;try{await api('/clients/'+client.id,{method:'DELETE'});loadClients()}catch(error){alert(error.message)}})};search.oninput=draw;draw();document.querySelector('#new-client').onclick=()=>openClientDialog(()=>loadClients())}
-function openClientDialog(onSaved,clientToEdit=null){const dialog=document.querySelector('#client-dialog'),form=dialog.querySelector('form'),status=document.querySelector('#client-status'),save=document.querySelector('#save-client');form.reset();document.querySelector('#c-name').value=clientToEdit?.nome||'';document.querySelector('#c-phone').value=clientToEdit?.telefone||'';document.querySelector('#c-document').value=clientToEdit?.cpf_cnpj||'';dialog.querySelector('h2').textContent=clientToEdit?'Editar cliente':'Novo cliente';status.textContent='';save.disabled=false;save.textContent=clientToEdit?'Salvar alterações':'Salvar cliente';dialog.showModal();form.onsubmit=async event=>{if(event.submitter?.id!=='save-client')return;event.preventDefault();const payload={nome:document.querySelector('#c-name').value.trim(),telefone:document.querySelector('#c-phone').value.trim(),cpf_cnpj:document.querySelector('#c-document').value.trim()};if(!payload.nome){status.textContent='Informe o nome do cliente.';return}save.disabled=true;save.textContent='Salvando…';status.textContent='';try{const result=await api('/clients'+(clientToEdit?'/'+clientToEdit.id:''),{method:clientToEdit?'PUT':'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)}),client=clientToEdit?{...clientToEdit,...payload}:result.cliente||{...payload,id:result.id,saldo_fiado:0};status.textContent=clientToEdit?'Cliente atualizado.':result.existente?'Cliente já existia e foi selecionado.':'Cliente salvo e selecionado.';setTimeout(()=>{dialog.close();onSaved?.(client)},250)}catch(error){status.textContent=error.message||'Não foi possível salvar o cliente.';save.disabled=false;save.textContent=clientToEdit?'Salvar alterações':'Salvar cliente'}}}
+function openClientDialog(onSaved,clientToEdit=null){const dialog=document.querySelector('#client-dialog'),form=dialog.querySelector('form'),status=document.querySelector('#client-status'),save=document.querySelector('#save-client');form.reset();document.querySelector('#c-name').value=clientToEdit?.nome||'';document.querySelector('#c-phone').value=clientToEdit?.telefone||'';document.querySelector('#c-document').value=clientToEdit?.cpf_cnpj||'';document.querySelector('#c-address').value=clientToEdit?.endereco||'';dialog.querySelector('h2').textContent=clientToEdit?'Editar cliente':'Novo cliente';status.textContent='';save.disabled=false;save.textContent=clientToEdit?'Salvar alterações':'Salvar cliente';dialog.showModal();form.onsubmit=async event=>{if(event.submitter?.id!=='save-client')return;event.preventDefault();const payload={nome:document.querySelector('#c-name').value.trim(),telefone:document.querySelector('#c-phone').value.trim(),cpf_cnpj:document.querySelector('#c-document').value.trim(),endereco:document.querySelector('#c-address').value.trim()};if(!payload.nome){status.textContent='Informe o nome do cliente.';return}save.disabled=true;save.textContent='Salvando…';status.textContent='';try{const result=await api('/clients'+(clientToEdit?'/'+clientToEdit.id:''),{method:clientToEdit?'PUT':'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)}),client=clientToEdit?{...clientToEdit,...payload}:result.cliente||{...payload,id:result.id,saldo_fiado:0};status.textContent=clientToEdit?'Cliente atualizado.':result.existente?'Cliente já existia e foi selecionado.':'Cliente salvo e selecionado.';setTimeout(()=>{dialog.close();onSaved?.(client)},250)}catch(error){status.textContent=error.message||'Não foi possível salvar o cliente.';save.disabled=false;save.textContent=clientToEdit?'Salvar alterações':'Salvar cliente'}}}
 
 async function loadProducts(){
   const search=document.querySelector('#product-search');let page=1;
@@ -176,7 +176,7 @@ async function openProduct(p){
 }
 const f=k=>document.querySelector('#f-'+k).value;
 async function setupSale(){
-  const search=document.querySelector('#sale-search'),suggestions=document.querySelector('#suggestions'),payment=document.querySelector('#payment'),quickClient=document.querySelector('#quick-client'),finishButton=document.querySelector('#finish-sale'),clientSearch=document.querySelector('#sale-client-search'),clientSuggestions=document.querySelector('#client-suggestions'),selectedClientLabel=document.querySelector('#selected-client'),discountInput=document.querySelector('#discount-input'),scanButton=document.querySelector('#scan-barcode');
+  const search=document.querySelector('#sale-search'),suggestions=document.querySelector('#suggestions'),payment=document.querySelector('#payment'),quickClient=document.querySelector('#quick-client'),finishButton=document.querySelector('#finish-sale'),clientSearch=document.querySelector('#sale-client-search'),clientSuggestions=document.querySelector('#client-suggestions'),selectedClientLabel=document.querySelector('#selected-client'),discountInput=document.querySelector('#discount-input'),deliveryInput=document.querySelector('#delivery-fee'),scanButton=document.querySelector('#scan-barcode');
   let clientsCache=[];
   try{clientsCache=await api('/clients')}catch(error){console.error(error)}
   const selectClient=client=>{
@@ -198,13 +198,14 @@ async function setupSale(){
   const resetSale=()=>{
     cart=[];selected=null;selectedClient=null;
     search.value='';suggestions.innerHTML='';document.querySelector('#quantity').value=1;
-    payment.value='pix';saleDiscount=0;discountInput.value='';clientSearch.value='';document.querySelector('#withdrawn-by').value='';clientSuggestions.innerHTML='';selectedClientLabel.hidden=true;selectedClientLabel.textContent='';
+    payment.value='pix';saleDiscount=0;discountInput.value='';deliveryInput.value='';clientSearch.value='';document.querySelector('#withdrawn-by').value='';clientSuggestions.innerHTML='';selectedClientLabel.hidden=true;selectedClientLabel.textContent='';
     quickClient.textContent='+ Cadastrar cliente';
     finishButton.disabled=false;finishButton.textContent='Finalizar venda';
     drawCart();search.focus();
   };
   payment.onchange=()=>{if(payment.value==='fiado'&&!selectedClient)clientSearch.focus()};
   discountInput.oninput=()=>{saleDiscount=String(discountInput.value).replace(',','.');drawCart()};
+  deliveryInput.oninput=()=>drawCart();
   clientSearch.oninput=()=>{
     if(selectedClient&&normalizarBusca(clientSearch.value)!==normalizarBusca(selectedClient.nome)){
       selectedClient=null;selectedClientLabel.hidden=true;selectedClientLabel.textContent='';quickClient.textContent='+ Cadastrar cliente';
@@ -282,7 +283,7 @@ async function setupSale(){
         allocated=Number((allocated+discount).toFixed(2));
         return {...item,desconto:discount};
       });
-      const result=await api('/sales',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({itens:items,forma_pagamento:forma,cliente_id:selectedClient?.id,retirado_por:withdrawnBy})});
+      const result=await api('/sales',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({itens:items,forma_pagamento:forma,cliente_id:selectedClient?.id,retirado_por:withdrawnBy,taxa_entrega:Math.max(0,Number(String(deliveryInput.value).replace(',','.'))||0)})});
       currentSale=result.venda_id;resetSale();
       const dialog=document.querySelector('#receipt-dialog');
       document.querySelector('#receipt-message').textContent=result.mensagem;
@@ -301,7 +302,7 @@ function discountAmount(){
   return Math.min(gross,value);
 }
 function drawCart(){
-  const box=document.querySelector('#cart'),gross=cartGross(),discount=discountAmount(),total=Math.max(0,gross-discount);
+  const box=document.querySelector('#cart'),gross=cartGross(),discount=discountAmount(),delivery=Math.max(0,Number(String(document.querySelector('#delivery-fee')?.value||'').replace(',','.'))||0),total=Math.max(0,gross-discount)+delivery;
   box.classList.toggle('empty',!cart.length);
   box.innerHTML=cart.length?'<div class="cart-head"><span>Produtos adicionados</span><span>Quantidade e valor</span></div>'+cart.map((item,index)=>'<article class="cart-item"><div class="cart-product"><b>'+escape(item.produto)+'</b><small>Código: '+escape(item.codigo||'—')+' · '+money(item.preco)+' por unidade</small></div><div class="cart-actions"><div class="item-quantity"><button type="button" data-decrease="'+index+'" aria-label="Diminuir quantidade">−</button><input data-quantity="'+index+'" type="number" min="1" step="1" value="'+item.quantidade+'" aria-label="Quantidade de '+escape(item.produto)+'"><button type="button" data-increase="'+index+'" aria-label="Aumentar quantidade">+</button></div><button type="button" class="price-edit" data-price-index="'+index+'" title="Clique para alterar e salvar o preço">'+money(item.preco*item.quantidade)+'</button><button type="button" class="remove-item" aria-label="Remover item" data-i="'+index+'">×</button></div></article>').join(''):'<div class="empty-cart"><b>Seu carrinho está vazio</b><span>Pesquise um produto acima para começar a venda.</span></div>';
   box.querySelectorAll('button[data-i]').forEach(button=>button.onclick=()=>{cart.splice(Number(button.dataset.i),1);drawCart()});
@@ -312,6 +313,8 @@ function drawCart(){
   document.querySelector('#sale-subtotal').textContent=money(gross);
   document.querySelector('#sale-discount-value').textContent='− '+money(discount);
   document.querySelector('#sale-discount-row').hidden=discount<=0;
+  document.querySelector('#sale-delivery-value').textContent='+ '+money(delivery);
+  document.querySelector('#sale-delivery-row').hidden=delivery<=0;
   document.querySelector('#sale-total').textContent=money(total);
   document.querySelector('#cart-count').textContent=cart.reduce((sum,item)=>sum+item.quantidade,0)+' item(ns)';
 }
