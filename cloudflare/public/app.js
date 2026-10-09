@@ -129,10 +129,17 @@ async function openProduct(p){
   document.querySelector('#dialog-title').textContent=p?'Editar produto':'Novo produto';
   ['code','unit','description','price','stock','category','status'].forEach(key=>document.querySelector('#f-'+key).value=p?({code:p.codigo,unit:p.unidade,description:p.descricao,price:p.preco,stock:p.estoque,category:p.categoria,status:p.situacao}[key]??''):(key==='unit'?'UN':key==='stock'?'0':key==='status'?'Ativo':''));
   if(!p){
-    document.querySelector('#f-code').value='Gerando código…';
-    document.querySelector('#f-code').readOnly=true;
-    try{document.querySelector('#f-code').value=(await api('/products/next-code')).codigo}catch(error){document.querySelector('#f-code').value=''}
-    document.querySelector('#f-code').readOnly=false;
+    const codeField=document.querySelector('#f-code');
+    codeField.value='Gerando código…';codeField.readOnly=true;
+    try{
+      codeField.value=(await api('/products/next-code')).codigo;
+    }catch(error){
+      const products=await todosProdutos();
+      const used=new Set(products.map(product=>String(product.codigo||'').trim()).filter(code=>/^\\d+$/.test(code)).map(Number));
+      let next=1;while(used.has(next))next++;
+      codeField.value=String(next);
+    }
+    codeField.readOnly=false;
   }
   dialog.showModal();
   dialog.querySelector('form').onsubmit=async event=>{
@@ -241,8 +248,11 @@ function discountAmount(){
 function drawCart(){
   const box=document.querySelector('#cart'),gross=cartGross(),discount=discountAmount(),total=Math.max(0,gross-discount);
   box.classList.toggle('empty',!cart.length);
-  box.innerHTML=cart.length?'<div class="cart-head"><span>Item</span><span>Qtd.</span><span>Subtotal</span></div>'+cart.map((item,index)=>'<div class="cart-item"><span><b>'+escape(item.produto)+'</b><small>'+money(item.preco)+' cada</small></span><span>'+item.quantidade+'</span><button type="button" class="price-edit" data-price-index="'+index+'" title="Clique para alterar e salvar o preço">'+money(item.preco*item.quantidade)+'</button><button type="button" aria-label="Remover item" data-i="'+index+'">×</button></div>').join(''):'<div class="empty-cart"><b>Seu carrinho está vazio</b><span>Pesquise um produto acima para começar a venda.</span></div>';
+  box.innerHTML=cart.length?'<div class="cart-head"><span>Item</span><span>Qtd.</span><span>Subtotal</span></div>'+cart.map((item,index)=>'<div class="cart-item"><span><b>'+escape(item.produto)+'</b><small>'+money(item.preco)+' cada</small></span><div class="item-quantity"><button type="button" data-decrease="'+index+'" aria-label="Diminuir quantidade">−</button><input data-quantity="'+index+'" type="number" min="1" step="1" value="'+item.quantidade+'" aria-label="Quantidade de '+escape(item.produto)+'"><button type="button" data-increase="'+index+'" aria-label="Aumentar quantidade">+</button></div><button type="button" class="price-edit" data-price-index="'+index+'" title="Clique para alterar e salvar o preço">'+money(item.preco*item.quantidade)+'</button><button type="button" aria-label="Remover item" data-i="'+index+'">×</button></div>').join(''):'<div class="empty-cart"><b>Seu carrinho está vazio</b><span>Pesquise um produto acima para começar a venda.</span></div>';
   box.querySelectorAll('button[data-i]').forEach(button=>button.onclick=()=>{cart.splice(Number(button.dataset.i),1);drawCart()});
+  box.querySelectorAll('button[data-decrease]').forEach(button=>button.onclick=()=>{const item=cart[Number(button.dataset.decrease)];item.quantidade=Math.max(1,item.quantidade-1);drawCart()});
+  box.querySelectorAll('button[data-increase]').forEach(button=>button.onclick=()=>{const item=cart[Number(button.dataset.increase)];item.quantidade+=1;drawCart()});
+  box.querySelectorAll('input[data-quantity]').forEach(input=>input.onchange=()=>{const item=cart[Number(input.dataset.quantity)],quantity=Number(input.value);item.quantidade=Number.isFinite(quantity)&&quantity>0?quantity:1;drawCart()});
   box.querySelectorAll('.price-edit').forEach(button=>button.onclick=()=>openQuickPrice(Number(button.dataset.priceIndex)));
   document.querySelector('#sale-subtotal').textContent=money(gross);
   document.querySelector('#sale-discount-value').textContent='− '+money(discount);
