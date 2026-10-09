@@ -176,7 +176,7 @@ async function openProduct(p){
 }
 const f=k=>document.querySelector('#f-'+k).value;
 async function setupSale(){
-  const search=document.querySelector('#sale-search'),suggestions=document.querySelector('#suggestions'),payment=document.querySelector('#payment'),quickClient=document.querySelector('#quick-client'),finishButton=document.querySelector('#finish-sale'),clientSearch=document.querySelector('#sale-client-search'),clientSuggestions=document.querySelector('#client-suggestions'),selectedClientLabel=document.querySelector('#selected-client'),discountInput=document.querySelector('#discount-input');
+  const search=document.querySelector('#sale-search'),suggestions=document.querySelector('#suggestions'),payment=document.querySelector('#payment'),quickClient=document.querySelector('#quick-client'),finishButton=document.querySelector('#finish-sale'),clientSearch=document.querySelector('#sale-client-search'),clientSuggestions=document.querySelector('#client-suggestions'),selectedClientLabel=document.querySelector('#selected-client'),discountInput=document.querySelector('#discount-input'),scanButton=document.querySelector('#scan-barcode');
   let clientsCache=[];
   try{clientsCache=await api('/clients')}catch(error){console.error(error)}
   const selectClient=client=>{
@@ -223,6 +223,37 @@ async function setupSale(){
     const existing=cart.find(item=>String(item.codigo)===String(product.codigo)&&item.produto===product.descricao&&Number(item.preco)===Number(product.preco));
     if(existing)existing.quantidade+=quantity;else cart.push({produto_id:product.id,codigo:product.codigo,produto:product.descricao,quantidade:quantity,preco:Number(product.preco)});
     selected=null;search.value='';suggestions.innerHTML='';document.querySelector('#quantity').value=1;drawCart();search.focus();
+  };
+  const stopScanner=()=>{
+    const video=document.querySelector('#barcode-video');
+    if(video.srcObject){video.srcObject.getTracks().forEach(track=>track.stop());video.srcObject=null}
+  };
+  scanButton.onclick=async()=>{
+    if(!('BarcodeDetector' in window)){alert('A leitura pela câmera ainda não é suportada neste navegador. Use o Chrome atualizado no celular ou informe o código manualmente.');return}
+    const dialog=document.querySelector('#barcode-dialog'),video=document.querySelector('#barcode-video'),status=document.querySelector('#barcode-status');
+    let detector;
+    try{
+      detector=new BarcodeDetector({formats:['ean_13','ean_8','code_128','code_39','upc_a','upc_e','itf']});
+      video.srcObject=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+      dialog.showModal();await video.play();status.textContent='Aponte a câmera para o código de barras.';
+      let active=true;
+      dialog.onclose=()=>{active=false;stopScanner()};
+      const scan=async()=>{
+        if(!active)return;
+        try{
+          const codes=await detector.detect(video);
+          if(codes.length){
+            const code=String(codes[0].rawValue||'').trim(),products=await todosProdutos(),product=products.find(item=>String(item.codigo||'').replace(/\D/g,'')===code.replace(/\D/g,'')||String(item.codigo||'').trim()===code);
+            if(product){dialog.close();addProduct(product);return}
+            status.textContent='Código '+code+' não está cadastrado. Continue apontando ou feche para pesquisar manualmente.';
+          }
+        }catch(error){}
+        requestAnimationFrame(scan);
+      };
+      scan();
+    }catch(error){
+      stopScanner();alert('Não foi possível acessar a câmera. Verifique a permissão da câmera para este site.');
+    }
   };
   search.oninput=async()=>{
     if(search.value.trim().length<1){suggestions.innerHTML='';return}
