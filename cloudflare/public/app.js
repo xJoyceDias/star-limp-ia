@@ -57,7 +57,34 @@ const normalizarBusca=value=>String(value||'').normalize('NFD').replace(/[\u0300
 const correspondeBusca=(item,termo,campos)=>{const parts=normalizarBusca(termo).split(' ').filter(Boolean);const text=campos.map(campo=>normalizarBusca(item[campo])).join(' ');return parts.every(part=>text.includes(part))};
 let productCache=null;
 const todosProdutos=()=>productCache||(productCache=api('/products'));
-async function loadReceivables(){const clients=await api('/receivables'),select=document.querySelector('#receive-client'),rows=document.querySelector('#receivable-rows');select.innerHTML='<option value="">Selecione o cliente</option>'+clients.map(client=>'<option value="'+client.id+'">'+escape(client.nome)+' — '+money(client.saldo_fiado)+'</option>').join('');rows.innerHTML=clients.map(client=>'<tr><td><b>'+escape(client.nome)+'</b></td><td>'+escape(client.telefone||'—')+'</td><td>'+money(client.saldo_fiado)+'</td><td><button class="secondary receive-client" data-id="'+client.id+'">Receber</button></td></tr>').join('');document.querySelector('#empty-receivables').textContent=clients.length?'':'Nenhum cliente com saldo em aberto.';rows.querySelectorAll('.receive-client').forEach(button=>button.onclick=()=>{const client=clients.find(item=>String(item.id)===button.dataset.id);select.value=client.id;document.querySelector('#receive-value').value=Number(client.saldo_fiado).toFixed(2);window.scrollTo({top:0,behavior:'smooth'})});document.querySelector('#save-receivable').onclick=async()=>{const client=clients.find(item=>String(item.id)===select.value),value=Number(document.querySelector('#receive-value').value);if(!client||value<=0)return alert('Selecione o cliente e informe o valor recebido.');await api('/receivables',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({cliente_id:client.id,valor_pago:value,forma_pagamento:document.querySelector('#receive-method').value,observacao:document.querySelector('#receive-note').value})});alert('Baixa registrada com sucesso.');loadReceivables()}}
+async function loadReceivables(){
+  const clients=await api('/receivables'),select=document.querySelector('#receive-client'),rows=document.querySelector('#receivable-rows');
+  select.innerHTML='<option value="">Selecione um cliente</option>'+clients.map(client=>'<option value="'+client.id+'">'+escape(client.nome)+' — '+money(client.saldo_fiado)+'</option>').join('');
+  const showDetail=async id=>{
+    if(!id){document.querySelector('#customer-account').hidden=true;return}
+    const data=await api('/receivables/'+id),box=document.querySelector('#customer-account');
+    box.hidden=false;document.querySelector('#account-title').textContent=data.cliente.nome+' — saldo: '+money(data.cliente.saldo_fiado);
+    document.querySelector('#account-info').textContent=[data.cliente.telefone,data.cliente.cpf_cnpj].filter(Boolean).join(' · ')||'Dados de contato não informados';
+    document.querySelector('#account-purchases').innerHTML=data.compras.length?data.compras.map(compra=>'<tr><td>'+formatDocumentDate(compra.data_hora)+'</td><td><b>'+escape(compra.itens||'Venda #'+compra.venda_id)+'</b><br><small>Retirado por: '+escape(compra.retirado_por||data.cliente.nome)+'</small></td><td>'+money(compra.valor_compra)+'</td><td>'+money(compra.saldo_aberto)+'</td></tr>').join(''):'<tr><td colspan="4">Nenhuma compra em aberto.</td></tr>';
+  };
+  const choose=client=>{select.value=client.id;document.querySelector('#receive-value').value=Number(client.saldo_fiado).toFixed(2);showDetail(client.id);document.querySelector('#customer-account').scrollIntoView({behavior:'smooth',block:'nearest'})};
+  rows.innerHTML=clients.map(client=>'<tr><td><b>'+escape(client.nome)+'</b></td><td>'+escape(client.telefone||'—')+'</td><td>'+money(client.saldo_fiado)+'</td><td><button class="secondary account-detail" data-id="'+client.id+'">Ver conta</button><button class="secondary receive-client" data-id="'+client.id+'">Receber</button></td></tr>').join('');
+  document.querySelector('#empty-receivables').textContent=clients.length?'':'Nenhum cliente com saldo em aberto.';
+  select.onchange=()=>showDetail(select.value);
+  rows.querySelectorAll('.account-detail').forEach(button=>button.onclick=()=>choose(clients.find(client=>String(client.id)===button.dataset.id)));
+  rows.querySelectorAll('.receive-client').forEach(button=>button.onclick=()=>choose(clients.find(client=>String(client.id)===button.dataset.id)));
+  document.querySelector('#save-receivable').onclick=async()=>{
+    const client=clients.find(item=>String(item.id)===select.value),value=Number(document.querySelector('#receive-value').value);
+    if(!client||value<=0)return alert('Selecione o cliente e informe o valor recebido.');
+    const payment=await api('/receivables',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({cliente_id:client.id,valor_pago:value,forma_pagamento:document.querySelector('#receive-method').value,observacao:document.querySelector('#receive-note').value})});
+    if(confirm('Pagamento registrado. Deseja imprimir o comprovante?'))printPaymentReceipt(payment);
+    loadReceivables();
+  };
+}
+function printPaymentReceipt(payment){
+  const p=payment,client=p.cliente,w=window.open('','_blank');if(!w)return alert('Permita pop-ups para imprimir o comprovante.');
+  w.document.write('<!doctype html><html><head><title>Comprovante de pagamento</title><style>@page{size:A4;margin:15mm}body{font:14px Arial;color:#10213d;max-width:720px;margin:auto}.head{border-bottom:3px solid #1565d8;padding-bottom:12px}.head h1{margin:4px 0}.card{margin-top:20px;padding:18px;border:1px solid #ccd7e7;border-radius:8px}table{width:100%;border-collapse:collapse;margin-top:14px}td{padding:10px 0;border-bottom:1px solid #dce4ee}.total{font-size:24px;font-weight:800;color:#1565d8;text-align:right;margin-top:18px}.balance{padding:13px;margin-top:14px;border-radius:6px;background:'+((p.saldo_atual>0)?'#fff3d9':'#e5f8ee')+';font-weight:800}@media print{button{display:none}}button{margin-top:20px;padding:10px 16px;background:#1565d8;color:#fff;border:0;border-radius:6px}</style></head><body><div class="head"><b>STAR LIMP — FRAGRÂNCIAS E PRODUTOS</b><h1>Comprovante de pagamento</h1><small>'+formatDocumentDate(p.data_hora)+'</small></div><section class="card"><b>Cliente:</b> '+escape(client.nome)+'<br><b>Telefone:</b> '+escape(client.telefone||'Não informado')+'<table><tr><td>Saldo antes do pagamento</td><td style="text-align:right">'+money(p.saldo_anterior)+'</td></tr><tr><td>Valor recebido ('+escape(p.forma_pagamento).toUpperCase()+')</td><td style="text-align:right"><b>'+money(p.valor)+'</b></td></tr></table><p class="balance">'+(p.saldo_atual>0?'Saldo devedor restante: '+money(p.saldo_atual):'Conta quitada — não há saldo devedor.')+'</p></section><button onclick="window.print()">Imprimir comprovante</button><script>window.onload=()=>setTimeout(()=>window.print(),250)<\/script></body></html>');w.document.close();w.focus();
+}
 async function loadSales(){
   const search=document.querySelector('#sales-search'),all=await api('/sales');
   const cancelSale=async sale=>{
