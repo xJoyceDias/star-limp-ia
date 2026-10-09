@@ -17,9 +17,9 @@ const normalizarItens = (itens) => itens.map((item) => {
 async function dashboard(DB) {
   const inicioHoje = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const [hoje, semana, mes, receber, devendo, clientes] = await DB.batch([
-    DB.prepare("SELECT COALESCE(SUM(valor_total), 0) valor FROM vendas WHERE substr(data_hora, 1, 10) = ?").bind(inicioHoje),
-    DB.prepare("SELECT COALESCE(SUM(valor_total), 0) valor FROM vendas WHERE date(data_hora) >= date(?, 'weekday 1', '-7 days')").bind(inicioHoje),
-    DB.prepare("SELECT COALESCE(SUM(valor_total), 0) valor FROM vendas WHERE substr(data_hora, 1, 7) = substr(?, 1, 7)").bind(inicioHoje),
+    DB.prepare("SELECT COALESCE(SUM(valor_total), 0) valor FROM vendas WHERE COALESCE(status, 'CONCLUIDA') <> 'CANCELADA' AND substr(data_hora, 1, 10) = ?").bind(inicioHoje),
+    DB.prepare("SELECT COALESCE(SUM(valor_total), 0) valor FROM vendas WHERE COALESCE(status, 'CONCLUIDA') <> 'CANCELADA' AND date(data_hora) >= date(?, 'weekday 1', '-7 days')").bind(inicioHoje),
+    DB.prepare("SELECT COALESCE(SUM(valor_total), 0) valor FROM vendas WHERE COALESCE(status, 'CONCLUIDA') <> 'CANCELADA' AND substr(data_hora, 1, 7) = substr(?, 1, 7)").bind(inicioHoje),
     DB.prepare("SELECT COALESCE(SUM(saldo_fiado), 0) valor FROM clientes"),
     DB.prepare("SELECT COUNT(*) quantidade FROM clientes WHERE saldo_fiado > 0"),
     DB.prepare("SELECT COUNT(*) quantidade FROM clientes"),
