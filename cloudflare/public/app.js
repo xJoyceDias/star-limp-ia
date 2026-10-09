@@ -123,7 +123,26 @@ function openClientDialog(onSaved){
 async function loadProducts(){const q=document.querySelector('#product-search');q.oninput=()=>listProducts(q.value);document.querySelector('#new-product').onclick=()=>openProduct();listProducts('')}
 async function listProducts(term){const products=(await todosProdutos()).filter(product=>correspondeBusca(product,term,['descricao','codigo','categoria']));const rows=document.querySelector('#product-rows');rows.innerHTML=products.map(p=>'<tr><td>'+escape(p.descricao)+'</td><td>'+escape(p.codigo||'—')+'</td><td>'+Number(p.estoque||0)+' '+escape(p.unidade||'UN')+'</td><td>'+money(p.preco)+'</td><td><button class="secondary edit" data-id="'+p.id+'">Editar</button></td></tr>').join('');document.querySelector('#empty-products').textContent=products.length?'':'Nenhum produto encontrado.';rows.querySelectorAll('.edit').forEach(b=>b.onclick=()=>openProduct(products.find(p=>p.id==b.dataset.id)))}
 function escape(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function openProduct(p){editing=p||null;const d=document.querySelector('#product-dialog');document.querySelector('#dialog-title').textContent=p?'Editar produto':'Novo produto';['code','unit','description','price','stock','category','status'].forEach(k=>document.querySelector('#f-'+k).value=p?({code:p.codigo,unit:p.unidade,description:p.descricao,price:p.preco,stock:p.estoque,category:p.categoria,status:p.situacao}[k]??''):(k==='unit'?'UN':k==='stock'?'0':k==='status'?'Ativo':''));d.showModal();d.querySelector('form').onsubmit=async e=>{if(e.submitter?.id!=='save-product')return;e.preventDefault();const data={codigo:f('code'),unidade:f('unit'),descricao:f('description'),preco:f('price'),estoque:f('stock'),categoria:f('category'),situacao:f('status')};await api('/products'+(editing?'/'+editing.id:''),{method:editing?'PUT':'POST',headers:{'content-type':'application/json'},body:JSON.stringify(data)});d.close();productCache=null;listProducts(document.querySelector('#product-search').value)}}
+async function openProduct(p){
+  editing=p||null;
+  const dialog=document.querySelector('#product-dialog');
+  document.querySelector('#dialog-title').textContent=p?'Editar produto':'Novo produto';
+  ['code','unit','description','price','stock','category','status'].forEach(key=>document.querySelector('#f-'+key).value=p?({code:p.codigo,unit:p.unidade,description:p.descricao,price:p.preco,stock:p.estoque,category:p.categoria,status:p.situacao}[key]??''):(key==='unit'?'UN':key==='stock'?'0':key==='status'?'Ativo':''));
+  if(!p){
+    document.querySelector('#f-code').value='Gerando código…';
+    document.querySelector('#f-code').readOnly=true;
+    try{document.querySelector('#f-code').value=(await api('/products/next-code')).codigo}catch(error){document.querySelector('#f-code').value=''}
+    document.querySelector('#f-code').readOnly=false;
+  }
+  dialog.showModal();
+  dialog.querySelector('form').onsubmit=async event=>{
+    if(event.submitter?.id!=='save-product')return;
+    event.preventDefault();
+    const data={codigo:f('code'),unidade:f('unit'),descricao:f('description'),preco:f('price'),estoque:f('stock'),categoria:f('category'),situacao:f('status')};
+    await api('/products'+(editing?'/'+editing.id:''),{method:editing?'PUT':'POST',headers:{'content-type':'application/json'},body:JSON.stringify(data)});
+    dialog.close();productCache=null;listProducts(document.querySelector('#product-search').value);
+  };
+}
 const f=k=>document.querySelector('#f-'+k).value;
 async function setupSale(){
   const search=document.querySelector('#sale-search'),suggestions=document.querySelector('#suggestions'),payment=document.querySelector('#payment'),quickClient=document.querySelector('#quick-client'),finishButton=document.querySelector('#finish-sale'),clientSearch=document.querySelector('#sale-client-search'),clientSuggestions=document.querySelector('#client-suggestions'),selectedClientLabel=document.querySelector('#selected-client'),discountInput=document.querySelector('#discount-input');
