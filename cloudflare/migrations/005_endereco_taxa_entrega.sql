@@ -1,0 +1,2 @@
+ALTER TABLE clientes ADD COLUMN endereco TEXT;
+ALTER TABLE vendas ADD COLUMN taxa_entrega REAL NOT NULL DEFAULT 0;
