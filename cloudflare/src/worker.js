@@ -154,22 +154,10 @@ async function venda(env, id) {
   return json({ venda: cabecalho, itens: itens.results, cliente, fiado });
 }
 
-async function clientes(request, env, url) {
-  if (request.method === "GET") {
-    const resultado = await env.DB.prepare("SELECT id, nome, telefone, cpf_cnpj, saldo_fiado, data_cadastro FROM clientes ORDER BY nome COLLATE NOCASE").all();
-    return json(resultado.results);
-  }
-  const dados = await request.json();
-  const nome = String(dados.nome || "").trim(), telefone=String(dados.telefone || "").replace(/\D/g,""), documento=String(dados.cpf_cnpj || "").replace(/\D/g,"");
-  if (!nome) return erro("Informe o nome do cliente.");
-  const existentes = await env.DB.prepare("SELECT id, nome, telefone, cpf_cnpj, saldo_fiado FROM clientes").all();
-  const nomeNormalizado=nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g," ").trim();
-  const encontrado=existentes.results.find(cliente=>{const nomeExistente=String(cliente.nome||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g," ").trim();return nomeExistente===nomeNormalizado||(telefone&&String(cliente.telefone||"").replace(/\D/g,"")===telefone)||(documento&&String(cliente.cpf_cnpj||"").replace(/\D/g,"")===documento)});
-  if(encontrado)return json({sucesso:true,existente:true,id:encontrado.id,cliente:encontrado,mensagem:"Cliente já cadastrado e selecionado."});
-  const resultado = await env.DB.prepare("INSERT INTO clientes (nome, telefone, cpf_cnpj, saldo_fiado, data_cadastro) VALUES (?, ?, ?, 0, ?)")
-    .bind(nome, telefone, documento, agora()).run();
-  return json({ sucesso:true, id:resultado.meta.last_row_id, cliente:{id:resultado.meta.last_row_id,nome,telefone,cpf_cnpj:documento,saldo_fiado:0}, mensagem:"Cliente cadastrado com sucesso." });
-}
+const normalizarCliente = valor => String(valor||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
+async function clientes(request,env,url){if(request.method==='GET'){const r=await env.DB.prepare("SELECT id,nome,telefone,cpf_cnpj,saldo_fiado,data_cadastro FROM clientes ORDER BY nome COLLATE NOCASE").all();return json(r.results)}const d=await request.json(),nome=String(d.nome||'').trim(),telefone=String(d.telefone||'').replace(/\D/g,''),documento=String(d.cpf_cnpj||'').replace(/\D/g,'');if(!nome)return erro('Informe o nome do cliente.');const e=await env.DB.prepare("SELECT id,nome,telefone,cpf_cnpj,saldo_fiado FROM clientes").all(),found=e.results.find(c=>normalizarCliente(c.nome)===normalizarCliente(nome)||(telefone&&String(c.telefone||'').replace(/\D/g,'')===telefone)||(documento&&String(c.cpf_cnpj||'').replace(/\D/g,'')===documento));if(found)return json({sucesso:true,existente:true,id:found.id,cliente:found,mensagem:'Cliente já cadastrado e selecionado.'});const r=await env.DB.prepare("INSERT INTO clientes (nome,telefone,cpf_cnpj,saldo_fiado,data_cadastro) VALUES (?, ?, ?, 0, ?)").bind(nome,telefone,documento,agora()).run();return json({sucesso:true,id:r.meta.last_row_id,cliente:{id:r.meta.last_row_id,nome,telefone,cpf_cnpj:documento,saldo_fiado:0},mensagem:'Cliente cadastrado com sucesso.'})}
+async function atualizarCliente(request,env,id){const d=await request.json(),nome=String(d.nome||'').trim(),telefone=String(d.telefone||'').replace(/\D/g,''),documento=String(d.cpf_cnpj||'').replace(/\D/g,'');if(!nome)return erro('Informe o nome do cliente.');const current=await env.DB.prepare("SELECT id FROM clientes WHERE id=?").bind(id).first();if(!current)return erro('Cliente não encontrado.',404);const e=await env.DB.prepare("SELECT id,nome,telefone,cpf_cnpj FROM clientes WHERE id<>?").bind(id).all(),dup=e.results.find(c=>normalizarCliente(c.nome)===normalizarCliente(nome)||(telefone&&String(c.telefone||'').replace(/\D/g,'')===telefone)||(documento&&String(c.cpf_cnpj||'').replace(/\D/g,'')===documento));if(dup)return erro('Já existe outro cliente com esse nome, telefone ou CPF/CNPJ.');await env.DB.prepare("UPDATE clientes SET nome=?,telefone=?,cpf_cnpj=? WHERE id=?").bind(nome,telefone,documento,id).run();return json({sucesso:true,mensagem:'Cliente atualizado.'})}
+async function excluirCliente(env,id){const c=await env.DB.prepare("SELECT id,saldo_fiado FROM clientes WHERE id=?").bind(id).first();if(!c)return erro('Cliente não encontrado.',404);if(numero(c.saldo_fiado)>0)return erro('Não é possível remover um cliente com saldo em aberto.');const [v,f,p]=await env.DB.batch([env.DB.prepare("SELECT COUNT(*) quantidade FROM vendas WHERE cliente_id=?").bind(id),env.DB.prepare("SELECT COUNT(*) quantidade FROM fiados WHERE cliente_id=?").bind(id),env.DB.prepare("SELECT COUNT(*) quantidade FROM pagamentos_fiado WHERE cliente_id=?").bind(id)]);if(numero(v.results[0].quantidade)||numero(f.results[0].quantidade)||numero(p.results[0].quantidade))return erro('Não é possível remover um cliente com histórico de vendas ou pagamentos.');await env.DB.prepare("DELETE FROM clientes WHERE id=?").bind(id).run();return json({sucesso:true,mensagem:'Cliente removido.'})}
 
 async function contasPagar(request, env, url) {
   if (request.method === "GET") {
@@ -227,6 +215,9 @@ export default {
       if (url.pathname === "/api/products/next-code" && request.method === "GET") return json({ codigo: await proximoCodigoProduto(env.DB) });
       if (url.pathname === "/api/products" && (request.method === "GET" || request.method === "POST")) return produtos(request, env, url);
       if (url.pathname === "/api/clients" && (request.method === "GET" || request.method === "POST")) return clientes(request, env, url);
+      const clienteId = url.pathname.match(/^\/api\/clients\/(\d+)$/);
+      if (clienteId && request.method === "PUT") return atualizarCliente(request, env, Number(clienteId[1]));
+      if (clienteId && request.method === "DELETE") return excluirCliente(env, Number(clienteId[1]));
       if (url.pathname === "/api/receivables" && (request.method === "GET" || request.method === "POST")) return receberFiado(request, env);
       const produto = url.pathname.match(/^\/api\/products\/(\d+)$/);
       if (produto && request.method === "PUT") return atualizarProduto(request, env, Number(produto[1]));
