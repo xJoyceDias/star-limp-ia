@@ -34,6 +34,17 @@ async function dashboard(DB) {
   };
 }
 
+async function proximoCodigoProduto(DB) {
+  const resultado = await DB.prepare("SELECT codigo FROM produtos WHERE trim(coalesce(codigo,'')) <> ''").all();
+  const usados = new Set(resultado.results.map((produto) => {
+    const texto = String(produto.codigo || "").trim();
+    return /^\d+$/.test(texto) ? Number(texto) : null;
+  }).filter((codigo) => Number.isInteger(codigo) && codigo > 0));
+  let proximo = 1;
+  while (usados.has(proximo)) proximo++;
+  return String(proximo);
+}
+
 async function produtos(request, env, url) {
   if (request.method === "GET") {
     const termo = (url.searchParams.get("termo") || "").toLowerCase();
@@ -45,13 +56,13 @@ async function produtos(request, env, url) {
   }
   const dados = await request.json();
   if (!String(dados.descricao || "").trim()) return erro("Informe a descrição do produto.");
+  const codigo = String(dados.codigo || "").trim() || await proximoCodigoProduto(env.DB);
   const comando = env.DB.prepare(
     "INSERT INTO produtos (codigo, descricao, unidade, preco, situacao, estoque, categoria) VALUES (?, ?, ?, ?, ?, ?, ?)"
-  ).bind(String(dados.codigo || "").trim(), String(dados.descricao).trim(), String(dados.unidade || "UN").trim(), numero(dados.preco), String(dados.situacao || "Ativo"), numero(dados.estoque), String(dados.categoria || "").trim());
+  ).bind(codigo, String(dados.descricao).trim(), String(dados.unidade || "UN").trim(), numero(dados.preco), String(dados.situacao || "Ativo"), numero(dados.estoque), String(dados.categoria || "").trim());
   const resultado = await comando.run();
-  return json({ sucesso: true, id: resultado.meta.last_row_id, mensagem: "Produto cadastrado com sucesso." });
+  return json({ sucesso: true, id: resultado.meta.last_row_id, codigo, mensagem: "Produto cadastrado com sucesso." });
 }
-
 async function atualizarProduto(request, env, id) {
   const dados = await request.json();
   if (!String(dados.descricao || "").trim()) return erro("Informe a descrição do produto.");
@@ -213,6 +224,7 @@ export default {
     if (!url.pathname.startsWith("/api/")) return env.ASSETS.fetch(request);
     try {
       if (url.pathname === "/api/dashboard" && request.method === "GET") return json(await dashboard(env.DB));
+      if (url.pathname === "/api/products/next-code" && request.method === "GET") return json({ codigo: await proximoCodigoProduto(env.DB) });
       if (url.pathname === "/api/products" && (request.method === "GET" || request.method === "POST")) return produtos(request, env, url);
       if (url.pathname === "/api/clients" && (request.method === "GET" || request.method === "POST")) return clientes(request, env, url);
       if (url.pathname === "/api/receivables" && (request.method === "GET" || request.method === "POST")) return receberFiado(request, env);
