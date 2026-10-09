@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS clientes (
   telefone TEXT,
   cpf_cnpj TEXT,
   saldo_fiado REAL NOT NULL DEFAULT 0,
-  data_cadastro TEXT
+  data_cadastro TEXT,
+  endereco TEXT
 );
 
 CREATE TABLE IF NOT EXISTS produtos (
@@ -29,7 +30,8 @@ CREATE TABLE IF NOT EXISTS vendas (
   valor_total REAL NOT NULL,
   forma_pagamento TEXT NOT NULL,
   cliente_id INTEGER,
-  status TEXT NOT NULL DEFAULT 'CONCLUIDA'
+  status TEXT NOT NULL DEFAULT 'CONCLUIDA',
+  taxa_entrega REAL NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS itens_venda (
