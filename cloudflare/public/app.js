@@ -257,12 +257,13 @@ async function setupSale(){
       stopScanner();alert('Não foi possível acessar a câmera. Verifique a permissão da câmera para este site.');
     }
   };
-  search.oninput=async()=>{
-    if(search.value.trim().length<1){suggestions.innerHTML='';return}
-    const products=(await todosProdutos()).filter(product=>correspondeBusca(product,search.value,['descricao','codigo','categoria']));
-    suggestions.innerHTML=products.slice(0,8).map(product=>'<button type="button" class="suggestion" data-id="'+product.id+'"><span><b>'+escape(product.descricao)+'</b><small>'+escape(product.codigo||'Sem código')+'</small></span><strong>'+money(product.preco)+'</strong></button>').join('')||'<p class="no-result">Nenhum produto encontrado.</p>';
+  const renderProductCatalog=async()=>{
+    const term=search.value.trim(),all=await todosProdutos();
+    const products=(term?all.filter(product=>correspondeBusca(product,term,['descricao','codigo','categoria'])):all).slice(0,24);
+    suggestions.innerHTML=products.map(product=>'<button type="button" class="suggestion product-card" data-id="'+product.id+'"><span class="product-card-meta"><small>'+escape(product.categoria||'Produtos')+' · Cód. '+escape(product.codigo||'—')+'</small><b>'+escape(product.descricao)+'</b></span><strong>'+money(product.preco)+'</strong><em>Adicionar +</em></button>').join('')||'<p class="no-result">Nenhum produto encontrado.</p>';
     suggestions.querySelectorAll('.suggestion').forEach(element=>element.onclick=()=>addProduct(products.find(product=>String(product.id)===element.dataset.id)));
   };
+  search.oninput=renderProductCatalog;
   search.onkeydown=event=>{
     if(event.key==='Enter'){
       const first=suggestions.querySelector('.suggestion');
@@ -295,7 +296,7 @@ async function setupSale(){
       dialog.showModal();
     }catch(error){alert(error.message||'Não foi possível finalizar a venda.');finishButton.disabled=false;finishButton.textContent='Finalizar venda'}
   };
-  drawCart();search.focus();
+  drawCart();renderProductCatalog();search.focus();
 }
 function cartGross(){return cart.reduce((sum,item)=>sum+item.preco*item.quantidade,0)}
 function discountAmount(){
