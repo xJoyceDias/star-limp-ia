@@ -221,11 +221,10 @@ async function setupSale(){
     selectClient(client);
   });
   const addProduct=product=>{
-    const quantity=Number(document.querySelector('#quantity').value);
-    if(!Number.isFinite(quantity)||quantity<=0)return alert('Informe uma quantidade válida.');
+    const quantity=1;
     const existing=cart.find(item=>String(item.codigo)===String(product.codigo)&&item.produto===product.descricao&&Number(item.preco)===Number(product.preco));
     if(existing)existing.quantidade+=quantity;else cart.push({produto_id:product.id,codigo:product.codigo,produto:product.descricao,quantidade:quantity,preco:Number(product.preco)});
-    selected=null;search.value='';suggestions.innerHTML='';document.querySelector('#quantity').value=1;drawCart();search.focus();
+    selected=null;search.value='';suggestions.innerHTML='';drawCart();search.focus();
   };
   const stopScanner=()=>{
     const video=document.querySelector('#barcode-video');
