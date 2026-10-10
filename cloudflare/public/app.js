@@ -304,21 +304,22 @@ function discountAmount(){
   return Math.min(gross,value);
 }
 function drawCart(){
-  const box=document.querySelector('#cart'),gross=cartGross(),discount=discountAmount(),delivery=Math.max(0,Number(String(document.querySelector('#delivery-fee')?.value||'').replace(',','.'))||0),total=Math.max(0,gross-discount)+delivery;
+  const box=document.querySelector('#cart'),gross=cartGross(),discount=discountAmount(),delivery=Math.max(0,Number(String(document.querySelector('#delivery-fee')?.value||'').replace(',','.'))||0),total=Math.max(0,gross-discount)+delivery,count=cart.reduce((sum,item)=>sum+item.quantidade,0);
   box.classList.toggle('empty',!cart.length);
-  box.innerHTML=cart.length?'<div class="cart-head"><span>Produtos adicionados</span><span>Quantidade e valor</span></div>'+cart.map((item,index)=>'<article class="cart-item"><div class="cart-product"><b>'+escape(item.produto)+'</b><small>Código: '+escape(item.codigo||'—')+' · '+money(item.preco)+' por unidade</small></div><div class="cart-actions"><div class="item-quantity"><button type="button" data-decrease="'+index+'" aria-label="Diminuir quantidade">−</button><input data-quantity="'+index+'" type="number" min="1" step="1" value="'+item.quantidade+'" aria-label="Quantidade de '+escape(item.produto)+'"><button type="button" data-increase="'+index+'" aria-label="Aumentar quantidade">+</button></div><button type="button" class="price-edit" data-price-index="'+index+'" title="Clique para alterar e salvar o preço">'+money(item.preco*item.quantidade)+'</button><button type="button" class="remove-item" aria-label="Remover item" data-i="'+index+'">×</button></div></article>').join(''):'<div class="empty-cart"><b>Seu carrinho está vazio</b><span>Pesquise um produto acima para começar a venda.</span></div>';
+  box.innerHTML=cart.length?cart.map((item,index)=>'<article class="item"><div><div class="it-name">'+escape(item.produto)+'</div><div class="it-unit">Cód. '+escape(item.codigo||'—')+' · '+money(item.preco)+' cada</div></div><button type="button" class="item-price" data-price-index="'+index+'" title="Alterar preço">'+money(item.preco*item.quantidade)+'</button><div class="it-ctrl"><div class="qty"><button type="button" data-decrease="'+index+'" aria-label="Diminuir">−</button><input data-quantity="'+index+'" type="number" min="1" step="1" value="'+item.quantidade+'" aria-label="Quantidade"><button type="button" data-increase="'+index+'" aria-label="Aumentar">+</button></div><button type="button" class="rm" aria-label="Remover item" data-i="'+index+'">×</button></div></article>').join(''):'<div class="empty-cart"><span>Seu carrinho está vazio</span><small>Escolha um produto do catálogo para começar.</small></div>';
   box.querySelectorAll('button[data-i]').forEach(button=>button.onclick=()=>{cart.splice(Number(button.dataset.i),1);drawCart()});
   box.querySelectorAll('button[data-decrease]').forEach(button=>button.onclick=()=>{const item=cart[Number(button.dataset.decrease)];item.quantidade=Math.max(1,item.quantidade-1);drawCart()});
   box.querySelectorAll('button[data-increase]').forEach(button=>button.onclick=()=>{const item=cart[Number(button.dataset.increase)];item.quantidade+=1;drawCart()});
   box.querySelectorAll('input[data-quantity]').forEach(input=>input.onchange=()=>{const item=cart[Number(input.dataset.quantity)],quantity=Number(input.value);item.quantidade=Number.isFinite(quantity)&&quantity>0?quantity:1;drawCart()});
-  box.querySelectorAll('.price-edit').forEach(button=>button.onclick=()=>openQuickPrice(Number(button.dataset.priceIndex)));
+  box.querySelectorAll('[data-price-index]').forEach(button=>button.onclick=()=>openQuickPrice(Number(button.dataset.priceIndex)));
   document.querySelector('#sale-subtotal').textContent=money(gross);
   document.querySelector('#sale-discount-value').textContent='− '+money(discount);
   document.querySelector('#sale-discount-row').hidden=discount<=0;
   document.querySelector('#sale-delivery-value').textContent='+ '+money(delivery);
   document.querySelector('#sale-delivery-row').hidden=delivery<=0;
   document.querySelector('#sale-total').textContent=money(total);
-  document.querySelector('#cart-count').textContent=cart.reduce((sum,item)=>sum+item.quantidade,0)+' item(ns)';
+  document.querySelector('#cart-count').textContent=count+' item(ns)';
+  document.querySelector('#cart-count-badge').textContent=count;
 }
 async function openQuickPrice(index){
   const item=cart[index];
