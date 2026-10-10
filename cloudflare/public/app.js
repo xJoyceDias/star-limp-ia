@@ -176,7 +176,7 @@ async function openProduct(p){
 }
 const f=k=>document.querySelector('#f-'+k).value;
 async function setupSale(){
-  const search=document.querySelector('#sale-search'),suggestions=document.querySelector('#suggestions'),payment=document.querySelector('#payment'),quickClient=document.querySelector('#quick-client'),finishButton=document.querySelector('#finish-sale'),clientSearch=document.querySelector('#sale-client-search'),clientSuggestions=document.querySelector('#client-suggestions'),selectedClientLabel=document.querySelector('#selected-client'),discountInput=document.querySelector('#discount-input'),deliveryInput=document.querySelector('#delivery-fee'),scanButton=document.querySelector('#scan-barcode');
+  const search=document.querySelector('#sale-search'),suggestions=document.querySelector('#suggestions'),payment=document.querySelector('#payment'),quickClient=document.querySelector('#quick-client'),finishButton=document.querySelector('#finish-sale'),clientSearch=document.querySelector('#sale-client-search'),clientSuggestions=document.querySelector('#client-suggestions'),selectedClientLabel=document.querySelector('#selected-client'),discountInput=document.querySelector('#discount-input'),deliveryInput=document.querySelector('#delivery-fee'),cashInput=document.querySelector('#cash-received'),changePanel=document.querySelector('#change-panel'),scanButton=document.querySelector('#scan-barcode');
   let clientsCache=[];
   try{clientsCache=await api('/clients')}catch(error){console.error(error)}
   const selectClient=client=>{
@@ -198,12 +198,14 @@ async function setupSale(){
   const resetSale=()=>{
     cart=[];selected=null;selectedClient=null;
     search.value='';suggestions.innerHTML='';document.querySelector('#quantity').value=1;
-    payment.value='pix';saleDiscount=0;discountInput.value='';deliveryInput.value='';clientSearch.value='';document.querySelector('#withdrawn-by').value='';clientSuggestions.innerHTML='';selectedClientLabel.hidden=true;selectedClientLabel.textContent='';
+    payment.value='pix';saleDiscount=0;discountInput.value='';deliveryInput.value='';cashInput.value='';changePanel.hidden=true;clientSearch.value='';document.querySelector('#withdrawn-by').value='';clientSuggestions.innerHTML='';selectedClientLabel.hidden=true;selectedClientLabel.textContent='';
     quickClient.textContent='+ Cadastrar cliente';
     finishButton.disabled=false;finishButton.textContent='Finalizar venda';
     drawCart();search.focus();
   };
-  payment.onchange=()=>{if(payment.value==='fiado'&&!selectedClient)clientSearch.focus()};
+  const updateChange=()=>{const gross=cartGross()-discountAmount()+Math.max(0,Number(String(deliveryInput.value||'').replace(',','.'))||0),received=Math.max(0,Number(String(cashInput.value||'').replace(',','.'))||0);document.querySelector('#change-value').textContent=money(Math.max(0,received-gross));document.querySelector('#cash-shortage').textContent=received&&received<gross?'Faltam '+money(gross-received)+' para concluir.':'';};
+  payment.onchange=()=>{changePanel.hidden=payment.value!=='dinheiro';if(payment.value==='fiado'&&!selectedClient)clientSearch.focus();updateChange()};
+  cashInput.oninput=updateChange;
   discountInput.oninput=()=>{saleDiscount=String(discountInput.value).replace(',','.');drawCart()};
   deliveryInput.oninput=()=>drawCart();
   clientSearch.oninput=()=>{
