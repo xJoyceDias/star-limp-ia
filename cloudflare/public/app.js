@@ -197,7 +197,7 @@ async function setupSale(){
   };
   const resetSale=()=>{
     cart=[];selected=null;selectedClient=null;
-    search.value='';suggestions.innerHTML='';document.querySelector('#quantity').value=1;
+    search.value='';suggestions.innerHTML='';
     payment.value='pix';saleDiscount=0;discountInput.value='';deliveryInput.value='';cashInput.value='';changePanel.hidden=true;clientSearch.value='';document.querySelector('#withdrawn-by').value='';clientSuggestions.innerHTML='';selectedClientLabel.hidden=true;selectedClientLabel.textContent='';
     quickClient.textContent='+ Cadastrar cliente';
     finishButton.disabled=false;finishButton.textContent='Finalizar venda';
